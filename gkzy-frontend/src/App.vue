@@ -1,13 +1,7 @@
 <script setup>
-// 使用路由系统，不需要其他逻辑
+import HelloWorld from './components/HelloWorld.vue'
 </script>
 
 <template>
-  <!-- RouterView 会根据当前路由显示对应的组件 -->
-  <router-view />
+  <HelloWorld />
 </template>
-
-<style>
-
-</style>
-
