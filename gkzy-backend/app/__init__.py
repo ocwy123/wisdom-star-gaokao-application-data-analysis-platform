@@ -4,6 +4,7 @@ from app.extensions import db, cors
 # from app.routes.auth import auth_bp
 from app.routes.school import school_bp
 # from app.routes.overview import overview_bp
+from app.routes.heat import heat_bp
 # ... 导入其他蓝图
 
 def create_app():
@@ -19,6 +20,7 @@ def create_app():
     # app.register_blueprint(auth_bp)
     app.register_blueprint(school_bp)
     # app.register_blueprint(overview_bp)
+    app.register_blueprint(heat_bp)
     # ...
 
     return app
