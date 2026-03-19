@@ -1,21 +1,3 @@
-<template>
-  <div>
-    <h2>高校列表（来自MySQL）</h2>
-    <ul>
-      <li v-for="school in schoolList" :key="school.id">
-        {{ school.name }} - {{ school.province }}
-      </li>
-    </ul>
-
-    <h2>高校热度排行（来自Hive）</h2>
-    <ul>
-      <li v-for="item in heatList" :key="item.school_id">
-        {{ item.school_name }} - 热度：{{ item.heat_score }}
-      </li>
-    </ul>
-  </div>
-</template>
-
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getSchoolList } from '../api/school'
@@ -36,3 +18,25 @@ onMounted(async () => {
   }
 })
 </script>
+
+<template>
+  <div>
+    <h2>高校列表（来自MySQL）</h2>
+    <ul>
+      <li v-for="school in schoolList" :key="school.id">
+        {{ school.name }} - {{ school.province }}
+      </li>
+    </ul>
+
+    <h2>高校热度排行（来自Hive）</h2>
+    <ul>
+      <li v-for="item in heatList" :key="item.school_id">
+        {{ item.school_name }} - 热度：{{ item.heat_score }}
+      </li>
+    </ul>
+  </div>
+</template>
+
+<style>
+
+</style>
