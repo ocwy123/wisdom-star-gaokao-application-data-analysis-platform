@@ -2671,3 +2671,4 @@ function renderPlanChart(data) {
     justify-content: center;
   }
 }
+</style>
