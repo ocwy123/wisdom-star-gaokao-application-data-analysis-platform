@@ -1,4 +1,6 @@
 from app.extensions import db
+from datetime import datetime
+
 
 class School(db.Model):
     __tablename__ = 'edu_school'
@@ -15,8 +17,10 @@ class School(db.Model):
     founded_year = db.Column(db.Integer)
     description = db.Column(db.Text)
     website = db.Column(db.String(255))
-    created_at = db.Column(db.DateTime)
-    updated_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
+
+    majors = db.relationship('Major', secondary='edu_school_major', back_populates='schools')
 
     def to_dict(self):
         return {

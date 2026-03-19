@@ -1,13 +1,18 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import Dashboard from '../views/Dashboard.vue'
 import SchoolList from '../views/SchoolList.vue'
 
 const routes = [
   {
     path: '/',
-    name: 'Home',
+    name: 'Dashboard',
+    component: Dashboard
+  },
+  {
+    path: '/schools',
+    name: 'SchoolList',
     component: SchoolList
   }
-  // 如果有其他路由，可以继续添加
 ]
 
 const router = createRouter({
