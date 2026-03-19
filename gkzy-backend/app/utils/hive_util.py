@@ -6,7 +6,9 @@ def get_hive_connection():
         host=Config.HIVE_HOST,
         port=Config.HIVE_PORT,
         database=Config.HIVE_DB,
-        auth='NOSASL'  # 根据集群认证方式调整
+        username=Config.HIVE_USER or None,  # 空字符串转为 None
+        password=Config.HIVE_PASSWORD or None,
+        auth=None
     )
     return conn
 

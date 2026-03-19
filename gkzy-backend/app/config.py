@@ -12,6 +12,8 @@ class Config:
     HIVE_HOST = os.getenv('HIVE_HOST')
     HIVE_PORT = os.getenv('HIVE_PORT')
     HIVE_DB = os.getenv('HIVE_DB')
+    HIVE_USER = os.getenv('HIVE_USER')
+    HIVE_PASSWORD = os.getenv('HIVE_PASSWORD')
 
     # JWT
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
