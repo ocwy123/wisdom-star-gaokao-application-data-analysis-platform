@@ -1,9 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
+<<<<<<< HEAD
+=======
+import Dashboard from '../views/Dashboard.vue'
+>>>>>>> d542ff691db917f1a695eec4809a16ccd8426862
 import SchoolList from '../views/SchoolList.vue'
 
 const routes = [
   {
     path: '/',
+<<<<<<< HEAD
     name: 'Home',
     component: SchoolList
   },
@@ -25,6 +30,15 @@ const routes = [
     name: 'AdminDashboard',
     component: () => import('../views/admin/AdminDashboard.vue'),
     meta: { requiresAuth: true }
+=======
+    name: 'Dashboard',
+    component: Dashboard
+  },
+  {
+    path: '/schools',
+    name: 'SchoolList',
+    component: SchoolList
+>>>>>>> d542ff691db917f1a695eec4809a16ccd8426862
   }
 ]
 
@@ -33,6 +47,7 @@ const router = createRouter({
   routes
 })
 
+<<<<<<< HEAD
 // 路由守卫
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('adminToken')
@@ -46,4 +61,6 @@ router.beforeEach((to, from, next) => {
   }
 })
 
+=======
+>>>>>>> d542ff691db917f1a695eec4809a16ccd8426862
 export default router

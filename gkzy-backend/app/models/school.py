@@ -1,4 +1,9 @@
 from app.extensions import db
+<<<<<<< HEAD
+=======
+from datetime import datetime
+
+>>>>>>> d542ff691db917f1a695eec4809a16ccd8426862
 
 class School(db.Model):
     __tablename__ = 'edu_school'
@@ -15,8 +20,15 @@ class School(db.Model):
     founded_year = db.Column(db.Integer)
     description = db.Column(db.Text)
     website = db.Column(db.String(255))
+<<<<<<< HEAD
     created_at = db.Column(db.DateTime)
     updated_at = db.Column(db.DateTime)
+=======
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
+
+    majors = db.relationship('Major', secondary='edu_school_major', back_populates='schools')
+>>>>>>> d542ff691db917f1a695eec4809a16ccd8426862
 
     def to_dict(self):
         return {
