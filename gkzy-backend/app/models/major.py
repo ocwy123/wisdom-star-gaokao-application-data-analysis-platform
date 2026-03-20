@@ -16,6 +16,8 @@ class Major(db.Model):
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
 
     schools = db.relationship('School', secondary='edu_school_major', back_populates='majors')
+    adm_records = db.relationship('AdmRecord', back_populates='major')
+    employment_stats = db.relationship('MajorEmployment', back_populates='major')
 
     def to_dict(self):
         return {
