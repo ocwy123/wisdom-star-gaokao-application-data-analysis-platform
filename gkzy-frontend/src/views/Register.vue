@@ -1,15 +1,25 @@
 <template>
   <div class="register-container">
     <div class="register-box">
-      <h2>用户注册</h2>
+      <div class="logo-section">
+        <h1 class="logo">GKZY</h1>
+        <p class="slogan">高考志愿填报系统</p>
+      </div>
       
-      <el-form :model="form" :rules="rules" ref="formRef" @submit.prevent="handleRegister">
+      <h2 class="title">用户注册</h2>
+      
+      <el-form :model="form" :rules="rules" ref="formRef" @submit.prevent="handleRegister" class="register-form">
         <el-form-item prop="username">
           <el-input 
             v-model="form.username" 
             placeholder="用户名"
             size="large"
-          />
+            class="form-input"
+          >
+            <template #prefix>
+              <el-icon class="input-icon"><User /></el-icon>
+            </template>
+          </el-input>
         </el-form-item>
         
         <el-form-item prop="nickname">
@@ -17,7 +27,12 @@
             v-model="form.nickname" 
             placeholder="昵称"
             size="large"
-          />
+            class="form-input"
+          >
+            <template #prefix>
+              <el-icon class="input-icon"><Avatar /></el-icon>
+            </template>
+          </el-input>
         </el-form-item>
         
         <el-form-item prop="password">
@@ -27,7 +42,12 @@
             placeholder="密码"
             size="large"
             show-password
-          />
+            class="form-input"
+          >
+            <template #prefix>
+              <el-icon class="input-icon"><Lock /></el-icon>
+            </template>
+          </el-input>
         </el-form-item>
         
         <el-form-item prop="confirmPassword">
@@ -37,7 +57,12 @@
             placeholder="确认密码"
             size="large"
             show-password
-          />
+            class="form-input"
+          >
+            <template #prefix>
+              <el-icon class="input-icon"><Lock /></el-icon>
+            </template>
+          </el-input>
         </el-form-item>
         
         <el-form-item prop="email">
@@ -45,7 +70,12 @@
             v-model="form.email" 
             placeholder="邮箱（可选）"
             size="large"
-          />
+            class="form-input"
+          >
+            <template #prefix>
+              <el-icon class="input-icon"><Message /></el-icon>
+            </template>
+          </el-input>
         </el-form-item>
         
         <el-form-item prop="phone">
@@ -53,7 +83,18 @@
             v-model="form.phone" 
             placeholder="手机号（可选）"
             size="large"
-          />
+            class="form-input"
+          >
+            <template #prefix>
+              <el-icon class="input-icon"><Phone /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        
+        <el-form-item>
+          <el-checkbox v-model="agreedToTerms" class="terms-checkbox">
+            我已阅读并同意 <a href="#" class="terms-link">用户协议</a> 和 <a href="#" class="terms-link">隐私政策</a>
+          </el-checkbox>
         </el-form-item>
         
         <el-button 
@@ -67,7 +108,8 @@
         </el-button>
         
         <div class="links">
-          <router-link to="/login">已有账号？立即登录</router-link>
+          <span>已有账号？</span>
+          <router-link to="/login" class="login-link">立即登录</router-link>
         </div>
       </el-form>
     </div>
@@ -78,11 +120,13 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { User, Lock, Message, Phone, Avatar } from '@element-plus/icons-vue'
 import request from '../utils/request'
 
 const router = useRouter()
 const loading = ref(false)
 const formRef = ref()
+const agreedToTerms = ref(false)
 
 const form = reactive({
   username: '',
@@ -145,6 +189,11 @@ const rules = {
 const handleRegister = async () => {
   if (!formRef.value) return
   
+  if (!agreedToTerms.value) {
+    ElMessage.warning('请阅读并同意用户协议和隐私政策')
+    return
+  }
+  
   const valid = await formRef.value.validate()
   if (!valid) return
   
@@ -171,37 +220,170 @@ const handleRegister = async () => {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--accent) 0%, #764ba2 100%);
+  transition: background 0.3s ease;
 }
 
 .register-box {
-  width: 400px;
-  padding: 40px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-  max-height: 80vh;
+  width: 440px;
+  padding: 48px;
+  background: var(--bg);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+  animation: slideUp 0.5s ease-out;
+  max-height: 85vh;
   overflow-y: auto;
 }
 
-.register-box h2 {
+.register-box:hover {
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
+}
+
+.logo-section {
   text-align: center;
-  margin-bottom: 30px;
-  color: #333;
+  margin-bottom: 32px;
+}
+
+.logo {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0 0 8px 0;
+  letter-spacing: 2px;
+}
+
+.slogan {
+  font-size: 14px;
+  color: var(--text);
+  margin: 0;
+}
+
+.title {
+  text-align: center;
+  margin-bottom: 32px;
+  color: var(--text-h);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.register-form {
+  width: 100%;
+}
+
+.form-input {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border);
+}
+
+.form-input:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-bg);
+}
+
+.form-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-bg);
+}
+
+.input-icon {
+  color: var(--text);
+  font-size: 18px;
+}
+
+.terms-checkbox {
+  color: var(--text);
+  font-size: 14px;
+  margin: 16px 0;
+}
+
+.terms-link {
+  color: var(--accent);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.terms-link:hover {
+  color: #9631e8;
+  text-decoration: underline;
 }
 
 .register-btn {
   width: 100%;
-  margin-top: 20px;
+  margin-top: 8px;
+  height: 48px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  background: var(--accent);
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.register-btn:hover {
+  background: #9631e8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(170, 59, 255, 0.3);
 }
 
 .links {
-  margin-top: 20px;
+  margin-top: 24px;
   text-align: center;
+  font-size: 14px;
+  color: var(--text);
 }
 
-.links a {
-  color: #409eff;
+.login-link {
+  color: var(--accent);
+  font-weight: 600;
   text-decoration: none;
+  margin-left: 4px;
+  transition: color 0.3s ease;
+}
+
+.login-link:hover {
+  color: #9631e8;
+  text-decoration: underline;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .register-box {
+    width: 90%;
+    max-width: 400px;
+    padding: 32px;
+  }
+}
+
+/* 滚动条样式 */
+.register-box::-webkit-scrollbar {
+  width: 6px;
+}
+
+.register-box::-webkit-scrollbar-track {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.register-box::-webkit-scrollbar-thumb {
+  background: var(--text);
+  border-radius: 3px;
+}
+
+.register-box::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
 }
 </style>

@@ -8,51 +8,10 @@ import json
 # 创建蓝图
 admin_auth_bp = Blueprint('admin_auth', __name__, url_prefix='/api/admin')
 
-# ==================== 管理员模型 ====================
-class Admin(db.Model):
-    __tablename__ = 'admins'
-    
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password_hash = db.Column(db.String(200), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    real_name = db.Column(db.String(50))
-    role = db.Column(db.String(20), default='admin')
-    created_at = db.Column(db.DateTime, default=datetime.now)
-    
-    # 添加 status 字段（虽然数据库中没有，但代码中引用了，默认设为1表示正常）
-    @property
-    def status(self):
-        return 1  # 默认正常状态
-# ==================== 系统配置模型 ====================
-class SystemConfig(db.Model):
-    __tablename__ = 'sys_config'
-    
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    config_key = db.Column(db.String(100), unique=True, nullable=False)
-    config_value = db.Column(db.Text, nullable=False)
-    config_type = db.Column(db.String(50), nullable=False)  # datasource, cache, log, system
-    description = db.Column(db.String(200))
-    updated_by = db.Column(db.Integer, db.ForeignKey('admins.id'))
-    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
-    
-    # 关联
-    updater = db.relationship('Admin', foreign_keys=[updated_by])
-
-class ConfigLog(db.Model):
-    __tablename__ = 'sys_config_log'
-    
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    admin_id = db.Column(db.Integer, db.ForeignKey('admins.id'))
-    action = db.Column(db.String(50))  # CREATE, UPDATE, DELETE
-    config_key = db.Column(db.String(100))
-    old_value = db.Column(db.Text)
-    new_value = db.Column(db.Text)
-    ip_address = db.Column(db.String(50))
-    created_at = db.Column(db.DateTime, default=datetime.now)
-    
-    # 关联
-    admin = db.relationship('Admin', foreign_keys=[admin_id])
+# ==================== 导入模型 ====================
+from app.models.admin import Admin
+from app.models.config_log import ConfigLog
+from app.models.config import Config as SystemConfig
 # ==================== 用户模型（从user.py导入）====================
 from app.models.user import User
 
@@ -72,7 +31,9 @@ def admin_required(f):
             if not current_admin:
                 return jsonify({'success': False, 'message': '管理员不存在'}), 401
             
-            # Admin 模型通过 property 提供了 status 字段
+            if current_admin.status != 1:
+                return jsonify({'success': False, 'message': '账号已被禁用'}), 401
+            
             return f(current_admin, *args, **kwargs)
             
         except jwt.ExpiredSignatureError:

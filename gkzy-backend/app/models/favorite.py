@@ -11,7 +11,7 @@ class Favorite(db.Model):
     target_id = db.Column(db.BigInteger, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
-    user = db.relationship('User', back_populates='favorites')
+    user = db.relationship('User', backref='favorites')
 
     def to_dict(self):
         return {
