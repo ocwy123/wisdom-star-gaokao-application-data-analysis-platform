@@ -9,24 +9,43 @@ const routes = [
     name: 'Home',
     component: SchoolList
   },
+  // 用户认证路由
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('../views/Login.vue'),
+    meta: { requiresGuest: true }
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: () => import('../views/Register.vue'),
+    meta: { requiresGuest: true }
+  },
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: () => import('../views/Profile.vue'),
+    meta: { requiresAuth: true }
+  },
   // 管理员路由
   {
     path: '/admin/login',
     name: 'AdminLogin',
     component: () => import('../views/admin/Login.vue'),
-    meta: { requiresGuest: true }
+    meta: { requiresGuest: true, adminOnly: true }
   },
   {
     path: '/admin/register',
     name: 'AdminRegister',
     component: () => import('../views/admin/Register.vue'),
-    meta: { requiresGuest: true }
+    meta: { requiresGuest: true, adminOnly: true }
   },
   {
     path: '/admin/dashboard',
     name: 'AdminDashboard',
     component: () => import('../views/admin/AdminDashboard.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, adminOnly: true }
   }
 ]
 
@@ -37,12 +56,26 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('adminToken')
+  const adminToken = localStorage.getItem('adminToken')
+  const userToken = localStorage.getItem('userToken')
   
-  if (to.meta.requiresAuth && !token) {
-    next('/admin/login')
-  } else if (to.meta.requiresGuest && token) {
-    next('/admin/dashboard')
+  // 管理员路由检查
+  if (to.meta.adminOnly) {
+    if (to.meta.requiresAuth && !adminToken) {
+      next('/admin/login')
+    } else if (to.meta.requiresGuest && adminToken) {
+      next('/admin/dashboard')
+    } else {
+      next()
+    }
+    return
+  }
+  
+  // 普通用户路由检查
+  if (to.meta.requiresAuth && !userToken) {
+    next('/login')
+  } else if (to.meta.requiresGuest && userToken) {
+    next('/')
   } else {
     next()
   }

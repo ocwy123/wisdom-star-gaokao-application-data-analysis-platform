@@ -17,7 +17,7 @@ class User(db.Model):
     status = db.Column(db.Integer, nullable=False, default=0)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
 
-    favorites = db.relationship('Favorite', back_populates='user', lazy='dynamic')
+    # favorites = db.relationship('Favorite', back_populates='user', lazy='dynamic')
 
     def set_password(self, password):
         self.password = generate_password_hash(password)

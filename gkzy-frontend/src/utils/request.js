@@ -2,13 +2,17 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
 const request = axios.create({
-  baseURL: 'http://192.168.54.29:5000/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
   timeout: 10000
 })
 
 request.interceptors.request.use(
   config => {
-    const token = localStorage.getItem('adminToken')
+    // 优先使用用户token，如果没有则使用管理员token
+    const userToken = localStorage.getItem('userToken')
+    const adminToken = localStorage.getItem('adminToken')
+    const token = userToken || adminToken
+    
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`
     }
@@ -23,11 +27,22 @@ request.interceptors.response.use(
     if (error.response) {
       switch (error.response.status) {
         case 401:
-          localStorage.removeItem('adminToken')
-          localStorage.removeItem('adminInfo')
-          if (window.location.pathname !== '/admin/login') {
-            ElMessage.error('登录已过期，请重新登录')
-            window.location.href = '/admin/login'
+          // 检查是否是管理员还是用户
+          const isAdminPath = window.location.pathname.startsWith('/admin')
+          if (isAdminPath) {
+            localStorage.removeItem('adminToken')
+            localStorage.removeItem('adminInfo')
+            if (window.location.pathname !== '/admin/login') {
+              ElMessage.error('登录已过期，请重新登录')
+              window.location.href = '/admin/login'
+            }
+          } else {
+            localStorage.removeItem('userToken')
+            localStorage.removeItem('userInfo')
+            if (window.location.pathname !== '/login') {
+              ElMessage.error('登录已过期，请重新登录')
+              window.location.href = '/login'
+            }
           }
           break
         case 403:
@@ -40,7 +55,7 @@ request.interceptors.response.use(
           ElMessage.error(error.response.data?.message || '请求失败')
       }
     } else {
-      ElMessage.error('网络连接失败')
+      ElMessage.error('网络连接失败，请检查后端服务是否启动')
     }
     return Promise.reject(error)
   }

@@ -90,7 +90,9 @@ def create_app():
     
     # 注册蓝图
     from app.services.admin_auth import admin_auth_bp
+    from app.routes.auth import auth_bp
     app.register_blueprint(admin_auth_bp)
+    app.register_blueprint(auth_bp)
     
     # 创建表
     with app.app_context():

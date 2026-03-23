@@ -47,16 +47,31 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowDown } from '@element-plus/icons-vue'
+import request from '../utils/request'
 
 const router = useRouter()
 const keyword = ref('')
-// 模拟登录状态，实际应从 store 或 localStorage 获取
+
+// 响应式用户状态
 const isLoggedIn = ref(false)
 const username = ref('')
+const userInfo = ref(null)
+
+// 检查登录状态
+const checkLoginStatus = () => {
+  const token = localStorage.getItem('userToken')
+  const info = localStorage.getItem('userInfo')
+  
+  isLoggedIn.value = !!token
+  if (info) {
+    userInfo.value = JSON.parse(info)
+    username.value = userInfo.value.nickname || userInfo.value.username
+  }
+}
 
 const handleSearch = () => {
   if (!keyword.value.trim()) {
@@ -71,11 +86,42 @@ const goToProfile = () => {
   router.push('/profile')
 }
 
-const logout = () => {
-  // 清除 token 等逻辑
-  isLoggedIn.value = false
-  router.push('/')
+const logout = async () => {
+  try {
+    await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    try {
+      await request.post('/auth/logout')
+    } catch (error) {
+      // 忽略登出API调用错误，继续清理本地数据
+    }
+    
+    // 清除本地存储
+    localStorage.removeItem('userToken')
+    localStorage.removeItem('userInfo')
+    
+    isLoggedIn.value = false
+    userInfo.value = null
+    username.value = ''
+    
+    ElMessage.success('退出登录成功')
+    router.push('/')
+  } catch (error) {
+    // 用户取消操作
+  }
 }
+
+// 组件挂载时检查登录状态
+onMounted(() => {
+  checkLoginStatus()
+  
+  // 监听storage变化，实现多标签页同步
+  window.addEventListener('storage', checkLoginStatus)
+})
 </script>
 
 <style scoped>
