@@ -19,8 +19,8 @@ class AdmRecord(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
 
-    school = db.relationship('School')
-    major = db.relationship('Major')
+    school = db.relationship('School', back_populates='adm_records')
+    major = db.relationship('Major', back_populates='adm_records')
 
     def to_dict(self):
         return {
