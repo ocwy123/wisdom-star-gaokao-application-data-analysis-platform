@@ -61,11 +61,12 @@ def get_school_list():
 
 
 @school_bp.route('/detail/<int:school_id>', methods=['GET'])
-@cache.cached(timeout=300, key_prefix='school_detail')
+# @cache.cached(timeout=300, key_prefix='school_detail')
 def get_school_detail(school_id):
     """获取高校详情"""
     try:
         data = SchoolService.get_school_detail(school_id)
+        print(f"Fetched school detail for ID {school_id}: {data}")
         
         if not data:
             return error(message='学校不存在'), 404

@@ -32,6 +32,10 @@ export function getSchoolDetail(id) {
   })
 }
 
+// export function getSchoolDetail(id) {
+//   return service.get(`/school/detail/${id}`)
+// }
+
 /**
  * 获取所有省份列表
  */
@@ -65,6 +69,3 @@ export function getSchoolTypes() {
 }
 
 
-export function getSchoolDetail(id) {
-  return service.get(`/school/detail/${id}`)
-}

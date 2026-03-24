@@ -596,7 +596,7 @@ function navigateTo(route) {
 }
 
 function viewSchoolDetail(id) {
-  router.push(`/schools/${id}`)
+  router.push(`/school/${id}`)
 }
 
 function viewMajorDetail(id) {

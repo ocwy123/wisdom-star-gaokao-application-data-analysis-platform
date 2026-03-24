@@ -53,7 +53,7 @@ def create_app():
     # MySQL 配置（远程）
     DB_USERNAME = 'root'
     DB_PASSWORD = 'root'
-    DB_HOST = '192.168.54.241'
+    DB_HOST = '192.168.1.241'
     DB_PORT = '3306'
     DB_NAME = 'gkzy_mysql'
     
@@ -116,6 +116,8 @@ def create_app():
     from app.routes.overview import overview_bp
     from app.routes.school import school_bp
     from app.services.analysis import analysis_bp
+    from app.routes.major import major_bp
+    from app.routes.heat import heat_bp
     # 注册所有蓝图路由
     app.register_blueprint(admin_auth_bp)
     app.register_blueprint(auth_bp)

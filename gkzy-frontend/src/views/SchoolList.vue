@@ -368,7 +368,9 @@ const handleCurrentChange = async (page) => {
 // 查看详情
 const viewDetail = (id) => {
   // TODO: 跳转到详情页
-  ElMessage.info('详情页开发中...')
+  // ElMessage.info('详情页开发中...')
+  console.log(id)
+  router.push(`/school/${id}`)
 }
 
 // 回到顶部

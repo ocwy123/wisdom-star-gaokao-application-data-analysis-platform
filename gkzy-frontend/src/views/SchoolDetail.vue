@@ -173,8 +173,10 @@ const fetchSchoolDetail = async () => {
   loading.value = true
   try {
     const response = await getSchoolDetail(schoolId.value)
-    if (response.code === 200) {
-      school.value = response.data
+    console.log('Fetching school detail for ID:', schoolId.value)
+    console.log('+++School detail response:', response)
+    if (response.data.code === 200) {
+      school.value = response.data.data
     }
   } catch (error) {
     console.error('Failed to fetch school detail:', error)
