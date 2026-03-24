@@ -14,7 +14,6 @@
             <router-link to="/majors" class="nav-item">看专业</router-link>
             <router-link to="/志愿" class="nav-item">志愿填报</router-link>
             <router-link to="/data" class="nav-item">数据分析</router-link>
-            <router-link to="/news" class="nav-item">资讯</router-link>
           </nav>
         </div>
         <div class="header-right">
@@ -149,10 +148,10 @@
           </div>
           <div class="section-controls">
             <div class="filter-tabs">
-              <button class="filter-tab active" @click="schoolFilter = 'all'">全部</button>
-              <button class="filter-tab" @click="schoolFilter = '985'">985</button>
-              <button class="filter-tab" @click="schoolFilter = '211'">211</button>
-              <button class="filter-tab" @click="schoolFilter = 'double'">双一流</button>
+              <button class="filter-tab" :class="{ active: schoolFilter === 'all' }" @click="schoolFilter = 'all'">全部</button>
+              <button class="filter-tab" :class="{ active: schoolFilter === '985' }" @click="schoolFilter = '985'">985</button>
+              <button class="filter-tab" :class="{ active: schoolFilter === '211' }" @click="schoolFilter = '211'">211</button>
+              <button class="filter-tab" :class="{ active: schoolFilter === 'double' }" @click="schoolFilter = 'double'">双一流</button>
             </div>
             <a href="#" class="more-link" @click.prevent="navigateTo('/schools')">查看全部 →</a>
           </div>
@@ -160,12 +159,17 @@
         <div class="schools-grid">
           <div
             class="school-card"
-            v-for="school in recommendedSchools.slice(0, 9)"
+            v-for="school in filteredSchools.slice(0, 16)"
             :key="school.id"
             @click="viewSchoolDetail(school.id)"
           >
             <div class="school-logo-wrapper">
-              <div class="school-logo">{{ school.logo }}</div>
+              <!-- 如果是图片 URL，显示图片；如果是 emoji，直接显示文本 -->
+              <img v-if="school.logo && school.logo.startsWith('http')" 
+                   :src="school.logo" 
+                   :alt="school.name" 
+                   class="school-logo-img" />
+              <div v-else class="school-logo-emoji">{{ school.logo }}</div>
             </div>
             <div class="school-content">
               <h3 class="school-name">{{ school.name }}</h3>
@@ -302,7 +306,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { getHotSchools, getMajorRank } from '../api/overview'
 
@@ -383,6 +387,20 @@ const faqs = [
 
 const recommendedSchools = ref([])
 
+// 根据筛选条件过滤学校
+const filteredSchools = computed(() => {
+  if (schoolFilter.value === 'all') {
+    return recommendedSchools.value
+  } else if (schoolFilter.value === '985') {
+    return recommendedSchools.value.filter(school => school.is_985)
+  } else if (schoolFilter.value === '211') {
+    return recommendedSchools.value.filter(school => school.is_211)
+  } else if (schoolFilter.value === 'double') {
+    return recommendedSchools.value.filter(school => school.is_double_first)
+  }
+  return recommendedSchools.value
+})
+
 onMounted(async () => {
   setupScrollListener()
   startCarousel()
@@ -415,7 +433,8 @@ async function loadHotSchools() {
           ...school,
           location,
           level: school.is_985 ? '985' : school.is_211 ? '211' : '一本',
-          logo: getSchoolLogo(school.type),
+          // 使用数据库中的 logo，如果没有则使用 emoji
+          logo: school.logo || getSchoolLogo(school.type),
           tags: tags,
           heatScore: Math.round(school.heat_score || 0)
         }
@@ -1631,7 +1650,14 @@ function getMotivationText() {
   padding: 6px;
 }
 
-.school-logo {
+.school-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 5px;
+}
+
+.school-logo-emoji {
   width: 100%;
   height: 100%;
   display: flex;

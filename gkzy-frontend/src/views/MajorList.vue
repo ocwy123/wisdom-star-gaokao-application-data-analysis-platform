@@ -9,10 +9,22 @@ const majorList = ref([])
 const total = ref(0)
 const loading = ref(false)
 const searchKeyword = ref('')
+const miniSearch = ref('')
 const pagination = ref({
   page: 1,
   size: 20
 })
+
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+const handleMiniSearch = () => {
+  if (miniSearch.value.trim()) {
+    // 这里可以添加全局搜索逻辑
+    console.log('搜索关键词:', miniSearch.value)
+  }
+}
 
 const loadMajors = async () => {
   const loadingInstance = ElLoading.service({ fullscreen: true, text: '加载中...' })
@@ -59,37 +71,62 @@ watch(() => pagination.value.page, loadMajors)
 
 <template>
   <div class="major-list-container">
+    <!-- 顶部导航栏 -->
+    <header class="header">
+      <div class="container">
+        <div class="header-left">
+          <div class="logo" @click="scrollToTop">
+            <span class="logo-icon">🎓</span>
+            <span class="logo-text">高考志愿</span>
+          </div>
+          <nav class="nav">
+            <router-link to="/" class="nav-item">首页</router-link>
+            <router-link to="/schools" class="nav-item">查大学</router-link>
+            <router-link to="/majors" class="nav-item active">看专业</router-link>
+            <router-link to="/志愿" class="nav-item">志愿填报</router-link>
+            <router-link to="/data" class="nav-item">数据分析</router-link>
+          </nav>
+        </div>
+        <div class="header-right">
+          <div class="search-mini">
+            <input type="text" placeholder="搜索..." class="search-mini-input" v-model="miniSearch" @keyup.enter="handleMiniSearch">
+            <span class="search-icon">🔍</span>
+          </div>
+          <button class="btn btn-text">登录</button>
+          <button class="btn btn-primary">注册</button>
+        </div>
+      </div>
+    </header>
+
     <!-- Hero 区域 -->
-    <el-affix :offset="0">
-      <div class="hero-section">
+    <div class="hero-section">
+      <div class="container">
         <div class="hero-content">
           <h1>
             专业库
-            <el-tag size="large" effect="dark" round>{{ total }}+ 个专业</el-tag>
+            <span class="count-badge">{{ total }}+ 个专业</span>
           </h1>
           <p class="subtitle">全国高校专业信息查询与深度分析，助你科学选择未来方向</p>
         </div>
       </div>
-    </el-affix>
+    </div>
 
     <!-- 搜索栏 -->
     <div class="search-wrapper">
-      <el-input
-        v-model="searchKeyword"
-        placeholder="输入专业名称或代码"
-        clearable
-        @keyup.enter="handleSearch"
-        class="search-input"
-      >
-        <template #prepend>
-          <i class="fas fa-search"></i>
-        </template>
-        <template #append>
-          <el-button :loading="loading" @click="handleSearch" type="primary">
+      <div class="custom-search">
+        <div class="search-input-container">
+          <input
+            v-model="searchKeyword"
+            type="text"
+            placeholder="输入专业名称或代码"
+            class="search-input-field"
+            @keyup.enter="handleSearch"
+          />
+          <button class="search-btn" @click="handleSearch" :disabled="loading">
             <i class="fas fa-search"></i> 搜索
-          </el-button>
-        </template>
-      </el-input>
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- 列表区域 -->
@@ -121,7 +158,6 @@ watch(() => pagination.value.page, loadMajors)
               <i class="fas fa-chevron-right arrow"></i>
             </div>
             <div class="card-body">
-              <p class="major-desc">{{ major.description?.substring(0, 80) }}...</p>
               <div class="major-meta">
                 <span><i class="far fa-clock"></i> {{ major.duration }}年制</span>
                 <span v-if="major.degree"><i class="fas fa-graduation-cap"></i> {{ major.degree }}</span>
@@ -152,154 +188,409 @@ watch(() => pagination.value.page, loadMajors)
 </template>
 
 <style scoped>
-/* 样式保持不变 */
+/* ===== 全局容器 ===== */
 .major-list-container {
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 0 30px 40px;
+  min-height: 100vh;
+  background: #f8fafc;
 }
 
+/* ===== 顶部导航 ===== */
+.header {
+  background: #fff;
+  border-bottom: 1px solid #e8e8e8;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+  width: 100%;
+}
+
+.header .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 64px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.logo:hover {
+  opacity: 0.7;
+}
+
+.logo-icon {
+  font-size: 28px;
+}
+
+.logo-text {
+  font-size: 20px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.nav {
+  display: flex;
+  gap: 32px;
+}
+
+.nav-item {
+  color: #666;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  transition: color 0.2s;
+  position: relative;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  color: #1e88e5;
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #1e88e5;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.search-mini {
+  position: relative;
+  width: 200px;
+}
+
+.search-mini-input {
+  width: 100%;
+  height: 36px;
+  border: 1px solid #e0e0e0;
+  border-radius: 18px;
+  padding: 0 40px 0 16px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-mini-input:focus {
+  border-color: #1e88e5;
+}
+
+.search-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 14px;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-text {
+  background: transparent;
+  color: #666;
+}
+
+.btn-text:hover {
+  background: #f5f5f5;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3);
+}
+
+/* ===== Hero 区域 ===== */
 .hero-section {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 0 0 50px 50px;
-  margin: 0 30px 50px;
-  padding: 30px;
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  padding: 60px 0;
   color: white;
   text-align: center;
 }
 
 .hero-content h1 {
-  font-size: 3rem;
-  margin: 0 0 20px;
+  font-size: 2.4rem;
+  margin: 0 0 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 15px;
+  gap: 12px;
   flex-wrap: wrap;
   color: #ffffff;
+  font-weight: 600;
+  letter-spacing: -0.5px;
 }
 
-.hero-content h1 .el-tag {
-  font-size: 1.2rem;
-  padding: 0 20px;
-  height: 40px;
-  line-height: 40px;
+.count-badge {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50px;
+  padding: 4px 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
 }
 
 .hero-content .subtitle {
-  font-size: 1.3rem;
+  font-size: 0.95rem;
   opacity: 0.9;
-  max-width: 800px;
+  max-width: 600px;
   margin: 0 auto;
+  line-height: 1.4;
+  font-weight: 400;
 }
 
-.search-wrapper {
-  margin: -35px auto 40px;
-  max-width: 700px;
-  position: relative;
-  z-index: 10;
-}
+/* ===== 搜索栏 ===== */
+ .search-wrapper {
+   margin: -30px auto 50px;
+   max-width: 600px;
+   position: relative;
+   z-index: 10;
+ }
 
-.search-input :deep(.el-input__wrapper) {
-  border-radius: 50px 0 0 50px;
-  padding-left: 20px;
-}
+ .custom-search {
+   width: 100%;
+ }
 
-.search-input :deep(.el-input-group__append) {
-  border-radius: 0 50px 50px 0;
+ .search-input-container {
+   display: flex;
+   align-items: center;
+   background: white;
+   border-radius: 24px;
+   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+   border: 1px solid #e0e0e0;
+   overflow: hidden;
+   transition: all 0.3s ease;
+   height: 44px;
+ }
+
+ .search-input-container:hover {
+   box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+   border-color: #1e88e5;
+ }
+
+ .search-input-container:focus-within {
+   box-shadow: 0 6px 25px rgba(30, 136, 229, 0.2);
+   border-color: #1e88e5;
+ }
+
+ .search-icon {
+   padding: 0 12px;
+   color: #999;
+   font-size: 14px;
+ }
+
+ .search-input-field {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 0 20px;
+  font-size: 15px;
+  color: #333;
   background: transparent;
+  height: 100%;
+  font-weight: 400;
+  letter-spacing: 0.2px;
 }
 
-.search-input :deep(.el-input-group__append button) {
-  border-radius: 0 50px 50px 0;
-  padding: 0 25px;
+.search-input-field::placeholder {
+  color: #999;
+  font-weight: 400;
+  letter-spacing: 0.2px;
+}
+
+.search-btn {
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  color: white;
+  border: none;
+  padding: 0 24px;
+  height: 100%;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.5px;
+}
+
+ .search-btn:hover:not(:disabled) {
+   transform: translateY(-1px);
+   box-shadow: 0 4px 15px rgba(30, 136, 229, 0.4);
+ }
+
+ .search-btn:disabled {
+   opacity: 0.6;
+   cursor: not-allowed;
+ }
+
+/* ===== 列表区域 ===== */
+.list-section {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px 60px;
 }
 
 .major-grid {
   margin-bottom: 40px;
 }
 
+.major-grid .el-col {
+  margin-bottom: 30px;
+}
+
 .major-card {
   cursor: pointer;
-  transition: transform 0.3s, box-shadow 0.3s;
-  border-radius: 16px;
+  transition: all 0.3s ease;
+  border-radius: 20px;
   overflow: hidden;
   height: 100%;
   display: flex;
   flex-direction: column;
+  background: white;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f0f0;
 }
 
 .major-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-8px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  border-color: #e0e0e0;
 }
 
 .card-header {
-  padding: 20px 20px 10px;
+  padding: 20px 20px 16px;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #f0f0f0;
+  align-items: flex-start;
+  border-bottom: 1px solid #f8f8f8;
+  background: linear-gradient(135deg, #f8fafc 0%, #f0f4f8 100%);
 }
 
 .title-wrapper {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
 }
 
 .title-wrapper h3 {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   margin: 0;
-  color: #333;
+  color: #1e3a8a;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.title-wrapper .el-tag {
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  align-self: center;
+  margin: 0 auto;
 }
 
 .arrow {
-  color: #667eea;
-  font-size: 1.2rem;
-  opacity: 0.5;
-  transition: opacity 0.3s;
+  color: #1e88e5;
+  font-size: 1.3rem;
+  opacity: 0.6;
+  transition: all 0.3s ease;
+  margin-top: 4px;
 }
 
 .major-card:hover .arrow {
   opacity: 1;
+  transform: translateX(3px);
 }
 
 .card-body {
-  padding: 15px 20px;
-  flex: 1;
-}
+   padding: 16px 20px;
+   flex: 1;
+   display: flex;
+   align-items: center;
+   justify-content: flex-start;
+ }
 
-.major-desc {
-  color: #666;
-  line-height: 1.6;
-  margin-bottom: 15px;
-  font-size: 0.95rem;
-  min-height: 3.2em;
-}
+ .major-meta {
+   display: flex;
+   flex-direction: column;
+   gap: 10px;
+   font-size: 0.9rem;
+   color: #666;
+   width: 100%;
+ }
 
-.major-meta {
-  display: flex;
-  gap: 20px;
-  font-size: 0.9rem;
-  color: #888;
-}
+ .major-meta span {
+   display: flex;
+   align-items: center;
+   gap: 6px;
+   padding: 4px 0;
+ }
 
-.major-meta span {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.major-meta i {
-  color: #667eea;
-  width: 16px;
-}
+ .major-meta i {
+   color: #1e88e5;
+   width: 18px;
+   font-size: 1rem;
+ }
 
 .card-footer {
-  padding: 15px 20px;
-  background: #fafafa;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
   border-top: 1px solid #f0f0f0;
+  overflow: hidden;
+}
+
+.card-footer .el-tag {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  font-size: 0.8rem;
+  padding: 3px 8px;
 }
 
 .pagination-wrapper {
@@ -308,20 +599,90 @@ watch(() => pagination.value.page, loadMajors)
   margin-top: 40px;
 }
 
+/* ===== 响应式设计 ===== */
 @media (max-width: 768px) {
+  .header .container {
+    height: auto;
+    padding: 12px 16px;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .header-left {
+    width: 100%;
+    gap: 16px;
+  }
+
+  .logo-text {
+    font-size: 17px;
+  }
+
+  .nav {
+    gap: 16px;
+    font-size: 14px;
+  }
+
+  .header-right {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .search-mini {
+    flex: 1;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 8px 14px;
+    font-size: 14px;
+  }
+
   .hero-section {
-    padding: 40px 20px;
+    padding: 60px 0;
   }
+
   .hero-content h1 {
-    font-size: 2rem;
+    font-size: 2.5rem;
+    gap: 12px;
   }
+
+  .count-badge {
+    font-size: 1rem;
+    padding: 6px 16px;
+  }
+
+  .hero-content .subtitle {
+    font-size: 1.1rem;
+  }
+
   .search-wrapper {
-    margin-top: -20px;
+    margin-top: -30px;
+    padding: 0 20px;
   }
+
   .major-card .card-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
+    gap: 12px;
+  }
+
+  .major-meta {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-content h1 {
+    font-size: 2rem;
+  }
+
+  .hero-content .subtitle {
+    font-size: 1rem;
+  }
+
+  .search-mini {
+    display: none;
   }
 }
 </style>

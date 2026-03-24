@@ -5,6 +5,9 @@ import jwt
 from functools import wraps
 from app.extensions import db
 import json
+
+from app.models import School, Major, SchoolMajor, AdmRecord, SchoolHeat, MajorEmployment, User
+
 # 创建蓝图
 admin_auth_bp = Blueprint('admin_auth', __name__, url_prefix='/api/admin')
 

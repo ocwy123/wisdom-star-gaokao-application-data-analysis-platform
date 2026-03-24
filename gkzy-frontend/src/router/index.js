@@ -1,14 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Dashboard from '../views/Dashboard.vue'
 import SchoolList from '../views/SchoolList.vue'
-import MajorList from '../views/MajorList.vue'  // 新增
-import MajorDetail from '../views/MajorDetail.vue'  // 新增
+import MajorList from '../views/MajorList.vue'
+import MajorDetail from '../views/MajorDetail.vue'
 import SchoolDetail from '../views/SchoolDetail.vue'  // 新增
 
 const routes = [
   {
     path: '/',
-    name: 'Home',
+    name: 'Dashboard',
     component: Dashboard,
     meta: { requiresAuth: true }
   },
@@ -31,11 +31,33 @@ const routes = [
     component: () => import('../views/Profile.vue'),
     meta: { requiresAuth: true }
   },
+  // 高校相关路由
   {
-    path:'/dashboard',
-    name:'Dashboard',
-    component: () => import('../views/Dashboard.vue'),
-    meta: { requiresAuth: true }
+    path: '/schools',
+    name: 'SchoolList',
+    component: SchoolList
+  },
+  // 专业相关路由
+  {
+    path: '/majors',
+    name: 'MajorList',
+    component: MajorList
+  },
+  {
+    path: '/major/:id',
+    name: 'MajorDetail',
+    component: MajorDetail,
+    props: true
+  },
+  {
+    path: '/analysis/deep-search',
+    name: 'DeepSearch',
+    component: () => import('../views/analysis/DeepSearch.vue')
+  },
+  {
+    path: '/analysis/multi-dimension',
+    name: 'MultiDimensionAnalysis',
+    component: () => import('../views/analysis/MultiDimensionAnalysis.vue')
   },
   // 管理员路由
   {

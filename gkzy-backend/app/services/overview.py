@@ -58,6 +58,8 @@ class OverviewService:
                     s.type, 
                     s.is_985, 
                     s.is_211,
+                    s.is_double_first,
+                    s.logo,
                     h.heat_score
                 FROM ana_school_heat h
                 INNER JOIN edu_school s ON h.school_id = s.id
@@ -82,6 +84,8 @@ class OverviewService:
                     'type': row.type,
                     'is_985': bool(row.is_985) if row.is_985 is not None else False,
                     'is_211': bool(row.is_211) if row.is_211 is not None else False,
+                    'is_double_first': bool(row.is_double_first) if row.is_double_first is not None else False,
+                    'logo': row.logo or '',
                     'heat_score': float(row.heat_score) if row.heat_score else 0
                 })
             

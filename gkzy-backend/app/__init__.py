@@ -48,8 +48,8 @@ from app.models.data_source import DataSource
 def create_app():
     app = Flask(__name__)
     CORS(app, origins=['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174'], supports_credentials=True)
-    # init_cors(app)
-
+    init_cors(app)
+    
     # MySQL 配置（远程）
     DB_USERNAME = 'root'
     DB_PASSWORD = 'root'
@@ -113,16 +113,17 @@ def create_app():
     # 注册蓝图
     from app.services.admin_auth import admin_auth_bp
     from app.routes.auth import auth_bp
+    from app.routes.overview import overview_bp
     from app.routes.school import school_bp
-    # from app.routes.overview import overview_bp
-    # from app.routes.major import major_bp
-    # from app.routes.heat import heat_bp
+    from app.services.analysis import analysis_bp
+    # 注册所有蓝图路由
     app.register_blueprint(admin_auth_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(overview_bp)
     app.register_blueprint(school_bp)
-    # app.register_blueprint(overview_bp)
-    # app.register_blueprint(major_bp)
-    # app.register_blueprint(heat_bp)
+    app.register_blueprint(major_bp)
+    app.register_blueprint(heat_bp)
+    app.register_blueprint(analysis_bp)
 
     # 创建表
     with app.app_context():
