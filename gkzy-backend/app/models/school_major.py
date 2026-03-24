@@ -12,9 +12,9 @@ class SchoolMajor(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
 
-    # 关系定义
-    school = db.relationship('School', backref='school_majors')
-    major = db.relationship('Major', backref='school_majors')
+    # 关系定义（使用 viewonly=True 避免冲突）
+    school = db.relationship('School', back_populates='school_majors', viewonly=True)
+    major = db.relationship('Major', back_populates='school_majors', viewonly=True)
 
     def to_dict(self):
         return {

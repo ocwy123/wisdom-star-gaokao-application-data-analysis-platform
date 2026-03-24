@@ -114,11 +114,13 @@ def create_app():
     from app.services.admin_auth import admin_auth_bp
     from app.routes.auth import auth_bp
     from app.routes.overview import overview_bp
+    from app.routes.school import school_bp
     from app.services.analysis import analysis_bp
+    # 注册所有蓝图路由
     app.register_blueprint(admin_auth_bp)
     app.register_blueprint(auth_bp)
-    app.register_blueprint(school_bp)
     app.register_blueprint(overview_bp)
+    app.register_blueprint(school_bp)
     app.register_blueprint(major_bp)
     app.register_blueprint(heat_bp)
     app.register_blueprint(analysis_bp)

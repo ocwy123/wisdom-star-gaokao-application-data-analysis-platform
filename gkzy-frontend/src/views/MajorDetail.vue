@@ -24,7 +24,6 @@ const loading = ref(true)
 const activeTab = ref('overview')
 
 // 图表实例
-let salaryChart = null
 let provinceChart = null
 
 // 加载分析数据
@@ -46,66 +45,64 @@ const loadAnalysis = async () => {
 
 // 渲染图表
 const renderCharts = () => {
-  // 薪资趋势图
-  const salaryEl = document.getElementById('salaryChart')
-  if (salaryEl && analysisData.value.salary_trend?.length) {
-    salaryChart = echarts.init(salaryEl)
-    salaryChart.setOption({
-      title: { show: false },
-      tooltip: { trigger: 'axis' },
-      grid: { left: '5%', right: '5%', bottom: '5%', top: '10%', containLabel: true },
-      xAxis: {
-        type: 'category',
-        data: analysisData.value.salary_trend.map(item => item.year + '年'),
-        axisLabel: { color: '#666' }
-      },
-      yAxis: {
-        type: 'value',
-        name: '元/月',
-        nameTextStyle: { color: '#999' },
-        axisLabel: { color: '#666' }
-      },
-      series: [{
-        data: analysisData.value.salary_trend.map(item => item.avg_salary),
-        type: 'line',
-        smooth: true,
-        lineStyle: { color: '#667eea', width: 3 },
-        areaStyle: { color: 'rgba(102,126,234,0.1)' },
-        symbol: 'circle',
-        symbolSize: 8
-      }]
-    })
-  }
-
   // 省份分布图（柱状图）
-  const provinceEl = document.getElementById('provinceChart')
-  if (provinceEl && analysisData.value.province_distribution?.length) {
-    provinceChart = echarts.init(provinceEl)
-    const provinces = analysisData.value.province_distribution.map(item => item.province)
-    const counts = analysisData.value.province_distribution.map(item => item.count)
-    provinceChart.setOption({
-      title: { show: false },
-      tooltip: { trigger: 'axis' },
-      grid: { left: '5%', right: '5%', bottom: '10%', top: '5%', containLabel: true },
-      xAxis: {
-        type: 'category',
-        data: provinces,
-        axisLabel: { rotate: 30, color: '#666' }
-      },
-      yAxis: {
-        type: 'value',
-        name: '开设高校数',
-        nameTextStyle: { color: '#999' },
-        axisLabel: { color: '#666' }
-      },
-      series: [{
-        data: counts,
-        type: 'bar',
-        itemStyle: { color: '#667eea', borderRadius: [4,4,0,0] },
-        barWidth: 20
-      }]
-    })
+  const renderProvinceChart = () => {
+    const provinceEl = document.getElementById('provinceChart')
+    if (!provinceEl) {
+      // 如果DOM元素不存在，延迟重试
+      setTimeout(renderProvinceChart, 100)
+      return
+    }
+    
+    if (analysisData.value.province_distribution?.length) {
+      // 如果已有图表实例，先销毁
+      if (provinceChart) {
+        provinceChart.dispose()
+      }
+      
+      provinceChart = echarts.init(provinceEl)
+      const provinces = analysisData.value.province_distribution.map(item => item.province)
+      const counts = analysisData.value.province_distribution.map(item => item.count)
+      provinceChart.setOption({
+        title: { show: false },
+        tooltip: { trigger: 'axis' },
+        grid: { left: '8%', right: '5%', bottom: '15%', top: '12%', containLabel: true },
+        xAxis: {
+          type: 'category',
+          data: provinces,
+          axisLabel: { 
+            rotate: 45, 
+            color: '#666',
+            fontSize: 12,
+            margin: 15,
+            interval: 0
+          }
+        },
+        yAxis: {
+          type: 'value',
+          name: '开设高校数',
+          nameTextStyle: { color: '#999' },
+          axisLabel: { color: '#666' }
+        },
+        series: [{
+          data: counts,
+          type: 'bar',
+          itemStyle: { color: '#667eea', borderRadius: [4,4,0,0] },
+          barWidth: 25
+        }]
+      })
+      
+      // 监听窗口大小变化，重新渲染图表
+      window.addEventListener('resize', () => {
+        if (provinceChart) {
+          provinceChart.resize()
+        }
+      })
+    }
   }
+  
+  // 立即尝试渲染省份分布图
+  renderProvinceChart()
 }
 
 // 加载开设高校
@@ -130,7 +127,10 @@ const handleTabChange = (tab) => {
     loadSchools()
   }
   if (activeTab.value === 'overview') {
-    setTimeout(renderCharts, 100)
+    // 使用nextTick确保DOM更新完成后再渲染图表
+    nextTick(() => {
+      renderCharts()
+    })
   }
 }
 
@@ -195,16 +195,9 @@ onMounted(() => {
       <el-tabs v-model="activeTab" @tab-click="handleTabChange" class="detail-tabs">
         <!-- 专业概况 -->
         <el-tab-pane label="专业概况" name="overview">
+          <!-- 专业前景 - 放在上面 -->
           <el-row :gutter="20">
-            <el-col :xs="24" :lg="12">
-              <el-card shadow="hover" class="chart-card" v-if="analysisData.province_distribution?.length">
-                <template #header>
-                  <span><i class="fas fa-map-marked-alt"></i> 开设高校省份分布</span>
-                </template>
-                <div id="provinceChart" class="chart-container"></div>
-              </el-card>
-            </el-col>
-            <el-col :xs="24" :lg="12">
+            <el-col :xs="24">
               <el-card shadow="hover" class="chart-card" v-if="analysisData.employment?.prospect">
                 <template #header>
                   <span><i class="fas fa-chart-line"></i> 专业前景</span>
@@ -213,20 +206,37 @@ onMounted(() => {
               </el-card>
             </el-col>
           </el-row>
+          
+          <!-- 开设高校省份分布 - 放在下面 -->
+          <el-row :gutter="20">
+            <el-col :xs="24">
+              <el-card shadow="hover" class="chart-card" v-if="analysisData.province_distribution?.length">
+                <template #header>
+                  <span><i class="fas fa-map-marked-alt"></i> 开设高校省份分布</span>
+                </template>
+                <div id="provinceChart" class="chart-container" style="height: 450px;"></div>
+              </el-card>
+            </el-col>
+          </el-row>
         </el-tab-pane>
 
         <!-- 就业数据 -->
         <el-tab-pane label="就业数据" name="employment">
-          <el-row :gutter="20">
-            <el-col :span="24">
-              <el-card shadow="hover" class="chart-card" v-if="analysisData.salary_trend?.length">
-                <template #header>
-                  <span><i class="fas fa-chart-bar"></i> 平均薪资趋势 (元/月)</span>
-                </template>
-                <div id="salaryChart" class="chart-container" style="height: 350px;"></div>
-              </el-card>
-            </el-col>
-          </el-row>
+          <!-- 就业基本信息 -->
+           <div class="employment-basic-info" v-if="analysisData.employment">
+             <div class="info-item" v-if="analysisData.employment.avg_salary">
+               <span class="info-label">平均薪资</span>
+               <span class="info-value">{{ analysisData.employment.avg_salary }}元/月</span>
+             </div>
+             <div class="info-item" v-if="analysisData.employment.employment_rate">
+               <span class="info-label">就业率</span>
+               <span class="info-value">{{ analysisData.employment.employment_rate }}%</span>
+             </div>
+             <div class="info-item" v-if="analysisData.employment.satisfaction">
+               <span class="info-label">满意度</span>
+               <span class="info-value">{{ analysisData.employment.satisfaction }}%</span>
+             </div>
+           </div>
 
           <el-row :gutter="20" class="employment-detail" v-if="analysisData.employment">
             <!-- 行业分布 -->
@@ -349,58 +359,77 @@ onMounted(() => {
 .major-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 30px;
 }
 
 .back-button-wrapper {
-  margin-bottom: 15px;
+  margin-bottom: 12px;
 }
 
 .back-button {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: #667eea;
   padding: 0;
+  font-weight: 500;
 }
 
 .back-button:hover {
   color: #5a6fd8;
 }
 
+.header-left {
+  flex: 1;
+  min-width: 300px;
+  text-align: left;
+}
+
 .header-left h1 {
-  font-size: 2.2rem;
-  margin: 0 0 10px;
-  color: #333;
+  font-size: 2.4rem;
+  font-weight: 700;
+  margin: 0 0 12px;
+  color: #1e3a8a;
+  line-height: 1.2;
 }
 
 .header-meta {
   display: flex;
-  gap: 15px;
+  gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
+}
+
+.header-meta .el-tag {
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 6px 12px;
 }
 
 .header-stats {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
+  min-width: 200px;
 }
 
 .stat-item {
   text-align: center;
+  min-width: 80px;
 }
 
 .stat-item .label {
   display: block;
-  font-size: 0.9rem;
-  color: #999;
-  margin-bottom: 5px;
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 4px;
+  font-weight: 500;
 }
 
 .stat-item .value {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: 600;
-  color: #667eea;
+  color: #1e88e5;
 }
 
 .info-card {
@@ -420,6 +449,7 @@ onMounted(() => {
   line-height: 1.8;
   color: #555;
   margin-bottom: 15px;
+  text-align: justify;
 }
 
 .subjects-tag {
@@ -445,6 +475,7 @@ onMounted(() => {
   color: #555;
   font-size: 1rem;
   min-height: 100px;
+  text-align: justify;
 }
 
 .employment-detail {
@@ -477,6 +508,93 @@ onMounted(() => {
 .dist-key {
   font-size: 0.95rem;
   color: #333;
+}
+
+/* 就业基本信息样式 */
+.employment-basic-info {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid #e1e8ed;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  min-width: 80px;
+}
+
+.info-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #1e88e5;
+  min-width: 120px;
+}
+
+.info-desc {
+  font-size: 0.9rem;
+  color: #666;
+  flex: 1;
+}
+
+/* 专业头部信息优化 */
+.header-card {
+  background: linear-gradient(135deg, #f8fafc 0%, #e8f4fd 100%);
+  border: 1px solid #e1e8ed;
+}
+
+.header-left h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 10px;
+}
+
+/* 专业介绍卡片优化 */
+.info-card {
+  border: 1px solid #e1e8ed;
+}
+
+.info-card :deep(.el-card__header) {
+  background: linear-gradient(135deg, #f8f9fa 0%, #eef2f7 100%);
+  font-size: 1.1rem;
+  color: #1e88e5;
+}
+
+/* 图表卡片优化 */
+.chart-card {
+  border: 1px solid #e1e8ed;
+}
+
+.chart-card :deep(.el-card__header) {
+  background: linear-gradient(135deg, #f8f9fa 0%, #eef2f7 100%);
+  font-size: 1.1rem;
+  color: #1e88e5;
+}
+
+/* 分布卡片优化 */
+.dist-card {
+  border: 1px solid #e1e8ed;
+}
+
+.dist-card :deep(.el-card__header) {
+  background: linear-gradient(135deg, #f8f9fa 0%, #eef2f7 100%);
+  font-size: 1rem;
+  color: #1e88e5;
 }
 
 .school-list-header {
