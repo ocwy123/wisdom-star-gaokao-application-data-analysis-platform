@@ -1,8 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Dashboard from '../views/Dashboard.vue'
-import MajorList from '../views/MajorList.vue'  // 新增
-import MajorDetail from '../views/MajorDetail.vue'  // 新增
-import { pa } from 'element-plus/es/locale/index.mjs'
+import SchoolList from '../views/SchoolList.vue'
+import MajorList from '../views/MajorList.vue'
+import MajorDetail from '../views/MajorDetail.vue'
 
 const routes = [
   {
@@ -29,6 +29,12 @@ const routes = [
     name: 'Profile',
     component: () => import('../views/Profile.vue'),
     meta: { requiresAuth: true }
+  },
+  // 高校相关路由
+  {
+    path: '/schools',
+    name: 'SchoolList',
+    component: SchoolList
   },
   // 专业相关路由
   {

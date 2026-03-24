@@ -15,7 +15,9 @@ class Major(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
 
-    schools = db.relationship('School', secondary='edu_school_major', back_populates='majors')
+    # 关系定义（添加 overlaps 参数避免警告）
+    school_majors = db.relationship('SchoolMajor', back_populates='major', overlaps='schools,majors')
+    schools = db.relationship('School', secondary='edu_school_major', back_populates='majors', overlaps='school_majors')
     # adm_records = db.relationship('AdmRecord', back_populates='major')
     employment_stats = db.relationship('MajorEmployment', back_populates='major')
 
