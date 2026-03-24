@@ -1,837 +1,548 @@
 <template>
   <div class="dashboard">
-    <!-- 加载动画 -->
-    <div v-if="loading" class="loading-overlay">
-      <div class="loading-content">
-        <div class="loading-spinner">
-          <div class="spinner-ring"></div>
-          <div class="spinner-ring"></div>
-          <div class="spinner-ring"></div>
-        </div>
-        <p class="loading-text">数据加载中...</p>
-      </div>
-    </div>
-
-    <!-- 顶部导航 -->
-    <header class="header" :class="{ scrolled: isScrolled }">
+    <!-- 顶部导航栏 -->
+    <header class="header">
       <div class="container">
-        <div class="logo" @click="scrollToTop">
-          <span class="logo-icon">🎓</span>
-          <span class="logo-text">高考志愿分析平台</span>
+        <div class="header-left">
+          <div class="logo" @click="scrollToTop">
+            <span class="logo-icon">🎓</span>
+            <span class="logo-text">高考志愿</span>
+          </div>
+          <nav class="nav">
+            <router-link to="/" class="nav-item active">首页</router-link>
+            <router-link to="/schools" class="nav-item">查大学</router-link>
+            <router-link to="/majors" class="nav-item">看专业</router-link>
+            <router-link to="/志愿" class="nav-item">志愿填报</router-link>
+            <router-link to="/data" class="nav-item">数据分析</router-link>
+            <router-link to="/news" class="nav-item">资讯</router-link>
+          </nav>
         </div>
-        <nav class="nav">
-          <router-link 
-            to="/" 
-            class="nav-item" 
-            :class="{ active: $route.path === '/' }"
-            @click="scrollToTop"
-          >
-            首页
-          </router-link>
-          <router-link to="/schools" class="nav-item">高校查询</router-link>
-          <router-link to="#" class="nav-item">专业查询</router-link>
-          <router-link to="#" class="nav-item">志愿填报</router-link>
-          <router-link to="#" class="nav-item">政策资讯</router-link>
-        </nav>
-        <div class="user-actions">
-          <button class="btn btn-primary" @click="showLoginModal">
-            <span class="btn-icon">👤</span>
-            登录/注册
-          </button>
+        <div class="header-right">
+          <div class="search-mini">
+            <input type="text" placeholder="搜索..." class="search-mini-input" v-model="miniSearch" @keyup.enter="handleSearch">
+            <span class="search-icon">🔍</span>
+          </div>
+          <button class="btn btn-text">登录</button>
+          <button class="btn btn-primary">注册</button>
         </div>
       </div>
     </header>
 
-    <!-- 主内容区 -->
-    <main class="main">
-      <!-- 搜索区域 -->
-      <section class="hero">
-        <div class="hero-bg">
-          <div class="bg-particle"></div>
-          <div class="bg-particle"></div>
-          <div class="bg-particle"></div>
-        </div>
-        <div class="container">
-          <div class="hero-content" :class="{ animated: !loading }">
-            <h1 class="hero-title">
-              <span class="title-line">高考志愿智能分析</span>
-              <span class="title-line highlight">平台</span>
-            </h1>
-            <p class="hero-subtitle">基于大数据分析，为您的志愿填报提供科学决策支持</p>
-            <div class="search-box">
-              <div class="search-container">
-                <input 
-                  type="text" 
-                  placeholder="搜索高校、专业或政策资讯..." 
-                  class="search-input"
-                  v-model="searchQuery"
-                  @focus="onSearchFocus"
-                  @blur="onSearchBlur"
-                >
-                <button class="search-btn" @click="handleSearch">
-                  <span class="search-icon">🔍</span>
-                  搜索
-                </button>
+    <!-- 轮播图区域 -->
+    <section class="carousel-section">
+      <div class="container">
+        <div class="carousel-layout">
+          <!-- 左侧功能模块 -->
+          <div class="side-module left-module">
+            <div class="module-card">
+              <div class="countdown-header">
+                <div class="module-icon">⏰</div>
+                <h3 class="module-title">高考倒计时</h3>
+              </div>
+              <div class="countdown-content">
+                <div class="countdown-days">
+                  <span class="days-number">{{ countdownDays }}</span>
+                  <span class="days-label">天</span>
+                </div>
+                <div class="countdown-info">
+                  <p class="countdown-date">2026年6月7日</p>
+                  <p class="countdown-desc">距离高考还有</p>
+                </div>
+              </div>
+              <div class="countdown-progress">
+                <div class="progress-bar">
+                  <div class="progress-fill" :style="{ width: countdownProgress + '%' }"></div>
+                </div>
+                <div class="progress-text">
+                  <span>已过 {{ countdownProgress }}%</span>
+                </div>
+              </div>
+              <div class="countdown-stats">
+                <div class="stat-item">
+                  <span class="stat-label">备考阶段</span>
+                  <span class="stat-value">{{ getStudyPhase() }}</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">剩余周数</span>
+                  <span class="stat-value">{{ Math.ceil(countdownDays / 7) }}周</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">建议复习</span>
+                  <span class="stat-value">{{ getStudyAdvice() }}</span>
+                </div>
+              </div>
+              <div class="countdown-motivation">
+                <div class="motivation-icon">💪</div>
+                <p class="motivation-text">{{ getMotivationText() }}</p>
               </div>
             </div>
-            <div class="quick-tags">
-              <span class="tag-label">热门搜索：</span>
-              <a 
-                v-for="tag in hotTags" 
-                :key="tag" 
-                href="#" 
-                class="tag"
-                @click="quickSearch(tag)"
+          </div>
+
+          <!-- 轮播图 -->
+          <div class="carousel-main">
+            <div class="carousel">
+              <div
+                class="carousel-item"
+                v-for="(slide, index) in carouselSlides"
+                :key="index"
+                :class="{ active: currentSlide === index }"
               >
-                {{ tag }}
-              </a>
+                <div class="slide-content" :style="{ background: slide.gradient }">
+                  <div class="slide-text">
+                    <div class="slide-badge">{{ slide.badge }}</div>
+                    <h2 class="slide-title">{{ slide.title }}</h2>
+                    <p class="slide-desc">{{ slide.description }}</p>
+                    <button class="slide-btn" @click="navigateTo(slide.link)">
+                      {{ slide.buttonText }} →
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="carousel-controls">
+                <button class="control-btn" @click="prevSlide">‹</button>
+                <div class="carousel-dots">
+                  <span
+                    class="dot"
+                    v-for="(slide, index) in carouselSlides"
+                    :key="index"
+                    :class="{ active: currentSlide === index }"
+                    @click="goToSlide(index)"
+                  ></span>
+                </div>
+                <button class="control-btn" @click="nextSlide">›</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧功能模块 -->
+          <div class="side-module right-module">
+            <div class="module-card">
+              <h3 class="module-title">快捷功能</h3>
+              <div class="quick-functions">
+                <div class="function-item" v-for="func in quickFunctions" :key="func.id" @click="navigateTo(func.route)">
+                  <div class="function-content">
+                    <span class="function-name">{{ func.name }}</span>
+                    <span class="function-desc">{{ func.desc }}</span>
+                  </div>
+                  <span class="function-arrow">→</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- 数据概览 -->
-      <section class="stats-section">
-        <div class="container">
-          <div class="section-header" :class="{ animated: !loading }">
-            <h2 class="section-title">数据概览</h2>
-            <p class="section-desc">实时掌握高考数据动态，助力科学志愿填报</p>
+    <!-- 平台横幅 -->
+    <section class="platform-banner">
+      <div class="container">
+        <h2 class="banner-title">高考志愿平台</h2>
+      </div>
+    </section>
+
+    <!-- 热门院校 -->
+    <section class="schools-section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-title-group">
+            <h2 class="section-title">热门院校</h2>
           </div>
-          <div class="stats-grid">
-            <div 
-              class="stat-card" 
-              v-for="(stat, index) in statistics" 
-              :key="stat.label"
-              :style="{ animationDelay: `${index * 0.1}s` }"
-              :class="{ animated: !loading }"
-            >
-              <div class="stat-icon" :style="{ background: stat.color }">
-                <span class="icon">{{ stat.icon }}</span>
-                <div class="icon-glow"></div>
-              </div>
-              <div class="stat-content">
-                <div class="stat-value">{{ stat.value }}</div>
-                <div class="stat-label">{{ stat.label }}</div>
-              </div>
-              <div class="stat-trend" :class="stat.trend">
-                <span class="trend-icon">{{ stat.trendIcon }}</span>
-                <span class="trend-text">{{ stat.change }}</span>
-              </div>
-              <div class="card-glow"></div>
+          <div class="section-controls">
+            <div class="filter-tabs">
+              <button class="filter-tab active" @click="schoolFilter = 'all'">全部</button>
+              <button class="filter-tab" @click="schoolFilter = '985'">985</button>
+              <button class="filter-tab" @click="schoolFilter = '211'">211</button>
+              <button class="filter-tab" @click="schoolFilter = 'double'">双一流</button>
             </div>
+            <a href="#" class="more-link" @click.prevent="navigateTo('/schools')">查看全部 →</a>
           </div>
         </div>
-      </section>
-
-      <!-- 热门院校推荐 -->
-      <section class="recommend-section">
-        <div class="container">
-          <div class="section-header" :class="{ animated: !loading }">
-            <h2 class="section-title">热门院校推荐</h2>
-            <p class="section-desc">根据历年录取数据和考生偏好，为您推荐优质院校</p>
-          </div>
-          <div class="recommend-grid">
-            <div 
-              class="school-card" 
-              v-for="(school, index) in recommendedSchools" 
-              :key="school.id"
-              :style="{ animationDelay: `${index * 0.1}s` }"
-              :class="{ animated: !loading }"
-              @click="viewSchoolDetail(school.id)"
-            >
-              <div class="school-badge" :class="getSchoolBadge(school.level)">
-                {{ school.level }}
-              </div>
-              <div class="school-logo">
-                <span class="logo">{{ school.logo }}</span>
-              </div>
-              <div class="school-info">
-                <h3 class="school-name">{{ school.name }}</h3>
-                <p class="school-location">📍 {{ school.location }}</p>
+        <div class="schools-grid">
+          <div
+            class="school-card"
+            v-for="school in recommendedSchools.slice(0, 9)"
+            :key="school.id"
+            @click="viewSchoolDetail(school.id)"
+          >
+            <div class="school-logo-wrapper">
+              <div class="school-logo">{{ school.logo }}</div>
+            </div>
+            <div class="school-content">
+              <h3 class="school-name">{{ school.name }}</h3>
+              <p class="school-location">{{ school.location }}</p>
+              <div class="school-footer">
                 <div class="school-tags">
                   <span class="tag" v-for="tag in school.tags" :key="tag">{{ tag }}</span>
                 </div>
-                <div class="school-stats">
-                  <div class="stat">
-                    <span class="value">{{ school.avgScore }}</span>
-                    <span class="label">平均分</span>
-                  </div>
-                  <div class="stat">
-                    <span class="value">{{ school.rank }}</span>
-                    <span class="label">排名</span>
-                  </div>
-                  <div class="stat">
-                    <span class="value">{{ school.employmentRate }}</span>
-                    <span class="label">就业率</span>
-                  </div>
-                </div>
-              </div>
-              <div class="school-hover">
-                <span>查看详情 →</span>
+                <span class="view-link">查看院校 →</span>
               </div>
             </div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- 图表区域 -->
-      <section class="charts-section">
-        <div class="container">
-          <div class="charts-grid">
-            <!-- 热度排行 -->
-            <div 
-              class="chart-card" 
-              :class="{ animated: !loading }"
-            >
-              <div class="chart-header">
-                <h3 class="chart-title">
-                  <span class="chart-icon">🏫</span>
-                  高校热度排行
-                </h3>
-                <button class="btn-more" @click="navigateToSchools">
-                  查看更多
-                  <span class="btn-arrow">→</span>
-                </button>
+    <!-- 热门专业 -->
+    <section class="majors-section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-title-group">
+            <h2 class="section-title">热门专业</h2>
+            <p class="section-subtitle">就业前景好，报考热度高</p>
+          </div>
+          <a href="#" class="more-link" @click.prevent="navigateTo('/majors')">查看全部 →</a>
+        </div>
+        <div class="majors-grid">
+          <div class="major-card" v-for="major in topMajors" :key="major.id" @click="viewMajorDetail(major.id)">
+            <h3 class="major-name">{{ major.name }}</h3>
+            <div class="major-stats">
+              <div class="major-stat">
+                <span class="label">平均薪资</span>
+                <span class="value">{{ major.salary }}</span>
               </div>
-              <div class="rank-list" v-if="schoolRank.length">
-                <div 
-                  class="rank-item" 
-                  v-for="(item, index) in schoolRank" 
-                  :key="item.school_id"
-                  @click="viewSchoolDetail(item.school_id)"
-                >
-                  <div class="rank-info">
-                    <span class="rank-number" :class="getRankClass(index)">
-                      {{ index + 1 }}
-                    </span>
-                    <span class="rank-name">{{ item.school_name }}</span>
-                  </div>
-                  <div class="rank-score">
-                    <span class="score">{{ item.heat_score }}</span>
-                    <span class="score-label">热度</span>
-                  </div>
-                  <div class="rank-hover">查看详情 →</div>
-                </div>
+              <div class="major-stat">
+                <span class="label">专业代码</span>
+                <span class="value">{{ major.code }}</span>
               </div>
-              <div class="empty" v-else>
-                <div class="empty-content">
-                  <span class="empty-icon">📊</span>
-                  <span class="empty-text">暂无数据</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 专业排行 -->
-            <div 
-              class="chart-card" 
-              :class="{ animated: !loading }"
-            >
-              <div class="chart-header">
-                <h3 class="chart-title">
-                  <span class="chart-icon">📚</span>
-                  专业热度排行
-                </h3>
-                <button class="btn-more" @click="navigateToMajors">
-                  查看更多
-                  <span class="btn-arrow">→</span>
-                </button>
-              </div>
-              <div class="rank-list" v-if="majorRank.length">
-                <div 
-                  class="rank-item" 
-                  v-for="(item, index) in majorRank" 
-                  :key="item.major_id"
-                  @click="viewMajorDetail(item.major_id)"
-                >
-                  <div class="rank-info">
-                    <span class="rank-number" :class="getRankClass(index)">
-                      {{ index + 1 }}
-                    </span>
-                    <span class="rank-name">{{ item.major_name }}</span>
-                  </div>
-                  <div class="rank-score">
-                    <span class="score">{{ item.heat_score }}</span>
-                    <span class="score-label">热度</span>
-                  </div>
-                  <div class="rank-hover">查看详情 →</div>
-                </div>
-              </div>
-              <div class="empty" v-else>
-                <div class="empty-content">
-                  <span class="empty-icon">📊</span>
-                  <span class="empty-text">暂无数据</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 分数线趋势 -->
-            <div 
-              class="chart-card full-width" 
-              :class="{ animated: !loading }"
-            >
-              <div class="chart-header">
-                <h3 class="chart-title">
-                  <span class="chart-icon">📈</span>
-                  历年分数线趋势
-                </h3>
-                <div class="chart-controls">
-                  <select class="filter-select" v-model="selectedProvince">
-                    <option value="">全国</option>
-                    <option value="北京">北京</option>
-                    <option value="上海">上海</option>
-                    <option value="广东">广东</option>
-                    <option value="江苏">江苏</option>
-                  </select>
-                  <select class="filter-select" v-model="selectedBatch">
-                    <option value="">全部批次</option>
-                    <option value="本科一批">本科一批</option>
-                    <option value="本科二批">本科二批</option>
-                    <option value="专科批">专科批</option>
-                  </select>
-                </div>
-              </div>
-              <div class="chart-container">
-                <div ref="scoreTrendChart" class="chart"></div>
-              </div>
-            </div>
-
-            <!-- 各省难度 -->
-            <div 
-              class="chart-card" 
-              :class="{ animated: !loading }"
-            >
-              <div class="chart-header">
-                <h3 class="chart-title">
-                  <span class="chart-icon">🗺️</span>
-                  各省录取难度
-                </h3>
-              </div>
-              <div class="chart-container">
-                <div ref="provinceChart" class="chart"></div>
-              </div>
-            </div>
-
-            <!-- 招生计划 -->
-            <div 
-              class="chart-card" 
-              :class="{ animated: !loading }"
-            >
-              <div class="chart-header">
-                <h3 class="chart-title">
-                  <span class="chart-icon">📊</span>
-                  招生计划分布
-                </h3>
-              </div>
-              <div class="chart-container">
-                <div ref="planChart" class="chart"></div>
+              <div class="major-stat">
+                <span class="label">修业年限</span>
+                <span class="value">{{ major.duration }}</span>
               </div>
             </div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- 新闻资讯 -->
-      <section class="news-section">
-        <div class="container">
-          <div class="section-header" :class="{ animated: !loading }">
-            <h2 class="section-title">最新资讯</h2>
-            <p class="section-desc">及时了解高考政策变化和招生动态</p>
+    <!-- 常见问题 -->
+    <section class="faq-section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-title-group">
+            <h2 class="section-title">常见问题</h2>
+            <p class="section-subtitle">解答你的疑惑</p>
           </div>
-          <div class="news-grid">
-            <div 
-              class="news-card" 
-              v-for="(news, index) in newsList" 
-              :key="news.id"
-              :style="{ animationDelay: `${index * 0.1}s` }"
-              :class="{ animated: !loading }"
-              @click="viewNewsDetail(news.id)"
-            >
-              <div class="news-image">
-                <span class="image-icon">{{ news.icon }}</span>
-              </div>
-              <div class="news-content">
-                <div class="news-meta">
-                  <span class="news-category" :class="news.category">{{ news.category }}</span>
-                  <span class="news-date">{{ news.date }}</span>
-                </div>
-                <h3 class="news-title">{{ news.title }}</h3>
-                <p class="news-desc">{{ news.description }}</p>
-                <div class="news-footer">
-                  <span class="news-source">{{ news.source }}</span>
-                  <span class="news-read">{{ news.readCount }} 阅读</span>
-                </div>
-              </div>
-              <div class="news-hover">
-                <span>阅读全文 →</span>
-              </div>
+        </div>
+        <div class="faq-grid">
+          <div class="faq-item" v-for="(faq, index) in faqs" :key="index" @click="toggleFaq(index)">
+            <div class="faq-header">
+              <h3 class="faq-question">{{ faq.question }}</h3>
+              <span class="faq-toggle" :class="{ active: expandedFaq === index }">+</span>
+            </div>
+            <div class="faq-answer" v-if="expandedFaq === index">
+              <p>{{ faq.answer }}</p>
             </div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- 备考指南 -->
-      <section class="guide-section">
-        <div class="container">
-          <div class="section-header" :class="{ animated: !loading }">
-            <h2 class="section-title">备考指南</h2>
-            <p class="section-desc">科学备考策略，助力高考冲刺</p>
-          </div>
-          <div class="guide-grid">
-            <div 
-              class="guide-card" 
-              v-for="(guide, index) in guideList" 
-              :key="guide.id"
-              :style="{ animationDelay: `${index * 0.1}s` }"
-              :class="{ animated: !loading }"
-              @click="viewGuideDetail(guide.id)"
-            >
-              <div class="guide-icon">
-                <span class="icon">{{ guide.icon }}</span>
-              </div>
-              <h3 class="guide-title">{{ guide.title }}</h3>
-              <p class="guide-desc">{{ guide.description }}</p>
-              <div class="guide-tags">
-                <span class="tag" v-for="tag in guide.tags" :key="tag">{{ tag }}</span>
-              </div>
-              <div class="guide-hover">
-                <span>查看详情 →</span>
-              </div>
-            </div>
-          </div>
+    <!-- CTA 区域 -->
+    <section class="cta-section">
+      <div class="container">
+        <div class="cta-content">
+          <h2 class="cta-title">准备好开始了吗？</h2>
+          <p class="cta-subtitle">立即注册，获取个性化志愿推荐方案</p>
+          <button class="cta-btn" @click="navigateTo('/register')">免费注册</button>
         </div>
-      </section>
-
-      <!-- 政策解读 -->
-      <section class="policy-section">
-        <div class="container">
-          <div class="section-header" :class="{ animated: !loading }">
-            <h2 class="section-title">政策解读</h2>
-            <p class="section-desc">深度解析高考政策，把握填报机会</p>
-          </div>
-          <div class="policy-grid">
-            <div 
-              class="policy-card" 
-              v-for="(policy, index) in policyList" 
-              :key="policy.id"
-              :style="{ animationDelay: `${index * 0.1}s` }"
-              :class="{ animated: !loading }"
-              @click="viewPolicyDetail(policy.id)"
-            >
-              <div class="policy-header">
-                <h3 class="policy-title">{{ policy.title }}</h3>
-                <span class="policy-date">{{ policy.date }}</span>
-              </div>
-              <p class="policy-summary">{{ policy.summary }}</p>
-              <div class="policy-tags">
-                <span class="tag" v-for="tag in policy.tags" :key="tag">{{ tag }}</span>
-              </div>
-              <div class="policy-footer">
-                <span class="policy-author">发布：{{ policy.author }}</span>
-                <span class="policy-views">{{ policy.views }} 浏览</span>
-              </div>
-              <div class="policy-hover">
-                <span>查看详情 →</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 用户评价 -->
-      <section class="testimonials-section">
-        <div class="container">
-          <div class="section-header" :class="{ animated: !loading }">
-            <h2 class="section-title">用户评价</h2>
-            <p class="section-desc">听听其他考生和家长的真实反馈</p>
-          </div>
-          <div class="testimonials-grid">
-            <div 
-              class="testimonial-card" 
-              v-for="(testimonial, index) in testimonials" 
-              :key="testimonial.id"
-              :style="{ animationDelay: `${index * 0.1}s` }"
-              :class="{ animated: !loading }"
-            >
-              <div class="testimonial-header">
-                <div class="user-avatar">
-                  <span class="avatar">{{ testimonial.avatar }}</span>
-                </div>
-                <div class="user-info">
-                  <h4 class="user-name">{{ testimonial.name }}</h4>
-                  <p class="user-desc">{{ testimonial.desc }}</p>
-                </div>
-                <div class="rating">
-                  <span class="stars">{{ testimonial.rating }}</span>
-                </div>
-              </div>
-              <p class="testimonial-content">{{ testimonial.content }}</p>
-              <div class="testimonial-footer">
-                <span class="testimonial-date">{{ testimonial.date }}</span>
-                <span class="testimonial-school">{{ testimonial.school }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 功能入口 -->
-      <section class="features-section">
-        <div class="container">
-          <div class="section-header" :class="{ animated: !loading }">
-            <h2 class="section-title">核心功能</h2>
-            <p class="section-desc">一站式高考志愿填报服务</p>
-          </div>
-          <div class="features-grid">
-            <div 
-              class="feature-card" 
-              v-for="(feature, index) in features" 
-              :key="feature.title"
-              :style="{ animationDelay: `${index * 0.1}s` }"
-              :class="{ animated: !loading }"
-              @click="navigateToFeature(feature.route)"
-            >
-              <div class="feature-icon">
-                <span class="icon">{{ feature.icon }}</span>
-                <div class="icon-glow"></div>
-              </div>
-              <h4 class="feature-title">{{ feature.title }}</h4>
-              <p class="feature-desc">{{ feature.desc }}</p>
-              <div class="feature-hover">
-                <span>立即体验 →</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
+      </div>
+    </section>
 
     <!-- 底部 -->
     <footer class="footer">
       <div class="container">
         <div class="footer-content">
-          <div class="footer-section">
-            <h4>关于我们</h4>
-            <p>致力于为高考考生提供最专业、最全面的志愿填报服务</p>
-          </div>
-          <div class="footer-section">
-            <h4>联系方式</h4>
-            <p>客服热线：400-123-4567</p>
-            <p>邮箱：service@gkzy.com</p>
-          </div>
-          <div class="footer-section">
-            <h4>关注我们</h4>
-            <div class="social-links">
+          <div class="footer-col">
+            <h4 class="footer-title">关于我们</h4>
+            <p class="footer-desc">高考志愿数据分析平台致力于为全国高考考生提供最专业、最全面的志愿填报服务，帮助考生科学决策。</p>
+            <div class="footer-social">
               <a href="#" class="social-link">微信</a>
               <a href="#" class="social-link">微博</a>
-              <a href="#" class="social-link">QQ群</a>
+              <a href="#" class="social-link">抖音</a>
             </div>
+          </div>
+          <div class="footer-col">
+            <h4 class="footer-title">产品</h4>
+            <ul class="footer-links">
+              <li><a href="#">高校库</a></li>
+              <li><a href="#">专业库</a></li>
+              <li><a href="#">分数线查询</a></li>
+              <li><a href="#">志愿推荐</a></li>
+              <li><a href="#">数据分析</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4 class="footer-title">资源</h4>
+            <ul class="footer-links">
+              <li><a href="#">填报指南</a></li>
+              <li><a href="#">政策解读</a></li>
+              <li><a href="#">院校排名</a></li>
+              <li><a href="#">就业前景</a></li>
+              <li><a href="#">常见问题</a></li>
+            </ul>
+          </div>
+          <div class="footer-col">
+            <h4 class="footer-title">联系我们</h4>
+            <p class="footer-contact">
+              <span>客服热线：400-123-4567</span><br>
+              <span>邮箱：service@gkzy.com</span><br>
+              <span>地址：四川成都市郫都区</span>
+            </p>
           </div>
         </div>
         <div class="footer-bottom">
-          <p>© 2026 高考志愿数据分析平台 版权所有</p>
+          <p class="footer-copyright">© 2026 高考志愿数据分析平台 | 蜀ICP备XXXXXXXX号 | <a href="#">隐私政策</a> | <a href="#">服务条款</a></p>
         </div>
       </div>
     </footer>
 
-    <!-- 回到顶部按钮 -->
-    <button 
-      class="back-to-top" 
-      :class="{ visible: showBackToTop }"
-      @click="scrollToTop"
-    >
-      <span class="arrow">↑</span>
-    </button>
+    <!-- 回到顶部 -->
+    <button class="back-to-top" :class="{ visible: showBackToTop }" @click="scrollToTop">↑</button>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import * as echarts from 'echarts'
-import {
-  getStatistics,
-  getSchoolRank,
-  getMajorRank,
-  getScoreTrend,
-  getProvinceDifficulty,
-  getPlanDistribution
-} from '../api/overview'
+import { getHotSchools, getMajorRank } from '../api/overview'
 
 const router = useRouter()
-
-const loading = ref(true)
-const isScrolled = ref(false)
-const showBackToTop = ref(false)
 const searchQuery = ref('')
-const selectedProvince = ref('')
-const selectedBatch = ref('')
+const miniSearch = ref('')
+const showBackToTop = ref(false)
+const currentSlide = ref(0)
+const carouselTimer = ref(null)
+const schoolFilter = ref('all')
+const expandedFaq = ref(null)
 
-const statistics = ref([])
-const schoolRank = ref([])
-const majorRank = ref([])
-const scoreTrendChart = ref(null)
-const provinceChart = ref(null)
-const planChart = ref(null)
+// 高考倒计时相关数据
+const countdownDays = ref(0)
+const countdownProgress = ref(0)
 
-const hotTags = ['清华大学', '计算机科学与技术', '985高校', '北京', '临床医学']
+const quickFunctions = [
+  { id: 1, icon: '🏫', name: '高校查询', desc: '3000+ 高校信息', route: '/schools' },
+  { id: 2, icon: '📚', name: '专业查询', desc: '700+ 专业详情', route: '/majors' },
+  { id: 3, icon: '📊', name: '分数线', desc: '5 年录取数据', route: '/scores' },
+  { id: 4, icon: '🎯', name: '志愿推荐', desc: '智能匹配方案', route: '/analysis' }
+]
 
-const statCards = [
-  { 
-    label: '高校总数', 
-    icon: '🏫', 
-    color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    trend: 'up',
-    trendIcon: '↗',
-    change: '+5.2%'
+const carouselSlides = [
+  {
+    badge: '智能推荐',
+    title: '志愿智能分析',
+    description: '基于大数据和AI算法，为你的志愿填报提供科学决策支持',
+    buttonText: '立即体验',
+    link: '/analysis',
+    icon: '🎓',
+    gradient: 'linear-gradient(135deg, #1e88e5 0%, #1565c0 100%)'
   },
-  { 
-    label: '专业总数', 
-    icon: '📚', 
-    color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-    trend: 'up',
-    trendIcon: '↗',
-    change: '+3.8%'
+  {
+    badge: '数据库',
+    title: '高校数据库',
+    description: '3000+ 所高校详细信息，5年历史录取数据，助力科学选择',
+    buttonText: '查看高校',
+    link: '/schools',
+    icon: '🏫',
+    gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
   },
-  { 
-    label: '录取数据量', 
-    icon: '📊', 
-    color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-    trend: 'up',
-    trendIcon: '↗',
-    change: '+12.5%'
-  },
-  { 
-    label: '覆盖省份', 
-    icon: '🗺️', 
-    color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-    trend: 'stable',
-    trendIcon: '→',
-    change: '0%'
+  {
+    badge: '就业前景',
+    title: '专业深度解析',
+    description: '了解专业前景、课程设置、就业方向，做出最优选择',
+    buttonText: '探索专业',
+    link: '/majors',
+    icon: '📚',
+    gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
   }
 ]
 
-const recommendedSchools = [
+const topMajors = ref([])
+
+const faqs = [
   {
-    id: 1,
-    name: '清华大学',
-    location: '北京',
-    level: '985',
-    logo: '🏛️',
-    tags: ['顶尖', '理工', '综合'],
-    avgScore: '680',
-    rank: '1',
-    employmentRate: '98%'
+    question: '如何使用志愿推荐功能？',
+    answer: '进入志愿推荐页面，输入你的高考成绩、全省位次、所在省份和选考科目，系统会根据大数据分析为你推荐冲、稳、保三个梯度的院校专业组合。'
   },
   {
-    id: 2,
-    name: '北京大学',
-    location: '北京',
-    level: '985',
-    logo: '🎓',
-    tags: ['顶尖', '文科', '综合'],
-    avgScore: '675',
-    rank: '2',
-    employmentRate: '97%'
+    question: '平台的数据准确性如何保证？',
+    answer: '我们的数据来自教育部、各省教育考试院等官方渠道，每年定期更新。所有数据都经过专业团队的验证和处理，确保准确性和时效性。'
   },
   {
-    id: 3,
-    name: '复旦大学',
-    location: '上海',
-    level: '985',
-    logo: '📚',
-    tags: ['顶尖', '综合', '医学'],
-    avgScore: '670',
-    rank: '3',
-    employmentRate: '96%'
+    question: '可以对比多所高校吗？',
+    answer: '可以。在高校详情页面点击"加入对比"，最多可以同时对比4所高校，系统会为你展示详细的对比分析报告。'
   },
   {
-    id: 4,
-    name: '上海交通大学',
-    location: '上海',
-    level: '985',
-    logo: '⚓',
-    tags: ['理工', '工程', '创新'],
-    avgScore: '668',
-    rank: '4',
-    employmentRate: '95%'
+    question: '如何查看历年分数线？',
+    answer: '在高校详情页面的"录取分析"标签中，可以查看该校近5年的录取分数线、位次变化趋势，帮助你更好地评估录取概率。'
+  },
+  {
+    question: '平台是否提供一对一咨询服务？',
+    answer: '我们提供在线客服支持和专业的填报指南。对于复杂的个性化问题，可以联系我们的专业顾问团队获得一对一的咨询服务。'
   }
 ]
 
-const newsList = [
-  {
-    id: 1,
-    title: '2026年高考政策重大调整，这些变化考生需注意',
-    description: '教育部发布最新高考政策，涉及考试科目、录取方式等多个方面...',
-    category: '政策',
-    date: '2026-03-15',
-    source: '教育部',
-    readCount: '2.5万',
-    icon: '📰'
-  },
-  {
-    id: 2,
-    title: '985高校新增专业名单公布，人工智能成热门',
-    description: '多所985高校新增人工智能、大数据等前沿专业，为考生提供更多选择...',
-    category: '招生',
-    date: '2026-03-14',
-    source: '高校招生网',
-    readCount: '1.8万',
-    icon: '🎯'
-  },
-  {
-    id: 3,
-    title: '高考志愿填报时间确定，这些时间节点要牢记',
-    description: '各省市高考志愿填报时间陆续公布，考生需提前做好准备...',
-    category: '填报',
-    date: '2026-03-13',
-    source: '教育在线',
-    readCount: '1.2万',
-    icon: '⏰'
-  },
-  {
-    id: 4,
-    title: '名校录取分数线预测分析，你的分数能上哪所大学',
-    description: '基于历年数据，预测2026年各高校录取分数线，为考生提供参考...',
-    category: '分析',
-    date: '2026-03-12',
-    source: '数据分析',
-    readCount: '9800',
-    icon: '📊'
-  }
-]
-
-const guideList = [
-  {
-    id: 1,
-    title: '高考冲刺阶段复习策略',
-    description: '最后三个月如何高效复习，提升成绩的关键技巧',
-    icon: '🚀',
-    tags: ['复习', '策略', '提分']
-  },
-  {
-    id: 2,
-    title: '志愿填报常见问题解答',
-    description: '解答考生和家长在志愿填报过程中遇到的各类问题',
-    icon: '❓',
-    tags: ['填报', '问答', '技巧']
-  },
-  {
-    id: 3,
-    title: '心理调节与压力管理',
-    description: '高考期间如何保持良好心态，应对考试压力',
-    icon: '🧠',
-    tags: ['心理', '调节', '压力']
-  },
-  {
-    id: 4,
-    title: '各科备考重点与难点',
-    description: '分析各科目备考重点，攻克难点知识点',
-    icon: '📝',
-    tags: ['备考', '重点', '难点']
-  }
-]
-
-const policyList = [
-  {
-    id: 1,
-    title: '新高考改革政策深度解读',
-    summary: '全面解析新高考改革政策对考生志愿填报的影响',
-    date: '2026-03-10',
-    author: '政策研究室',
-    views: '3.2万',
-    tags: ['改革', '政策', '解读']
-  },
-  {
-    id: 2,
-    title: '特殊类型招生政策分析',
-    summary: '艺术、体育、保送等特殊类型招生政策详解',
-    date: '2026-03-09',
-    author: '招生办',
-    views: '2.1万',
-    tags: ['特殊招生', '政策', '分析']
-  },
-  {
-    id: 3,
-    title: '平行志愿填报策略指南',
-    summary: '如何科学合理地填报平行志愿，提高录取概率',
-    date: '2026-03-08',
-    author: '志愿专家',
-    views: '1.8万',
-    tags: ['平行志愿', '策略', '指南']
-  }
-]
-
-const testimonials = [
-  {
-    id: 1,
-    name: '张同学',
-    desc: '2025年考生',
-    avatar: '👦',
-    content: '这个平台帮我找到了最适合的学校和专业，最终被心仪的大学录取！',
-    rating: '⭐⭐⭐⭐⭐',
-    date: '2025-08-15',
-    school: '清华大学'
-  },
-  {
-    id: 2,
-    name: '李家长',
-    desc: '考生家长',
-    avatar: '👩',
-    content: '数据分析很准确，志愿推荐很科学，让孩子少走了很多弯路。',
-    rating: '⭐⭐⭐⭐⭐',
-    date: '2025-08-10',
-    school: '北京大学'
-  },
-  {
-    id: 3,
-    name: '王老师',
-    desc: '高中教师',
-    avatar: '👨‍🏫',
-    content: '作为老师，我推荐所有考生使用这个平台，数据权威，分析专业。',
-    rating: '⭐⭐⭐⭐⭐',
-    date: '2025-08-05',
-    school: '复旦大学'
-  }
-]
-
-const features = [
-  {
-    icon: '🔍',
-    title: '智能搜索',
-    desc: '快速查找高校、专业信息',
-    route: '/search'
-  },
-  {
-    icon: '📊',
-    title: '数据分析',
-    desc: '历年数据深度分析对比',
-    route: '/analysis'
-  },
-  {
-    icon: '🎯',
-    title: '志愿推荐',
-    desc: '基于成绩智能推荐院校',
-    route: '/recommend'
-  },
-  {
-    icon: '📈',
-    title: '趋势预测',
-    desc: '录取趋势科学预测分析',
-    route: '/trend'
-  }
-]
+const recommendedSchools = ref([])
 
 onMounted(async () => {
   setupScrollListener()
-  await loadAllData()
-  setTimeout(() => {
-    loading.value = false
-  }, 1000)
+  startCarousel()
+  setupCountdown()
+  await loadHotSchools()
+  await loadTopMajors()
 })
 
 onUnmounted(() => {
   removeScrollListener()
+  stopCarousel()
 })
+
+async function loadHotSchools() {
+  try {
+    const res = await getHotSchools({ limit: 12 })
+    if (res.data && res.data.length > 0) {
+      recommendedSchools.value = res.data.map(school => {
+        let location = `${school.province || ''}${school.city || ''}`.replace(/(省|市)/g, '')
+        const municipalities = ['北京', '上海', '天津', '重庆']
+        municipalities.forEach(city => {
+          if (location.startsWith(city) && location !== city) {
+            location = city
+          }
+        })
+        
+        const tags = getSchoolTags(school)
+        
+        return {
+          ...school,
+          location,
+          level: school.is_985 ? '985' : school.is_211 ? '211' : '一本',
+          logo: getSchoolLogo(school.type),
+          tags: tags,
+          heatScore: Math.round(school.heat_score || 0)
+        }
+      })
+    }
+  } catch (error) {
+    console.error('加载热门院校失败', error)
+  }
+}
+
+async function loadTopMajors() {
+  try {
+    const res = await getMajorRank({ limit: 6 })
+    
+    let majorsData = []
+    if (res && res.data && Array.isArray(res.data)) {
+      majorsData = res.data
+    } else if (res && Array.isArray(res)) {
+      majorsData = res
+    }
+    
+    if (majorsData && majorsData.length > 0) {
+      topMajors.value = majorsData.map(major => {
+        return {
+          id: major.id,
+          name: major.name,
+          code: major.code || '',
+          salary: formatSalary(major.avg_salary),
+          duration: major.duration || '四年'
+        }
+      })
+    }
+  } catch (error) {
+    console.error('加载热门专业失败:', error)
+  }
+}
+
+function getMajorIcon(majorName) {
+  const iconMap = {
+    '计算机': '💻',
+    '软件': '💻',
+    '临床': '🏥',
+    '医学': '🏥',
+    '金融': '💰',
+    '经济': '💰',
+    '机械': '⚙️',
+    '师范': '📚',
+    '教育': '📚',
+    '生物': '🌿',
+    '电气': '⚡',
+    '土木': '🏗️',
+    '化学': '🧪',
+    '物理': '🔬',
+    '数学': '📐',
+    '外语': '🌍',
+    '艺术': '🎨',
+    '体育': '⚽',
+    '农业': '🌾'
+  }
+  
+  for (const [key, icon] of Object.entries(iconMap)) {
+    if (majorName.includes(key)) {
+      return icon
+    }
+  }
+  return '🎓'
+}
+
+function getMajorBadge(salary) {
+  if (salary >= 15000) return '高薪'
+  if (salary >= 12000) return '热门'
+  if (salary >= 10000) return '稳定'
+  return '潜力'
+}
+
+function formatSalary(salary) {
+  if (!salary) return '面议'
+  const k = Math.floor(salary / 1000)
+  return `${k}k`
+}
+
+function getSchoolLogo(type) {
+  const logos = {
+    '综合': '🏛️',
+    '理工': '⚡',
+    '师范': '📚',
+    '财经': '💰',
+    '医学': '🏥',
+    '农业': '🌾',
+    '艺术': '🎨',
+    '体育': '⚽'
+  }
+  return logos[type] || '🏫'
+}
+
+function getSchoolTags(school) {
+  // 只保留一个类别标签，优先显示学校类型
+  if (school.type) {
+    return [school.type]
+  }
+  // 如果没有类型，则显示985/211标签
+  if (school.is_985) return ['985']
+  if (school.is_211) return ['211']
+  return []
+}
+
+function startCarousel() {
+  carouselTimer.value = setInterval(() => {
+    nextSlide()
+  }, 5000)
+}
+
+function stopCarousel() {
+  if (carouselTimer.value) clearInterval(carouselTimer.value)
+}
+
+function nextSlide() {
+  currentSlide.value = (currentSlide.value + 1) % carouselSlides.length
+}
+
+function prevSlide() {
+  currentSlide.value = (currentSlide.value - 1 + carouselSlides.length) % carouselSlides.length
+}
+
+function goToSlide(index) {
+  currentSlide.value = index
+}
 
 function setupScrollListener() {
   window.addEventListener('scroll', handleScroll)
@@ -842,43 +553,17 @@ function removeScrollListener() {
 }
 
 function handleScroll() {
-  isScrolled.value = window.scrollY > 50
   showBackToTop.value = window.scrollY > 300
 }
 
-async function loadAllData() {
-  try {
-    await Promise.all([
-      loadStatistics(),
-      loadSchoolRank(),
-      loadMajorRank(),
-      loadScoreTrend(),
-      loadProvinceDifficulty(),
-      loadPlanDistribution()
-    ])
-  } catch (error) {
-    console.error('数据加载失败', error)
-  }
-}
-
 function scrollToTop() {
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  })
-}
-
-function onSearchFocus() {
-  // 搜索框聚焦效果
-}
-
-function onSearchBlur() {
-  // 搜索框失焦效果
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 function handleSearch() {
-  if (searchQuery.value.trim()) {
-    router.push(`/search?q=${encodeURIComponent(searchQuery.value)}`)
+  const query = searchQuery.value || miniSearch.value
+  if (query.trim()) {
+    router.push(`/search?q=${encodeURIComponent(query)}`)
   }
 }
 
@@ -887,1083 +572,133 @@ function quickSearch(tag) {
   handleSearch()
 }
 
-function showLoginModal() {
-  // 显示登录模态框
-  console.log('显示登录模态框')
-}
-
-function navigateToSchools() {
-  router.push('/schools')
-}
-
-function navigateToMajors() {
-  router.push('/majors')
-}
-
-function viewSchoolDetail(schoolId) {
-  router.push(`/schools/${schoolId}`)
-}
-
-function viewMajorDetail(majorId) {
-  router.push(`/majors/${majorId}`)
-}
-
-function viewNewsDetail(newsId) {
-  router.push(`/news/${newsId}`)
-}
-
-function viewGuideDetail(guideId) {
-  router.push(`/guide/${guideId}`)
-}
-
-function viewPolicyDetail(policyId) {
-  router.push(`/policy/${policyId}`)
-}
-
-function navigateToFeature(route) {
+function navigateTo(route) {
   router.push(route)
 }
 
-function getRankClass(index) {
-  if (index === 0) return 'rank-1'
-  if (index === 1) return 'rank-2'
-  if (index === 2) return 'rank-3'
-  return 'rank-other'
+function viewSchoolDetail(id) {
+  router.push(`/schools/${id}`)
 }
 
-function getSchoolBadge(level) {
-  if (level === '985') return 'badge-985'
-  if (level === '211') return 'badge-211'
-  return 'badge-other'
+function viewMajorDetail(id) {
+  router.push(`/majors/${id}`)
 }
 
-async function loadStatistics() {
-  try {
-    const res = await getStatistics()
-    const data = res.data
-    statistics.value = statCards.map(card => ({
-      ...card,
-      value: formatValue(card.label, data)
-    }))
-  } catch (error) {
-    console.error('加载统计数据失败', error)
-    statistics.value = statCards.map(card => ({
-      ...card,
-      value: '***'
-    }))
-  }
+function toggleFaq(index) {
+  expandedFaq.value = expandedFaq.value === index ? null : index
 }
 
-function formatValue(label, data) {
-  const map = {
-    '高校总数': data.school_count,
-    '专业总数': data.major_count,
-    '录取数据量': data.record_count,
-    '覆盖省份': data.province_count
-  }
-  const value = map[label]
-  return value && value > 0 ? value : '***'
-}
-
-async function loadSchoolRank() {
-  try {
-    const res = await getSchoolRank({ limit: 10 })
-    schoolRank.value = res.data && res.data.length > 0 ? res.data : []
-  } catch (error) {
-    console.error('加载高校排行失败', error)
-    schoolRank.value = []
-  }
-}
-
-async function loadMajorRank() {
-  try {
-    const res = await getMajorRank({ limit: 10 })
-    majorRank.value = res.data && res.data.length > 0 ? res.data : []
-  } catch (error) {
-    console.error('加载专业排行失败', error)
-    majorRank.value = []
-  }
-}
-
-async function loadScoreTrend() {
-  try {
-    const res = await getScoreTrend({ 
-      province: selectedProvince.value,
-      batch: selectedBatch.value,
-      years: 5 
-    })
-    const data = res.data && res.data.length > 0 ? res.data : []
-    renderScoreTrendChart(data)
-  } catch (error) {
-    console.error('加载分数线趋势失败', error)
-    renderScoreTrendChart([])
-  }
-}
-
-function renderScoreTrendChart(data) {
-  if (!scoreTrendChart.value) return
+function setupCountdown() {
+  // 设置高考日期为2026年6月7日
+  const gaokaoDate = new Date(2026, 5, 7) // 月份从0开始，5代表6月
+  const today = new Date()
   
-  const chart = echarts.init(scoreTrendChart.value)
+  // 计算剩余天数
+  const timeDiff = gaokaoDate.getTime() - today.getTime()
+  const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24))
   
-  if (!data || data.length === 0) {
-    chart.setOption({
-      title: {
-        text: '暂无数据',
-        left: 'center',
-        top: 'center',
-        textStyle: {
-          color: '#999',
-          fontSize: 16,
-          fontWeight: 'normal'
-        }
-      }
-    })
-    return
-  }
+  countdownDays.value = daysDiff > 0 ? daysDiff : 0
   
-  const years = data.map(item => item.year).reverse()
-  
-  chart.setOption({
-    tooltip: { trigger: 'axis' },
-    legend: { 
-      data: ['平均分', '最低分', '最高分'],
-      textStyle: { color: '#666' }
-    },
-    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-    xAxis: { 
-      type: 'category', 
-      data: years,
-      axisLine: { lineStyle: { color: '#ddd' } },
-      axisLabel: { color: '#666' }
-    },
-    yAxis: { 
-      type: 'value', 
-      name: '分数',
-      axisLine: { lineStyle: { color: '#ddd' } },
-      axisLabel: { color: '#666' },
-      splitLine: { lineStyle: { color: '#f0f0f0' } }
-    },
-    series: [
-      {
-        name: '平均分',
-        type: 'line',
-        data: data.map(item => item.avg_score).reverse(),
-        smooth: true,
-        lineStyle: { width: 3 },
-        itemStyle: { color: '#3498db' }
-      },
-      {
-        name: '最低分',
-        type: 'line',
-        data: data.map(item => item.min_score).reverse(),
-        smooth: true,
-        lineStyle: { width: 2 },
-        itemStyle: { color: '#2ecc71' }
-      },
-      {
-        name: '最高分',
-        type: 'line',
-        data: data.map(item => item.max_score).reverse(),
-        smooth: true,
-        lineStyle: { width: 2 },
-        itemStyle: { color: '#e74c3c' }
-      }
-    ]
-  })
+  // 计算进度（假设备考周期为365天）
+  const totalDays = 365
+  const passedDays = totalDays - daysDiff
+  countdownProgress.value = Math.max(0, Math.min(100, Math.round((passedDays / totalDays) * 100)))
 }
 
-async function loadProvinceDifficulty() {
-  try {
-    const res = await getProvinceDifficulty()
-    const data = res.data && res.data.length > 0 ? res.data.slice(0, 10) : []
-    renderProvinceChart(data)
-  } catch (error) {
-    console.error('加载省份难度失败', error)
-    renderProvinceChart([])
-  }
+function getStudyPhase() {
+  const days = countdownDays.value
+  if (days > 180) return '基础阶段'
+  if (days > 90) return '强化阶段'
+  if (days > 30) return '冲刺阶段'
+  return '最后冲刺'
 }
 
-function renderProvinceChart(data) {
-  if (!provinceChart.value) return
-  
-  const chart = echarts.init(provinceChart.value)
-  
-  if (!data || data.length === 0) {
-    chart.setOption({
-      title: {
-        text: '暂无数据',
-        left: 'center',
-        top: 'center',
-        textStyle: {
-          color: '#999',
-          fontSize: 16,
-          fontWeight: 'normal'
-        }
-      }
-    })
-    return
-  }
-  
-  chart.setOption({
-    tooltip: { trigger: 'axis' },
-    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-    xAxis: {
-      type: 'category',
-      data: data.map(item => item.province),
-      axisLine: { lineStyle: { color: '#ddd' } },
-      axisLabel: { 
-        color: '#666',
-        rotate: 45 
-      }
-    },
-    yAxis: { 
-      type: 'value', 
-      name: '平均分',
-      axisLine: { lineStyle: { color: '#ddd' } },
-      axisLabel: { color: '#666' },
-      splitLine: { lineStyle: { color: '#f0f0f0' } }
-    },
-    series: [{
-      type: 'bar',
-      data: data.map(item => item.avg_score),
-      itemStyle: {
-        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: '#83bff6' },
-          { offset: 1, color: '#188df0' }
-        ])
-      }
-    }]
-  })
+function getStudyAdvice() {
+  const days = countdownDays.value
+  if (days > 180) return '夯实基础'
+  if (days > 90) return '专题突破'
+  if (days > 30) return '模拟训练'
+  return '查漏补缺'
 }
 
-async function loadPlanDistribution() {
-  try {
-    const res = await getPlanDistribution()
-    const data = res.data && res.data.length > 0 ? res.data.slice(0, 10) : []
-    renderPlanChart(data)
-  } catch (error) {
-    console.error('加载招生计划失败', error)
-    renderPlanChart([])
-  }
-}
-
-function renderPlanChart(data) {
-  if (!planChart.value) return
-  
-  const chart = echarts.init(planChart.value)
-  
-  if (!data || data.length === 0) {
-    chart.setOption({
-      title: {
-        text: '暂无数据',
-        left: 'center',
-        top: 'center',
-        textStyle: {
-          color: '#999',
-          fontSize: 16,
-          fontWeight: 'normal'
-        }
-      }
-    })
-    return
-  }
-  
-  chart.setOption({
-    tooltip: { trigger: 'item' },
-    legend: { orient: 'vertical', right: 10, top: 'center' },
-    series: [{
-      type: 'pie',
-      radius: ['40%', '70%'],
-      center: ['40%', '50%'],
-      data: data.map(item => ({
-        name: item.province,
-        value: item.total_plan
-      })),
-      emphasis: {
-        itemStyle: {
-          shadowBlur: 10,
-          shadowOffsetX: 0,
-          shadowColor: 'rgba(0, 0, 0, 0.5)'
-        }
-      }
-    }]
-  })
+function getMotivationText() {
+  const days = countdownDays.value
+  if (days > 180) return '千里之行，始于足下！'
+  if (days > 90) return '坚持就是胜利，加油！'
+  if (days > 30) return '胜利在望，坚持到底！'
+  return '相信自己，你一定行！'
 }
 </script>
 
 <style scoped>
-/* 之前的样式保持不变，这里只添加新增模块的样式 */
-
-/* 热门院校推荐 */
-.recommend-section {
-  padding: 80px 0;
-  background: #f8fafc;
-}
-
-.recommend-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
-}
-
-.school-card {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-  opacity: 0;
-  transform: translateY(30px);
-}
-
-.school-card.animated {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.school-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
-}
-
-.school-badge {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  color: white;
-}
-
-.badge-985 {
-  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-}
-
-.badge-211 {
-  background: linear-gradient(135deg, #4facfe, #00f2fe);
-}
-
-.badge-other {
-  background: linear-gradient(135deg, #a8e6cf, #88d3ce);
-}
-
-.school-logo {
-  text-align: center;
-  margin-bottom: 16px;
-}
-
-.school-logo .logo {
-  font-size: 48px;
-}
-
-.school-info {
-  text-align: center;
-}
-
-.school-name {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 8px;
-}
-
-.school-location {
-  color: #64748b;
-  margin-bottom: 12px;
-}
-
-.school-tags {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.school-tags .tag {
-  padding: 4px 8px;
-  background: #f1f5f9;
-  border-radius: 6px;
-  font-size: 12px;
-  color: #475569;
-}
-
-.school-stats {
-  display: flex;
-  justify-content: space-around;
-  margin-top: 16px;
-}
-
-.school-stats .stat {
-  text-align: center;
-}
-
-.school-stats .value {
-  display: block;
-  font-size: 18px;
-  font-weight: 600;
-  color: #3498db;
-}
-
-.school-stats .label {
-  font-size: 12px;
-  color: #94a3b8;
-}
-
-.school-hover {
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #3498db, #9b59b6);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  transition: left 0.3s ease;
-}
-
-.school-card:hover .school-hover {
-  left: 0;
-}
-
-/* 新闻资讯 */
-.news-section {
-  padding: 80px 0;
-}
-
-.news-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 24px;
-}
-
-.news-card {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-  opacity: 0;
-  transform: translateY(30px);
-}
-
-.news-card.animated {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.news-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
-}
-
-.news-image {
-  text-align: center;
-  margin-bottom: 16px;
-}
-
-.news-image .image-icon {
-  font-size: 48px;
-}
-
-.news-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.news-category {
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: white;
-}
-
-.news-category.政策 {
-  background: #ff6b6b;
-}
-
-.news-category.招生 {
-  background: #4facfe;
-}
-
-.news-category.填报 {
-  background: #a8e6cf;
-}
-
-.news-category.分析 {
-  background: #feca57;
-}
-
-.news-date {
-  font-size: 12px;
-  color: #94a3b8;
-}
-
-.news-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 8px;
-  line-height: 1.4;
-}
-
-.news-desc {
-  color: #64748b;
-  line-height: 1.6;
-  margin-bottom: 16px;
-}
-
-.news-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.news-source {
-  font-size: 12px;
-  color: #94a3b8;
-}
-
-.news-read {
-  font-size: 12px;
-  color: #94a3b8;
-}
-
-.news-hover {
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #3498db, #9b59b6);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  transition: left 0.3s ease;
-}
-
-.news-card:hover .news-hover {
-  left: 0;
-}
-
-/* 备考指南 */
-.guide-section {
-  padding: 80px 0;
-  background: #f8fafc;
-}
-
-.guide-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-}
-
-.guide-card {
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-  text-align: center;
-  opacity: 0;
-  transform: translateY(30px);
-}
-
-.guide-card.animated {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.guide-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
-}
-
-.guide-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-}
-
-.guide-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 12px;
-}
-
-.guide-desc {
-  color: #64748b;
-  line-height: 1.6;
-  margin-bottom: 16px;
-}
-
-.guide-tags {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-}
-
-.guide-tags .tag {
-  padding: 4px 8px;
-  background: #f1f5f9;
-  border-radius: 6px;
-  font-size: 12px;
-  color: #475569;
-}
-
-.guide-hover {
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #3498db, #9b59b6);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  transition: left 0.3s ease;
-}
-
-.guide-card:hover .guide-hover {
-  left: 0;
-}
-
-/* 政策解读 */
-.policy-section {
-  padding: 80px 0;
-}
-
-.policy-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 24px;
-}
-
-.policy-card {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-  opacity: 0;
-  transform: translateY(30px);
-}
-
-.policy-card.animated {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.policy-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
-}
-
-.policy-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
-}
-
-.policy-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e293b;
-  line-height: 1.4;
-  flex: 1;
-}
-
-.policy-date {
-  font-size: 12px;
-  color: #94a3b8;
-  margin-left: 12px;
-}
-
-.policy-summary {
-  color: #64748b;
-  line-height: 1.6;
-  margin-bottom: 16px;
-}
-
-.policy-tags {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.policy-tags .tag {
-  padding: 4px 8px;
-  background: #f1f5f9;
-  border-radius: 6px;
-  font-size: 12px;
-  color: #475569;
-}
-
-.policy-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.policy-author {
-  font-size: 12px;
-  color: #94a3b8;
-}
-
-.policy-views {
-  font-size: 12px;
-  color: #94a3b8;
-}
-
-.policy-hover {
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #3498db, #9b59b6);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  transition: left 0.3s ease;
-}
-
-.policy-card:hover .policy-hover {
-  left: 0;
-}
-
-/* 用户评价 */
-.testimonials-section {
-  padding: 80px 0;
-  background: #f8fafc;
-}
-
-.testimonials-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 24px;
-}
-
-.testimonial-card {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-  opacity: 0;
-  transform: translateY(30px);
-}
-
-.testimonial-card.animated {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.testimonial-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
-}
-
-.testimonial-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.user-avatar {
-  margin-right: 12px;
-}
-
-.user-avatar .avatar {
-  font-size: 32px;
-}
-
-.user-info {
-  flex: 1;
-}
-
-.user-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 4px;
-}
-
-.user-desc {
-  font-size: 12px;
-  color: #94a3b8;
-}
-
-.rating {
-  text-align: right;
-}
-
-.rating .stars {
-  font-size: 14px;
-  color: #f59e0b;
-}
-
-.testimonial-content {
-  color: #64748b;
-  line-height: 1.6;
-  margin-bottom: 16px;
-  font-style: italic;
-}
-
-.testimonial-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.testimonial-date {
-  font-size: 12px;
-  color: #94a3b8;
-}
-
-.testimonial-school {
-  font-size: 12px;
-  color: #3498db;
-  font-weight: 600;
-}
-
-/* 功能入口 */
-.features-section {
-  padding: 80px 0;
-}
-
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-}
-
-.feature-card {
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-  cursor: pointer;
-  text-align: center;
-  opacity: 0;
-  transform: translateY(30px);
-}
-
-.feature-card.animated {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.feature-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
-}
-
-.feature-icon {
-  position: relative;
-  font-size: 48px;
-  margin-bottom: 16px;
-}
-
-.feature-icon .icon {
-  position: relative;
-  z-index: 2;
-}
-
-.icon-glow {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(135deg, #3498db, #9b59b6);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  opacity: 0.1;
-  transition: all 0.3s ease;
-}
-
-.feature-card:hover .icon-glow {
-  opacity: 0.2;
-  transform: translate(-50%, -50%) scale(1.2);
-}
-
-.feature-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 12px;
-}
-
-.feature-desc {
-  color: #64748b;
-  line-height: 1.6;
-}
-
-.feature-hover {
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #3498db, #9b59b6);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  transition: left 0.3s ease;
-}
-
-.feature-card:hover .feature-hover {
-  left: 0;
+* {
+  box-sizing: border-box;
 }
 
-/* 之前的样式保持不变 */
 .dashboard {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  position: relative;
-}
-
-/* 加载动画 */
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
+  background: #fafbfc;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color: #1a1a1a;
   width: 100%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.loading-spinner {
-  position: relative;
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 20px;
-}
-
-.spinner-ring {
-  position: absolute;
-  width: 64px;
-  height: 64px;
-  margin: 8px;
-  border: 8px solid transparent;
-  border-radius: 50%;
-  animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-}
-
-.spinner-ring:nth-child(1) {
-  border-top-color: #3498db;
-  animation-delay: -0.45s;
-}
-
-.spinner-ring:nth-child(2) {
-  border-top-color: #9b59b6;
-  animation-delay: -0.3s;
-}
-
-.spinner-ring:nth-child(3) {
-  border-top-color: #2ecc71;
-  animation-delay: -0.15s;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.loading-text {
-  color: #64748b;
-  font-size: 16px;
-  text-align: center;
-}
-
-/* 头部导航 */
-.header {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  transition: all 0.3s ease;
-}
-
-.header.scrolled {
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  margin: 0;
+  padding: 0;
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 20px;
+  width: 100%;
+}
+
+/* ===== 顶部导航 ===== */
+.header {
+  background: #fff;
+  border-bottom: 1px solid #e8e8e8;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .header .container {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  align-items: center;
+  height: 64px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 40px;
 }
 
 .logo {
   display: flex;
   align-items: center;
+  gap: 8px;
   cursor: pointer;
-  transition: transform 0.3s ease;
+  transition: opacity 0.2s;
 }
 
 .logo:hover {
-  transform: scale(1.05);
+  opacity: 0.7;
 }
 
 .logo-icon {
-  font-size: 24px;
-  margin-right: 8px;
+  font-size: 28px;
 }
 
 .logo-text {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e293b;
+  font-size: 20px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .nav {
@@ -1972,16 +707,17 @@ function renderPlanChart(data) {
 }
 
 .nav-item {
-  color: #64748b;
+  color: #666;
   text-decoration: none;
+  font-size: 15px;
   font-weight: 500;
-  transition: color 0.3s ease;
+  transition: color 0.2s;
   position: relative;
 }
 
 .nav-item:hover,
 .nav-item.active {
-  color: #3498db;
+  color: #1e88e5;
 }
 
 .nav-item.active::after {
@@ -1991,630 +727,1477 @@ function renderPlanChart(data) {
   left: 0;
   width: 100%;
   height: 2px;
-  background: #3498db;
+  background: #1e88e5;
 }
 
-.user-actions {
+.header-right {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  gap: 16px;
+}
+
+.search-mini {
+  position: relative;
+  width: 200px;
+}
+
+.search-mini-input {
+  width: 100%;
+  padding: 10px 12px 10px 16px;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #f5f5f5;
+  transition: all 0.2s;
+}
+
+.search-mini-input:focus {
+  outline: none;
+  background: white;
+  border-color: #1e88e5;
+  box-shadow: 0 2px 8px rgba(30, 136, 229, 0.1);
+}
+
+.search-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  pointer-events: none;
 }
 
 .btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 8px;
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-size: 15px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-text {
+  background: transparent;
+  color: #666;
+}
+
+.btn-text:hover {
+  color: #1a1a1a;
+  background: #f0f0f0;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #3498db, #9b59b6);
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
   color: white;
+  box-shadow: 0 2px 8px rgba(30, 136, 229, 0.2);
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3);
 }
 
-/* 英雄区域 */
-.hero {
-  padding: 150px 0 80px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  text-align: center;
+/* ===== Hero 搜索区域 ===== */
+.hero-section {
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  padding: 60px 0;
   position: relative;
   overflow: hidden;
 }
 
-.hero-bg {
+.hero-section::before {
+  content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.bg-particle {
-  position: absolute;
+  top: -40%;
+  right: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  animation: float 6s ease-in-out infinite;
-}
-
-.bg-particle:nth-child(1) {
-  width: 100px;
-  height: 100px;
-  top: 20%;
-  left: 10%;
-  animation-delay: 0s;
-}
-
-.bg-particle:nth-child(2) {
-  width: 150px;
-  height: 150px;
-  top: 60%;
-  right: 15%;
-  animation-delay: 2s;
-}
-
-.bg-particle:nth-child(3) {
-  width: 80px;
-  height: 80px;
-  bottom: 30%;
-  left: 20%;
-  animation-delay: 4s;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-20px) rotate(180deg); }
 }
 
 .hero-content {
-  max-width: 800px;
-  margin: 0 auto;
   position: relative;
-  z-index: 2;
-  opacity: 0;
-  transform: translateY(30px);
-  transition: all 0.8s ease;
-}
-
-.hero-content.animated {
-  opacity: 1;
-  transform: translateY(0);
+  z-index: 1;
+  text-align: center;
 }
 
 .hero-title {
   font-size: 48px;
   font-weight: 700;
-  margin-bottom: 16px;
+  color: white;
+  margin: 0 0 16px 0;
   line-height: 1.2;
 }
 
-.title-line {
-  display: block;
+.hero-subtitle {
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 32px 0;
+  line-height: 1.5;
 }
 
-.title-line.highlight {
-  background: linear-gradient(135deg, #ffd700, #ff6b6b);
+.hero-search {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.search-container {
+  display: flex;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  margin-bottom: 16px;
+}
+
+.search-input {
+  flex: 1;
+  padding: 14px 18px;
+  border: none;
+  outline: none;
+  font-size: 15px;
+}
+
+.search-btn {
+  padding: 14px 32px;
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  border: none;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.search-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3);
+}
+
+.search-suggestions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.suggestion-label {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.suggestion-tag {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  font-size: 13px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.15);
+  transition: all 0.2s;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.suggestion-tag:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* ===== 平台横幅 ===== */
+.platform-banner {
+  padding: 20px 0;
+  background: linear-gradient(90deg, #1e88e5 0%, #1565c0 100%);
+  margin-top: 16px;
+  box-shadow: 0 4px 12px rgba(30, 136, 229, 0.2);
+}
+
+.banner-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+  text-align: center;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== 数据概览 ===== */
+.stats-section {
+  padding: 40px 0;
+  background: white;
+  margin-top: 16px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 32px 24px;
+  border-radius: 12px;
+  text-align: center;
+  transition: all 0.2s;
+  border: 1px solid rgba(30, 136, 229, 0.1);
+}
+
+.stat-card:nth-child(2) {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.stat-card:nth-child(3) {
+  background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+}
+
+.stat-card:nth-child(4) {
+  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(30, 136, 229, 0.15);
+}
+
+.stat-number {
+  font-size: 36px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 4px;
+}
+
+.stat-desc {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ===== 轮播图 ===== */
+/* ===== 轮播图 ===== */
+.carousel-section {
+  padding: 40px 0;
+  background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+.carousel-layout {
+  display: grid;
+  grid-template-columns: 200px 1fr 200px;
+  gap: 16px;
+  align-items: stretch;  /* 改为 stretch，让所有列对齐 */
+}
+
+.side-module {
+  height: auto;
+}
+
+.module-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f0f0;
+  height: 100%;
+  min-height: 320px;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+
+.module-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.module-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.module-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 12px 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* 高考倒计时样式 */
+.countdown-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;  /* 减少间距 */
+}
+
+.countdown-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;  /* 减少间距 */
+}
+
+.countdown-days {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.days-number {
+  font-size: 32px;
+  font-weight: 700;
+  color: #ff6b6b;
+  line-height: 1;
+}
+
+.days-label {
+  font-size: 14px;
+  color: #999;
+  font-weight: 500;
+}
+
+.countdown-info {
+  flex: 1;
+}
+
+.countdown-date {
+  font-size: 12px;
+  color: #666;
+  margin: 0 0 4px 0;
+  font-weight: 500;
+}
+
+.countdown-desc {
+  font-size: 11px;
+  color: #999;
+  margin: 0;
+}
+
+.countdown-progress {
+  margin-top: 12px;  /* 减少间距 */
+}
+
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: #f0f0f0;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 6px;  /* 减少间距 */
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff6b6b 0%, #ff8e8e 100%);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 10px;
+  color: #999;
+  text-align: center;
+}
+
+.countdown-stats {
+  margin-top: 12px;  /* 减少间距 */
+  padding-top: 12px;  /* 减少间距 */
+  border-top: 1px solid #f0f0f0;
+  flex: 1;  /* 让统计信息占据剩余空间 */
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;  /* 减少间距 */
+}
+
+.stat-item:last-child {
+  margin-bottom: 0;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #666;
+}
+
+.stat-value {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ff6b6b;
+  background: #fff5f5;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.countdown-motivation {
+  margin-top: auto;  /* 推到底部 */
+  padding: 12px 12px 12px 8px;  /* 左内边距减少，文字向左偏移 */
+  background: linear-gradient(135deg, #fff5f5 0%, #fff0f0 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #ff6b6b;
+  border-left: 3px solid #ff6b6b;
+}
+
+.motivation-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.motivation-text {
+  font-size: 11px;
+  color: #ff6b6b;
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* 快捷功能样式 */
+.quick-functions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.function-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid #f0f0f0;
+}
+
+.function-item:hover {
+  background: #1e88e5;
+  border-color: #1e88e5;
+  transform: translateX(2px);
+}
+
+.function-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.function-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  transition: color 0.2s;
+}
+
+.function-desc {
+  font-size: 12px;
+  color: #999;
+  transition: color 0.2s;
+}
+
+.function-item:hover .function-name,
+.function-item:hover .function-desc {
+  color: white;
+}
+
+.function-arrow {
+  font-size: 16px;
+  color: #999;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.function-item:hover .function-arrow {
+  color: white;
+  transform: translateX(4px);
+}
+
+
+ /* 高考倒计时样式 */
+ .countdown-header {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   margin-bottom: 20px;
+ }
+
+ .countdown-content {
+   display: flex;
+   align-items: center;
+   gap: 16px;
+   margin-bottom: 20px;
+ }
+
+ .countdown-days {
+   display: flex;
+   align-items: baseline;
+   gap: 4px;
+ }
+
+ .days-number {
+   font-size: 32px;
+   font-weight: 700;
+   color: #ff6b6b;
+   line-height: 1;
+ }
+
+ .days-label {
+   font-size: 14px;
+   color: #999;
+   font-weight: 500;
+ }
+
+ .countdown-info {
+   flex: 1;
+ }
+
+ .countdown-date {
+   font-size: 12px;
+   color: #666;
+   margin: 0 0 4px 0;
+   font-weight: 500;
+ }
+
+ .countdown-desc {
+   font-size: 11px;
+   color: #999;
+   margin: 0;
+ }
+
+ .countdown-progress {
+   margin-top: 16px;
+ }
+
+ .progress-bar {
+   width: 100%;
+   height: 6px;
+   background: #f0f0f0;
+   border-radius: 3px;
+   overflow: hidden;
+   margin-bottom: 8px;
+ }
+
+ .progress-fill {
+   height: 100%;
+   background: linear-gradient(90deg, #ff6b6b 0%, #ff8e8e 100%);
+   border-radius: 3px;
+   transition: width 0.3s ease;
+ }
+
+ .progress-text {
+   font-size: 10px;
+   color: #999;
+   text-align: center;
+ }
+
+ .countdown-stats {
+   margin-top: auto;
+   padding-top: 20px;
+   border-top: 1px solid #f0f0f0;
+ }
+
+ .stat-item {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   margin-bottom: 10px;
+ }
+
+ .stat-label {
+   font-size: 11px;
+   color: #666;
+ }
+
+ .stat-value {
+   font-size: 11px;
+   font-weight: 600;
+   color: #ff6b6b;
+   background: #fff5f5;
+   padding: 2px 6px;
+   border-radius: 3px;
+ }
+
+ .countdown-motivation {
+   margin-top: 16px;
+   padding: 14px 14px 14px 10px;  /* 左内边距减少，文字向左偏移 */
+   background: linear-gradient(135deg, #fff5f5 0%, #fff0f0 100%);
+   border-radius: 8px;
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   border: 1px solid #ff6b6b;
+   border-left: 3px solid #ff6b6b;
+ }
+
+ .motivation-icon {
+   font-size: 16px;
+   flex-shrink: 0;
+ }
+
+ .motivation-text {
+  font-size: 11px;
+  color: #ff6b6b;
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+ .carousel-main {
+   position: relative;
+ }
+
+.carousel {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12);
+  width: 100%;
+  height: 100%;
+}
+
+.carousel-item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.carousel-item.active {
+  position: relative;
+  opacity: 1;
+  visibility: visible;
+}
+
+.slide-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 80px;
+  color: #f0f0f0;
+  min-height: 380px;
+  width: 100%;
+  box-sizing: border-box;
+  transition: background 0.4s ease;
+  text-align: center;
+}
+
+.slide-text {
+  max-width: 680px;
+}
+
+.slide-badge {
+  display: inline-block;
+  padding: 8px 20px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 24px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #ebe8f1;
+  letter-spacing: 0.5px;
+}
+
+.slide-title {
+  font-size: 40px;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  margin: 0 0 24px 0;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+
+.slide-desc {
+  font-size: 16px;
+  color: #e8e6f3;
+  line-height: 1.6;
+  margin: 0 0 40px 0;
+  opacity: 0.95;
+  max-width: 520px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.slide-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
+  padding: 16px 40px;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 6px 16px rgba(30, 136, 229, 0.4);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  font-size: 16px;
+  letter-spacing: 0.5px;
+}
+
+.slide-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 10px 24px rgba(30, 136, 229, 0.6);
+  transform: translateY(-4px);
+}
+
+
+
+.carousel-controls {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0 0;
+}
+
+.control-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  color: #1e88e5;
+  font-size: 22px;
+  border: none;
+  box-shadow: 0 4px 12px rgba(102,126,234,0.25);
+  transition: background 0.3s ease, transform 0.2s ease;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.control-btn:hover {
+  background: rgba(255,255,255,0.35);
+  color: #1565c0;
+  transform: scale(1.1);
+}
+
+.carousel-dots {
+  display: flex;
+  gap: 10px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ccc;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.dot.active {
+  background: #1976d2;
+  width: 30px;
+  border-radius: 8px;
+}
+
+.dot:hover {
+  background: #999;
+}
+
+/* ===== 热门院校 ===== */
+.schools-section {
+  padding: 48px 0;
+  background: white;
+  margin-top: 16px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  gap: 24px;
+}
+
+.section-title-group {
+  flex: 1;
+}
+
+.section-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+}
+
+.section-subtitle {
+  font-size: 14px;
+  color: #999;
+  margin: 0;
+}
+
+.section-controls {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.filter-tab {
+  padding: 6px 14px;
+  background: #f5f5f5;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-tab:hover,
+.filter-tab.active {
+  background: #1e88e5;
+  color: white;
+  border-color: #1e88e5;
+}
+
+.more-link {
+  color: #1e88e5;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s;
+  white-space: nowrap;
+}
+
+.more-link:hover {
+  color: #64b5f6;
+}
+
+.schools-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.school-card {
+  background: white;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.school-card:hover {
+  border-color: #1e88e5;
+  box-shadow: 0 6px 16px rgba(30, 136, 229, 0.15);
+  transform: translateY(-3px);
+}
+
+.school-logo-wrapper {
+  flex-shrink: 0;
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 10px;
+  padding: 6px;
+}
+
+.school-logo {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 50%;
+  font-size: 45px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.school-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.school-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.school-location {
+  font-size: 11px;
+  color: #999;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.school-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+  margin: 0;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 70vw;
+}
+
+.school-tags .tag {
+  padding: 3px 7px;
+  background: #f5f5f5;
+  border-radius: 3px;
+  font-size: 10px;
+  color: #666;
+  font-weight: 500;
+}
+
+.school-tags .formatted-tags {
+  padding: 4px 12px;
+  background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+  border-radius: 6px;
+  font-size: 12px;
+  color: #555;
+  font-weight: 500;
+  white-space: nowrap;
+  margin: 0; /* 确保左右边距相等 */
+}
+
+.school-tags .tag.985 {
+  background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%);
+  color: #c2185b;
+}
+
+.school-tags .tag.211 {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  color: #1565c0;
+}
+
+.school-footer {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  padding-top: 6px;
+  margin-top: 4px;
+  border-top: 1px solid #f0f0f0;
+  width: fit-content;
+  max-width: 100%;
+}
+
+
+.type-label {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.view-link {
+  font-size: 12px;
+  color: #1e88e5;
+  font-weight: 500;
+  transition: color 0.2s;
+  white-space: nowrap;
+}
+
+.school-card:hover .view-link {
+  color: #64b5f6;
+}
+
+/* ===== 热门专业 ===== */
+.majors-section {
+  padding: 48px 0;
+  background: #fafbfc;
+  margin-top: 16px;
+}
+
+.majors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.major-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid #e8e8e8;
+  position: relative;
+  overflow: hidden;
+}
+
+.major-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.2s;
+}
+
+.major-card:hover {
+  border-color: #f5576c;
+  box-shadow: 0 8px 24px rgba(245, 87, 108, 0.12);
+  transform: translateY(-4px);
+}
+
+.major-card:hover::before {
+  transform: scaleX(1);
+}
+
+.major-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.major-icon {
+  font-size: 36px;
+}
+
+.major-badge {
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.major-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+  line-height: 1.4;
+}
+
+.major-desc {
+  font-size: 13px;
+  color: #999;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.major-stats {
+  display: flex;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.major-stat {
+  flex: 1;
+  text-align: center;
+}
+
+.major-stat .label {
+  display: block;
+  font-size: 10px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.major-stat .value {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.hero-subtitle {
-  font-size: 18px;
-  margin-bottom: 32px;
-  opacity: 0.9;
+
+/* ===== 用户评价 ===== */
+.testimonial-section {
+  padding: 48px 0;
+  background: #fafbfc;
+  margin-top: 16px;
 }
 
-.search-box {
-  margin-bottom: 24px;
+.testimonial-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
 }
 
-.search-container {
-  display: flex;
-  max-width: 500px;
-  margin: 0 auto;
-  background: rgba(255, 255, 255, 0.1);
+.testimonial-card {
+  background: white;
   border-radius: 12px;
-  overflow: hidden;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
+  padding: 24px;
+  border: 1px solid #e8e8e8;
+  transition: all 0.2s;
 }
 
-.search-container:focus-within {
-  background: rgba(255, 255, 255, 0.15);
-  transform: scale(1.02);
+.testimonial-card:hover {
+  border-color: #1e88e5;
+  box-shadow: 0 8px 24px rgba(30, 136, 229, 0.1);
+  transform: translateY(-4px);
 }
 
-.search-input {
-  flex: 1;
-  padding: 16px 20px;
-  border: none;
-  background: transparent;
-  color: white;
-  font-size: 16px;
-  outline: none;
-}
-
-.search-input::placeholder {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.search-btn {
-  padding: 16px 24px;
-  background: linear-gradient(135deg, #ffd700, #ff6b6b);
-  border: none;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.testimonial-header {
   display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.search-btn:hover {
-  transform: scale(1.05);
-}
-
-.quick-tags {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   gap: 12px;
-  flex-wrap: wrap;
-}
-
-.tag-label {
-  font-size: 14px;
-  opacity: 0.8;
-}
-
-.quick-tags .tag {
-  color: rgba(255, 255, 255, 0.8);
-  text-decoration: none;
-  font-size: 14px;
-  transition: color 0.3s ease;
-}
-
-.quick-tags .tag:hover {
-  color: white;
-}
-
-/* 数据概览 */
-.stats-section {
-  padding: 80px 0;
-}
-
-.section-header {
-  text-align: center;
-  margin-bottom: 48px;
-  opacity: 0;
-  transform: translateY(30px);
-  transition: all 0.8s ease;
-}
-
-.section-header.animated {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.section-title {
-  font-size: 32px;
-  font-weight: 600;
-  color: #1e293b;
   margin-bottom: 12px;
 }
 
-.section-desc {
-  font-size: 16px;
-  color: #64748b;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 24px;
-}
-
-.stat-card {
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.stat-card.animated {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.stat-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
-}
-
-.card-glow {
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-  transition: left 0.5s ease;
-}
-
-.stat-card:hover .card-glow {
-  left: 100%;
-}
-
-.stat-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 12px;
+.testimonial-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-}
-
-.stat-icon .icon {
   font-size: 24px;
-  position: relative;
-  z-index: 2;
+  flex-shrink: 0;
 }
 
-.icon-glow {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  opacity: 0;
-  transition: all 0.3s ease;
-}
-
-.stat-card:hover .icon-glow {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1.2);
-}
-
-.stat-content {
+.testimonial-info {
   flex: 1;
 }
 
-.stat-value {
-  font-size: 32px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 4px;
-}
-
-.stat-label {
+.testimonial-name {
   font-size: 14px;
-  color: #64748b;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 2px 0;
 }
 
-.stat-trend {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+.testimonial-role {
   font-size: 12px;
-  font-weight: 600;
+  color: #999;
+  margin: 0;
 }
 
-.stat-trend.up {
-  color: #10b981;
+.testimonial-rating {
+  margin-bottom: 12px;
 }
 
-.stat-trend.down {
-  color: #ef4444;
-}
-
-.stat-trend.stable {
-  color: #6b7280;
-}
-
-/* 图表区域 */
-.charts-section {
-  padding: 80px 0;
-  background: #f8fafc;
-}
-
-.charts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 24px;
-}
-
-.chart-card {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-  opacity: 0;
-  transform: translateY(30px);
-}
-
-.chart-card.animated {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.chart-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
-}
-
-.chart-card.full-width {
-  grid-column: 1 / -1;
-}
-
-.chart-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.chart-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e293b;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.chart-icon {
-  font-size: 20px;
-}
-
-.btn-more {
-  background: none;
-  border: none;
-  color: #3498db;
-  font-weight: 500;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  transition: all 0.3s ease;
-}
-
-.btn-more:hover {
-  gap: 8px;
-}
-
-.chart-controls {
-  display: flex;
-  gap: 12px;
-}
-
-.filter-select {
-  padding: 8px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  background: white;
+.star {
+  color: #ffc107;
   font-size: 14px;
-  color: #64748b;
+  margin-right: 2px;
 }
 
-.chart-container {
-  height: 300px;
+.testimonial-content {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
 }
 
-.chart {
-  width: 100%;
-  height: 100%;
+/* ===== 常见问题 ===== */
+.faq-section {
+  padding: 48px 0;
+  background: white;
+  margin-top: 16px;
 }
 
-.rank-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.faq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 16px;
 }
 
-.rank-item {
+.faq-item {
+  background: white;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.2s;
+}
+
+.faq-item:hover {
+  border-color: #1e88e5;
+  box-shadow: 0 4px 12px rgba(30, 136, 229, 0.1);
+}
+
+.faq-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  background: #f8fafc;
-  border-radius: 12px;
-  transition: all 0.3s ease;
-  position: relative;
   cursor: pointer;
+  background: #f8f9fa;
+  transition: background 0.2s;
+}
+
+.faq-item:hover .faq-header {
+  background: #f0f2f5;
+}
+
+.faq-question {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+  flex: 1;
+}
+
+.faq-toggle {
+  font-size: 20px;
+  color: #1e88e5;
+  font-weight: 300;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.faq-toggle.active {
+  transform: rotate(45deg);
+}
+
+.faq-answer {
+  padding: 16px;
+  background: white;
+  border-top: 1px solid #e8e8e8;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}
+
+.faq-answer p {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ===== CTA 区域 ===== */
+.cta-section {
+  padding: 60px 0;
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  margin-top: 40px;
+  position: relative;
   overflow: hidden;
 }
 
-.rank-item:hover {
-  background: #f1f5f9;
-}
-
-.rank-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.rank-number {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 600;
-  color: white;
-}
-
-.rank-1 {
-  background: #ff6b6b;
-}
-
-.rank-2 {
-  background: #4facfe;
-}
-
-.rank-3 {
-  background: #a8e6cf;
-}
-
-.rank-other {
-  background: #94a3b8;
-}
-
-.rank-name {
-  font-weight: 500;
-  color: #1e293b;
-}
-
-.rank-score {
-  text-align: right;
-}
-
-.score {
-  display: block;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.score-label {
-  font-size: 12px;
-  color: #94a3b8;
-}
-
-.rank-hover {
+.cta-section::before {
+  content: '';
   position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #3498db, #9b59b6);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  transition: left 0.3s ease;
+  top: -40%;
+  right: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
 }
 
-.rank-item:hover .rank-hover {
-  left: 0;
-}
-
-.empty {
-  height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.empty-content {
+.cta-content {
+  position: relative;
+  z-index: 1;
   text-align: center;
-  color: #94a3b8;
 }
 
-.empty-icon {
-  font-size: 48px;
-  display: block;
-  margin-bottom: 12px;
-}
-
-.empty-text {
-  font-size: 14px;
-}
-
-/* 底部 */
-.footer {
-  background: #1e293b;
+.cta-title {
+  font-size: 40px;
+  font-weight: 700;
   color: white;
-  padding: 60px 0 20px;
+  margin: 0 0 12px 0;
+}
+
+.cta-subtitle {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 28px 0;
+}
+
+.cta-btn {
+  padding: 14px 40px;
+  background: white;
+  color: #1e88e5;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* ===== 底部 ===== */
+.footer {
+  background: #1a1a1a;
+  color: #999;
+  padding: 48px 0 20px;
+  margin-top: 40px;
 }
 
 .footer-content {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 40px;
   margin-bottom: 40px;
 }
 
-.footer-section h4 {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 16px;
-}
-
-.footer-section p {
-  color: #94a3b8;
-  line-height: 1.6;
-}
-
-.social-links {
+.footer-col {
   display: flex;
-  gap: 16px;
+  flex-direction: column;
+}
+
+.footer-title {
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+}
+
+.footer-desc {
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0 0 16px 0;
+}
+
+.footer-social {
+  display: flex;
+  gap: 12px;
 }
 
 .social-link {
-  color: #94a3b8;
+  color: #999;
   text-decoration: none;
-  transition: color 0.3s ease;
+  font-size: 13px;
+  transition: color 0.2s;
 }
 
 .social-link:hover {
   color: white;
 }
 
+.footer-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer-links a {
+  color: #999;
+  text-decoration: none;
+  font-size: 13px;
+  transition: color 0.2s;
+}
+
+.footer-links a:hover {
+  color: white;
+}
+
+.footer-contact {
+  font-size: 13px;
+  line-height: 1.8;
+  margin: 0;
+}
+
+.footer-contact span {
+  display: block;
+}
+
 .footer-bottom {
   text-align: center;
   padding-top: 20px;
-  border-top: 1px solid #334155;
+  border-top: 1px solid #333;
 }
 
-.footer-bottom p {
-  color: #94a3b8;
-  font-size: 14px;
+.footer-copyright {
+  font-size: 12px;
+  color: #666;
+  margin: 0;
 }
 
-/* 回到顶部按钮 */
+.footer-copyright a {
+  color: #999;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footer-copyright a:hover {
+  color: white;
+}
+
+/* ===== 回到顶部 ===== */
 .back-to-top {
   position: fixed;
-  bottom: 30px;
-  right: 30px;
-  width: 50px;
-  height: 50px;
-  background: linear-gradient(135deg, #3498db, #9b59b6);
+  bottom: 24px;
+  right: 24px;
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
   border: none;
   border-radius: 50%;
   color: white;
-  font-size: 20px;
+  font-size: 18px;
   cursor: pointer;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3);
+  font-weight: 600;
 }
 
 .back-to-top.visible {
@@ -2624,51 +2207,677 @@ function renderPlanChart(data) {
 
 .back-to-top:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4);
+  box-shadow: 0 8px 20px rgba(30, 136, 229, 0.4);
 }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
+/* ===== 响应式设计 ===== */
+@media (max-width: 1024px) {
   .hero-title {
+    font-size: 36px;
+  }
+
+  .slide-content {
+    padding: 40px 32px;
+    min-height: 280px;
+  }
+
+  .slide-title {
     font-size: 32px;
   }
-  
-  .nav {
+
+  .slide-image {
+    font-size: 100px;
+  }
+
+  .trend-content {
+    grid-template-columns: 1fr;
+  }
+
+  .news-container {
+    grid-template-columns: 1fr;
+  }
+
+  .news-list {
+    grid-column: auto;
+  }
+
+  .faq-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .section-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 768px) {
+  .header .container {
+    height: auto;
+    padding: 12px 16px;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .header-left {
+    width: 100%;
     gap: 16px;
   }
-  
-  .charts-grid {
-    grid-template-columns: 1fr;
+
+  .logo-text {
+    font-size: 17px;
   }
-  
-  .chart-card.full-width {
-    grid-column: 1;
+
+  .nav {
+    gap: 16px;
+    font-size: 14px;
   }
-  
-  .stats-grid {
-    grid-template-columns: 1fr;
+
+  .header-right {
+    width: 100%;
+    gap: 8px;
   }
-  
-  .recommend-grid,
-  .news-grid,
-  .guide-grid,
-  .policy-grid,
-  .testimonials-grid,
-  .features-grid {
-    grid-template-columns: 1fr;
+
+  .search-mini {
+    flex: 1;
   }
-  
+
+  .btn {
+    flex: 1;
+    padding: 8px 14px;
+    font-size: 14px;
+  }
+
+  .hero-section {
+    padding: 40px 0;
+  }
+
+  .hero-title {
+    font-size: 28px;
+  }
+
+  .hero-subtitle {
+    font-size: 15px;
+    margin-bottom: 20px;
+  }
+
   .search-container {
     flex-direction: column;
   }
-  
-  .search-input {
-    padding: 12px 16px;
-  }
-  
+
   .search-btn {
-    padding: 12px 16px;
-    justify-content: center;
+    width: 100%;
+  }
+
+  .quick-nav-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .quick-nav-item {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 140px;
+  }
+
+  .quick-nav-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stat-number {
+    font-size: 28px;
+  }
+
+  .slide-content {
+    flex-direction: column;
+    padding: 32px 24px;
+    min-height: 240px;
+  }
+
+  .slide-title {
+    font-size: 24px;
+  }
+
+  .slide-desc {
+    font-size: 14px;
+  }
+
+  .slide-image {
+    font-size: 80px;
+    margin-top: 16px;
+  }
+
+  .schools-grid,
+  .majors-grid,
+  .guide-grid,
+  .testimonial-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-title {
+    font-size: 22px;
+  }
+
+  .cta-title {
+    font-size: 28px;
+  }
+
+  .footer-content {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 12px;
+  }
+
+  .header .container {
+    padding: 8px 12px;
+  }
+
+  .logo-text {
+    font-size: 15px;
+  }
+
+  .nav {
+    gap: 12px;
+    font-size: 13px;
+  }
+
+  .search-mini {
+    display: none;
+  }
+
+  .btn {
+    padding: 7px 13px;
+    font-size: 13px;
+  }
+
+  .hero-section {
+    padding: 24px 0;
+  }
+
+  .hero-title {
+    font-size: 22px;
+  }
+
+  .hero-subtitle {
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+
+  .search-input {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .search-btn {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .suggestion-tag {
+    font-size: 12px;
+    padding: 3px 10px;
+  }
+
+  .quick-nav-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .quick-nav-item {
+    flex: 1 1 auto;
+    min-width: auto;
+  }
+
+  .quick-nav-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nav-item-title {
+    font-size: 14px;
+  }
+
+  .nav-item-desc {
+    font-size: 11px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-number {
+    font-size: 24px;
+  }
+
+  .stat-label {
+    font-size: 14px;
+  }
+
+  .carousel-section {
+    padding: 16px 0;
+  }
+
+  .carousel-layout {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .side-module {
+    order: 2;
+    min-height: auto;
+  }
+
+  .carousel-main {
+    order: 1;
+  }
+
+  .carousel-item {
+    position: relative;
+  }
+
+  .module-card {
+    padding: 16px;
+    min-height: auto;
+  }
+
+  .module-icon {
+    font-size: 24px;
+  }
+
+  .module-title {
+    font-size: 14px;
+  }
+
+  .module-desc {
+    font-size: 11px;
+  }
+
+  .stat-value {
+    font-size: 12px;
+  }
+
+  .hot-text {
+    font-size: 11px;
+  }
+
+  .slide-content {
+    padding: 24px 16px;
+    min-height: 200px;
+  }
+
+  .slide-badge {
+    font-size: 11px;
+    padding: 4px 10px;
+    margin-bottom: 12px;
+  }
+
+  .slide-title {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+
+  .slide-desc {
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+
+  .slide-btn {
+    padding: 8px 20px;
+    font-size: 12px;
+  }
+
+  .slide-image {
+    font-size: 60px;
+    margin-top: 12px;
+  }
+
+  .carousel-controls {
+    gap: 12px;
+    padding: 12px 0;
+  }
+
+  .control-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+  }
+
+  .dot.active {
+    width: 18px;
+  }
+
+  .schools-section,
+  .majors-section,
+  .trend-section,
+  .guide-section,
+  .news-section,
+  .testimonial-section,
+  .faq-section {
+    padding: 32px 0;
+  }
+
+  .section-title {
+    font-size: 18px;
+  }
+
+  .section-subtitle {
+    font-size: 12px;
+  }
+
+  .section-header {
+    margin-bottom: 20px;
+  }
+
+  .filter-tabs {
+    gap: 6px;
+  }
+
+  .filter-tab {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+
+  .more-link {
+    font-size: 12px;
+  }
+
+  .school-card,
+  .major-card,
+  .guide-card,
+  .testimonial-card {
+    padding: 16px;
+  }
+
+  .school-rank {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .school-header {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .school-logo {
+    width: 55px;
+    height: 55px;
+    font-size: 28px;
+  }
+
+  .school-name {
+    font-size: 14px;
+  }
+
+  .school-location {
+    font-size: 11px;
+  }
+
+  .school-stats {
+    gap: 12px;
+    padding: 8px 0;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-size: 14px;
+  }
+
+  .stat-name {
+    font-size: 10px;
+  }
+
+  .action-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .major-icon {
+    font-size: 32px;
+  }
+
+  .major-badge {
+    padding: 3px 8px;
+    font-size: 10px;
+  }
+
+  .major-name {
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+
+  .major-desc {
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+
+  .major-stats {
+    gap: 12px;
+    padding-top: 12px;
+  }
+
+  .major-stat .label {
+    font-size: 10px;
+  }
+
+  .major-stat .value {
+    font-size: 13px;
+  }
+
+  .trend-chart {
+    padding: 20px;
+  }
+
+  .chart-bars {
+    height: 150px;
+    gap: 8px;
+  }
+
+  .chart-labels {
+    font-size: 11px;
+  }
+
+  .trend-insights {
+    gap: 12px;
+  }
+
+  .insights-title {
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+
+  .insight-item {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .insight-icon {
+    font-size: 20px;
+  }
+
+  .insight-content .insight-title {
+    font-size: 13px;
+  }
+
+  .insight-content .insight-desc {
+    font-size: 11px;
+  }
+
+  .guide-number {
+    font-size: 28px;
+  }
+
+  .guide-title {
+    font-size: 16px;
+  }
+
+  .guide-desc {
+    font-size: 12px;
+  }
+
+  .featured-item {
+    padding: 20px;
+    min-height: 240px;
+  }
+
+  .featured-image {
+    font-size: 48px;
+    margin-bottom: 12px;
+  }
+
+  .featured-title {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+
+  .featured-desc {
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+
+  .news-item {
+    padding: 12px;
+  }
+
+  .news-item-title {
+    font-size: 13px;
+  }
+
+  .news-item-tag {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+
+  .news-item-desc {
+    font-size: 11px;
+    margin-bottom: 6px;
+  }
+
+  .news-item-meta {
+    font-size: 10px;
+  }
+
+  .testimonial-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+
+  .testimonial-name {
+    font-size: 13px;
+  }
+
+  .testimonial-role {
+    font-size: 11px;
+  }
+
+  .testimonial-content {
+    font-size: 12px;
+  }
+
+  .faq-header {
+    padding: 12px;
+  }
+
+  .faq-question {
+    font-size: 13px;
+  }
+
+  .faq-answer {
+    padding: 12px;
+  }
+
+  .faq-answer p {
+    font-size: 12px;
+  }
+
+  .cta-section {
+    padding: 40px 0;
+  }
+
+  .cta-title {
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+
+  .cta-subtitle {
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+
+  .cta-btn {
+    padding: 10px 28px;
+    font-size: 13px;
+  }
+
+  .footer {
+    padding: 32px 0 12px;
+  }
+
+  .footer-content {
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  .footer-title {
+    font-size: 14px;
+    margin-bottom: 12px;
+    margin-bottom: 12px;
+  }
+
+  .footer-desc {
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+
+  .footer-social {
+    gap: 10px;
+  }
+
+  .social-link {
+    font-size: 12px;
+  }
+
+  .footer-links {
+    gap: 6px;
+  }
+
+  .footer-links a {
+    font-size: 12px;
+  }
+
+  .footer-contact {
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .footer-copyright {
+    font-size: 11px;
+  }
+
+  .back-to-top {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+    bottom: 16px;
+    right: 16px;
   }
 }
 </style>

@@ -8,7 +8,8 @@ const routes = [
   {
     path: '/',
     name: 'Dashboard',
-    component: Dashboard
+    component: Dashboard,
+    meta: { requiresAuth: true }
   },
   // 用户认证路由
   {
@@ -98,7 +99,7 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !userToken) {
     next('/login')
   } else if (to.meta.requiresGuest && userToken) {
-    next('/')
+    next('/dashboard')
   } else {
     next()
   }
