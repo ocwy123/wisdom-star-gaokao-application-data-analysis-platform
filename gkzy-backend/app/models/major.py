@@ -1,9 +1,9 @@
 from app.extensions import db
 from datetime import datetime
 
-
 class Major(db.Model):
     __tablename__ = 'edu_major'
+    __table_args__ = {'extend_existing': True}   # 添加这一行
 
     id = db.Column(db.BigInteger, primary_key=True)
     name = db.Column(db.String(50), nullable=False)

@@ -685,3 +685,118 @@ def validate_config(current_admin):
         'success': len(errors) == 0,
         'errors': errors
     })
+# ==================== 教育相关模型 ====================
+
+class EduSchool(db.Model):
+    """学校信息表"""
+    __tablename__ = 'edu_school'
+    
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(50), nullable=False)
+    code = db.Column(db.String(50), nullable=False)
+    province = db.Column(db.String(20), nullable=False)
+    city = db.Column(db.String(20), nullable=False)
+    type = db.Column(db.String(20), nullable=False)
+    is_985 = db.Column(db.Boolean, nullable=False)
+    is_211 = db.Column(db.Boolean, nullable=False)
+    is_double_first = db.Column(db.Boolean, nullable=False)
+    founded_year = db.Column(db.Integer)
+    description = db.Column(db.Text)
+    website = db.Column(db.String(255))
+    logo = db.Column(db.String(255))
+    phd_count = db.Column(db.Integer)
+    master_count = db.Column(db.Integer)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+
+class EduMajor(db.Model):
+    """专业信息表"""
+    __tablename__ = 'edu_major'
+    
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(50), nullable=False)
+    code = db.Column(db.String(50), nullable=False)
+    duration = db.Column(db.Integer, nullable=False)
+    degree = db.Column(db.String(50))
+    subjects = db.Column(db.Text)
+    description = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+
+class EduSchoolMajor(db.Model):
+    """学校专业关联表"""
+    __tablename__ = 'edu_school_major'
+    
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    school_id = db.Column(db.BigInteger, db.ForeignKey('edu_school.id'), nullable=False)
+    major_id = db.Column(db.BigInteger, db.ForeignKey('edu_major.id'), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+
+class EduAdmRecord(db.Model):
+    """招生记录表"""
+    __tablename__ = 'edu_adm_record'
+    
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    school_id = db.Column(db.BigInteger, db.ForeignKey('edu_school.id'), nullable=False)
+    major_id = db.Column(db.BigInteger, db.ForeignKey('edu_major.id'), nullable=False)
+    province = db.Column(db.String(50), nullable=False)
+    year = db.Column(db.Integer, nullable=False)
+    plan_count = db.Column(db.Integer, nullable=False)
+    subject = db.Column(db.String(50), nullable=False)
+    batch = db.Column(db.String(50), nullable=False)
+    major_group = db.Column(db.String(20), nullable=False)
+    min_score = db.Column(db.Integer, nullable=False)
+    min_rank = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+
+class AnaSchoolHeat(db.Model):
+    """学校热度表"""
+    __tablename__ = 'ana_school_heat'
+    
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    school_id = db.Column(db.BigInteger, db.ForeignKey('edu_school.id'), nullable=False)
+    search_count = db.Column(db.Integer, nullable=False)
+    favorite_count = db.Column(db.Integer, nullable=False)
+    view_count = db.Column(db.Integer, nullable=False)
+    heat_score = db.Column(db.Numeric(10,2), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+
+class AnaMajorEmployment(db.Model):
+    """专业就业表"""
+    __tablename__ = 'ana_major_employment'
+    
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    major_id = db.Column(db.BigInteger, db.ForeignKey('edu_major.id'), nullable=False)
+    year = db.Column(db.Integer, nullable=False)
+    avg_salary = db.Column(db.Integer)
+    industry_distribution = db.Column(db.Text)
+    post_distribution = db.Column(db.Text)
+    region_distribution = db.Column(db.Text)
+    prospect = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+
+class AnaScoreSegment(db.Model):
+    """分数段表"""
+    __tablename__ = 'ana_score_segment'
+    
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    province = db.Column(db.String(20), nullable=False)
+    year = db.Column(db.Integer, nullable=False)
+    subject = db.Column(db.String(20), nullable=False)
+    batch = db.Column(db.String(50))
+    score = db.Column(db.Integer, nullable=False)
+    rank = db.Column(db.Integer, nullable=False)
+    same_score_count = db.Column(db.Integer, nullable=False, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)

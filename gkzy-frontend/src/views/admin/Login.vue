@@ -44,7 +44,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import request from '../../../utils/request'
+import request from '../../utils/request'
 
 const router = useRouter()
 const loading = ref(false)

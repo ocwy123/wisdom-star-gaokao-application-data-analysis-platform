@@ -4,6 +4,7 @@ from datetime import datetime
 
 class MajorEmployment(db.Model):
     __tablename__ = 'ana_major_employment'
+    __table_args__ = {'extend_existing': True}   # 添加这一行
 
     id = db.Column(db.BigInteger, primary_key=True)
     major_id = db.Column(db.BigInteger, db.ForeignKey('edu_major.id'), nullable=False)

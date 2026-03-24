@@ -1,1 +1,27 @@
- 
+mysql:
+  host: 192.168.54.241
+  port: 3306
+  user: root
+  password: root
+  database: gkzy_mysql
+
+hive:
+  host: 192.168.54.241
+  port: 10000
+  user: ''  # 无用户名密码
+  database: gkzy_hive
+
+crawler:
+  user_agents:
+    - "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+  download_delay: 2
+  concurrent_requests: 8
+
+spark:
+  app_name: GKZY_ETL
+  master: local[*]  # 虚拟机单机模式，可根据资源调整
+  executor_memory: 2g
+
+etl:
+  input_path: ./data  # 原始数据存放目录
+  log_table: sys_etl_log          # 日志表名（MySQL）
