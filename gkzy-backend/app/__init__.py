@@ -37,7 +37,7 @@ from app.routes.heat import heat_bp
 def create_app():
     app = Flask(__name__)
     CORS(app, origins=['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174'], supports_credentials=True)
-    # init_cors(app)
+    init_cors(app)
     
     # MySQL 配置（远程）
     DB_USERNAME = 'root'

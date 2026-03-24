@@ -5,10 +5,7 @@ from datetime import datetime
 from functools import wraps
 from app.extensions import db
 import json
-from app.services.admin_auth import (
-    EduSchool, EduMajor, EduSchoolMajor, EduAdmRecord,
-    AnaSchoolHeat, AnaMajorEmployment, AnaScoreSegment
-)
+from app.models import School, Major, SchoolMajor, AdmRecord, SchoolHeat, MajorEmployment, ScoreSegment
 import json
 from datetime import datetime
 analysis_bp = Blueprint('analysis', __name__, url_prefix='/api/analysis')
@@ -97,35 +94,35 @@ def deep_search():
 
 def search_schools(keyword, filters):
     """搜索学校"""
-    from app.services.admin_auth import EduSchool
+    from app.services.admin_auth import School
     
-    query = EduSchool.query
+    query = School.query
     
     # 关键词搜索
     if keyword:
         query = query.filter(
             or_(
-                EduSchool.name.contains(keyword),
-                EduSchool.code.contains(keyword),
-                EduSchool.city.contains(keyword)
+                School.name.contains(keyword),
+                School.code.contains(keyword),
+                School.city.contains(keyword)
             )
         )
     
     # 筛选条件
     if filters.get('province'):
-        query = query.filter(EduSchool.province == filters['province'])
+        query = query.filter(School.province == filters['province'])
     
     if filters.get('city'):
-        query = query.filter(EduSchool.city.contains(filters['city']))
+        query = query.filter(School.city.contains(filters['city']))
     
     if filters.get('school_type'):
-        query = query.filter(EduSchool.type == filters['school_type'])
+        query = query.filter(School.type == filters['school_type'])
     
     if 'is_985' in filters:
-        query = query.filter(EduSchool.is_985 == filters['is_985'])
+        query = query.filter(School.is_985 == filters['is_985'])
     
     if 'is_211' in filters:
-        query = query.filter(EduSchool.is_211 == filters['is_211'])
+        query = query.filter(School.is_211 == filters['is_211'])
     
     schools = query.limit(50).all()
     
@@ -157,16 +154,16 @@ def search_schools(keyword, filters):
 
 def search_majors(keyword, filters):
     """搜索专业"""
-    from app.services.admin_auth import EduMajor
+    from app.services.admin_auth import Major
     
-    query = EduMajor.query
+    query = Major.query
     
     if keyword:
         query = query.filter(
             or_(
-                EduMajor.name.contains(keyword),
-                EduMajor.code.contains(keyword),
-                EduMajor.degree.contains(keyword)
+                Major.name.contains(keyword),
+                Major.code.contains(keyword),
+                Major.degree.contains(keyword)
             )
         )
     
@@ -196,26 +193,26 @@ def search_majors(keyword, filters):
 
 def search_employment(keyword, filters):
     """搜索就业数据"""
-    from app.services.admin_auth import AnaMajorEmployment, EduMajor
+    from app.services.admin_auth import MajorEmployment, Major
     
-    query = AnaMajorEmployment.query.join(
-        EduMajor, AnaMajorEmployment.major_id == EduMajor.id
+    query = MajorEmployment.query.join(
+        Major, MajorEmployment.major_id == Major.id
     )
     
     if keyword:
-        query = query.filter(EduMajor.name.contains(keyword))
+        query = query.filter(Major.name.contains(keyword))
     
     if filters.get('year'):
-        query = query.filter(AnaMajorEmployment.year == filters['year'])
+        query = query.filter(MajorEmployment.year == filters['year'])
     
     if filters.get('min_salary'):
-        query = query.filter(AnaMajorEmployment.avg_salary >= filters['min_salary'])
+        query = query.filter(MajorEmployment.avg_salary >= filters['min_salary'])
     
     employment_data = query.limit(50).all()
     
     results = []
     for emp in employment_data:
-        major = EduMajor.query.get(emp.major_id)
+        major = Major.query.get(emp.major_id)
         
         results.append({
             'id': emp.id,
@@ -234,46 +231,47 @@ def search_employment(keyword, filters):
 
 def search_admissions(keyword, filters):
     """搜索招生记录"""
-    from app.services.admin_auth import EduAdmRecord, EduSchool, EduMajor
+    from app.services.admin_auth import AdmRecord, School, Major
     
-    query = EduAdmRecord.query.join(
-        EduSchool, EduAdmRecord.school_id == EduSchool.id
-    ).join(
-        EduMajor, EduAdmRecord.major_id == EduMajor.id
+    query = AdmRecord.query.join(
+        School, AdmRecord.school_id == School.id
     )
+    # .join(
+    #     Major, AdmRecord.major_id == Major.id
+    # )
     
     if keyword:
         query = query.filter(
             or_(
-                EduSchool.name.contains(keyword),
-                EduMajor.name.contains(keyword)
+                School.name.contains(keyword),
+                Major.name.contains(keyword)
             )
         )
     
     if filters.get('province'):
-        query = query.filter(EduAdmRecord.province == filters['province'])
+        query = query.filter(AdmRecord.province == filters['province'])
     
     if filters.get('year'):
-        query = query.filter(EduAdmRecord.year == filters['year'])
+        query = query.filter(AdmRecord.year == filters['year'])
     
     if filters.get('batch'):
-        query = query.filter(EduAdmRecord.batch == filters['batch'])
+        query = query.filter(AdmRecord.batch == filters['batch'])
     
     if filters.get('subject'):
-        query = query.filter(EduAdmRecord.subject == filters['subject'])
+        query = query.filter(AdmRecord.subject == filters['subject'])
     
     if filters.get('score_range'):
         min_score, max_score = filters['score_range']
         query = query.filter(
-            EduAdmRecord.min_score.between(min_score, max_score)
+            AdmRecord.min_score.between(min_score, max_score)
         )
     
     admissions = query.limit(50).all()
     
     results = []
     for adm in admissions:
-        school = EduSchool.query.get(adm.school_id)
-        major = EduMajor.query.get(adm.major_id)
+        school = School.query.get(adm.school_id)
+        major = Major.query.get(adm.major_id)
         
         results.append({
             'id': adm.id,
@@ -296,20 +294,20 @@ def search_admissions(keyword, filters):
 
 def search_heat_data(keyword, filters):
     """搜索热度数据"""
-    from app.services.admin_auth import AnaSchoolHeat, EduSchool
+    from app.services.admin_auth import SchoolHeat, School
     
-    query = AnaSchoolHeat.query.join(
-        EduSchool, AnaSchoolHeat.school_id == EduSchool.id
+    query = SchoolHeat.query.join(
+        School, SchoolHeat.school_id == School.id
     )
     
     if keyword:
-        query = query.filter(EduSchool.name.contains(keyword))
+        query = query.filter(School.name.contains(keyword))
     
     heat_data = query.limit(50).all()
     
     results = []
     for heat in heat_data:
-        school = EduSchool.query.get(heat.school_id)
+        school = School.query.get(heat.school_id)
         
         results.append({
             'id': heat.id,
@@ -326,9 +324,9 @@ def search_heat_data(keyword, filters):
 
 def get_school_heat(school_id):
     """获取学校热度"""
-    from app.services.admin_auth import AnaSchoolHeat
+    from app.services.admin_auth import SchoolHeat
     
-    heat = AnaSchoolHeat.query.filter_by(school_id=school_id).first()
+    heat = SchoolHeat.query.filter_by(school_id=school_id).first()
     if heat:
         return {
             'heat_score': float(heat.heat_score) if heat.heat_score else 0,
@@ -340,9 +338,9 @@ def get_school_heat(school_id):
 
 def get_major_employment(major_id):
     """获取专业就业数据"""
-    from app.services.admin_auth import AnaMajorEmployment
+    from app.services.admin_auth import MajorEmployment
     
-    emp = AnaMajorEmployment.query.filter_by(major_id=major_id).first()
+    emp = MajorEmployment.query.filter_by(major_id=major_id).first()
     if emp:
         return {
             'avg_salary': emp.avg_salary,
@@ -431,7 +429,7 @@ def multi_dimension_compare():
         return jsonify({'success': False, 'message': str(e)}), 500
 def compare_schools(filters, metrics, time_range):
     """学校对比分析"""
-    from app.services.admin_auth import EduSchool, EduAdmRecord, AnaSchoolHeat
+    from app.services.admin_auth import School, AdmRecord, SchoolHeat
     
     school_ids = filters.get('school_ids', [])
     if not school_ids:
@@ -439,7 +437,7 @@ def compare_schools(filters, metrics, time_range):
     
     result = []
     for school_id in school_ids:
-        school = EduSchool.query.get(school_id)
+        school = School.query.get(school_id)
         if not school:
             continue
         
@@ -451,9 +449,9 @@ def compare_schools(filters, metrics, time_range):
         }
         
         # 获取招生数据
-        admissions = EduAdmRecord.query.filter(
-            EduAdmRecord.school_id == school_id,
-            EduAdmRecord.year.between(time_range[0], time_range[1])
+        admissions = AdmRecord.query.filter(
+            AdmRecord.school_id == school_id,
+            AdmRecord.year.between(time_range[0], time_range[1])
         ).all()
         
         if 'avg_score' in metrics:
@@ -471,7 +469,7 @@ def compare_schools(filters, metrics, time_range):
             item['data']['max_score'] = max([a.min_score for a in admissions if a.min_score]) if admissions else 0
         
         # 获取热度数据
-        heat = AnaSchoolHeat.query.filter_by(school_id=school_id).first()
+        heat = SchoolHeat.query.filter_by(school_id=school_id).first()
         if heat and 'heat_score' in metrics:
             item['data']['heat_score'] = float(heat.heat_score) if heat.heat_score else 0
         
@@ -481,7 +479,7 @@ def compare_schools(filters, metrics, time_range):
 
 def compare_majors(filters, metrics, time_range):
     """专业对比分析"""
-    from app.services.admin_auth import EduMajor, AnaMajorEmployment, EduAdmRecord
+    from app.services.admin_auth import Major, MajorEmployment, AdmRecord
     
     major_ids = filters.get('major_ids', [])
     if not major_ids:
@@ -489,7 +487,7 @@ def compare_majors(filters, metrics, time_range):
     
     result = []
     for major_id in major_ids:
-        major = EduMajor.query.get(major_id)
+        major = Major.query.get(major_id)
         if not major:
             continue
         
@@ -501,7 +499,7 @@ def compare_majors(filters, metrics, time_range):
         }
         
         # 获取就业数据
-        employment = AnaMajorEmployment.query.filter_by(major_id=major_id).first()
+        employment = MajorEmployment.query.filter_by(major_id=major_id).first()
         if employment:
             if 'avg_salary' in metrics:
                 item['data']['avg_salary'] = employment.avg_salary
@@ -509,9 +507,9 @@ def compare_majors(filters, metrics, time_range):
                 item['data']['employment_rate'] = 0  # 需要实际数据
         
         # 获取招生数据
-        admissions = EduAdmRecord.query.filter(
-            EduAdmRecord.major_id == major_id,
-            EduAdmRecord.year.between(time_range[0], time_range[1])
+        admissions = AdmRecord.query.filter(
+            # AdmRecord.major_id == major_id,
+            AdmRecord.year.between(time_range[0], time_range[1])
         ).all()
         
         if 'avg_score' in metrics:
@@ -524,25 +522,25 @@ def compare_majors(filters, metrics, time_range):
 
 def compare_by_province(filters, metrics, time_range):
     """按省份对比分析"""
-    from app.services.admin_auth import EduSchool, EduAdmRecord
+    from app.services.admin_auth import School, AdmRecord
     
     provinces = filters.get('provinces', [])
     if not provinces:
         # 获取所有省份
-        provinces = db.session.query(EduSchool.province).distinct().all()
+        provinces = db.session.query(School.province).distinct().all()
         provinces = [p[0] for p in provinces if p[0]]
     
     result = []
     for province in provinces[:10]:  # 限制数量
-        schools = EduSchool.query.filter_by(province=province).all()
+        schools = School.query.filter_by(province=province).all()
         school_ids = [s.id for s in schools]
         
         if not school_ids:
             continue
         
-        admissions = EduAdmRecord.query.filter(
-            EduAdmRecord.school_id.in_(school_ids),
-            EduAdmRecord.year.between(time_range[0], time_range[1])
+        admissions = AdmRecord.query.filter(
+            AdmRecord.school_id.in_(school_ids),
+            AdmRecord.year.between(time_range[0], time_range[1])
         ).all()
         
         item = {
@@ -567,17 +565,17 @@ def compare_by_province(filters, metrics, time_range):
 
 def analyze_year_trend(filters, metrics, time_range):
     """年份趋势分析"""
-    from app.services.admin_auth import EduAdmRecord
+    from app.services.admin_auth import AdmRecord
     
     result = []
     for year in range(time_range[0], time_range[1] + 1):
-        query = EduAdmRecord.query.filter_by(year=year)
+        query = AdmRecord.query.filter_by(year=year)
         
         if filters.get('school_ids'):
-            query = query.filter(EduAdmRecord.school_id.in_(filters['school_ids']))
+            query = query.filter(AdmRecord.school_id.in_(filters['school_ids']))
         
-        if filters.get('major_ids'):
-            query = query.filter(EduAdmRecord.major_id.in_(filters['major_ids']))
+        # if filters.get('major_ids'):
+        #     query = query.filter(AdmRecord.major_id.in_(filters['major_ids']))
         
         admissions = query.all()
         
@@ -603,7 +601,7 @@ def analyze_year_trend(filters, metrics, time_range):
 
 def analyze_by_score_segment(filters, metrics, time_range):
     """分数段分析"""
-    from app.services.admin_auth import EduAdmRecord
+    from app.services.admin_auth import AdmRecord
     
     segments = [
         {'name': '600分以上', 'min': 600, 'max': 750},
@@ -616,13 +614,13 @@ def analyze_by_score_segment(filters, metrics, time_range):
     
     result = []
     for segment in segments:
-        query = EduAdmRecord.query.filter(
-            EduAdmRecord.min_score.between(segment['min'], segment['max']),
-            EduAdmRecord.year.between(time_range[0], time_range[1])
+        query = AdmRecord.query.filter(
+            AdmRecord.min_score.between(segment['min'], segment['max']),
+            AdmRecord.year.between(time_range[0], time_range[1])
         )
         
         if filters.get('province'):
-            query = query.filter(EduAdmRecord.province == filters['province'])
+            query = query.filter(AdmRecord.province == filters['province'])
         
         admissions = query.all()
         
@@ -648,17 +646,17 @@ def analyze_by_score_segment(filters, metrics, time_range):
 
 def analyze_heat_trend(filters, metrics, time_range):
     """热度趋势分析"""
-    from app.services.admin_auth import AnaSchoolHeat, EduSchool
+    from app.services.admin_auth import SchoolHeat, School
     
-    query = AnaSchoolHeat.query.join(
-        EduSchool, AnaSchoolHeat.school_id == EduSchool.id
+    query = SchoolHeat.query.join(
+        School, SchoolHeat.school_id == School.id
     )
     
     if filters.get('province'):
-        query = query.filter(EduSchool.province == filters['province'])
+        query = query.filter(School.province == filters['province'])
     
     if filters.get('school_type'):
-        query = query.filter(EduSchool.type == filters['school_type'])
+        query = query.filter(School.type == filters['school_type'])
     
     heat_data = query.all()
     
@@ -667,7 +665,7 @@ def analyze_heat_trend(filters, metrics, time_range):
     
     result = []
     for heat in heat_data[:20]:  # 前20名
-        school = EduSchool.query.get(heat.school_id)
+        school = School.query.get(heat.school_id)
         
         item = {
             'dimension': 'heat',
@@ -690,25 +688,25 @@ def analyze_heat_trend(filters, metrics, time_range):
 def get_filter_options():
     """获取筛选选项"""
     try:
-        from app.services.admin_auth import EduSchool, EduMajor
+        from app.services.admin_auth import School, Major
         
         # 获取省份列表
-        provinces = db.session.query(EduSchool.province).distinct().all()
+        provinces = db.session.query(School.province).distinct().all()
         provinces = [p[0] for p in provinces if p[0]]
         
         # 获取学校类型列表
-        school_types = db.session.query(EduSchool.type).distinct().all()
+        school_types = db.session.query(School.type).distinct().all()
         school_types = [t[0] for t in school_types if t[0]]
         
         # 获取专业列表
-        majors = EduMajor.query.all()
+        majors = Major.query.all()
         major_list = [{'id': m.id, 'name': m.name} for m in majors]
         # 获取学校列表
-        schools = EduSchool.query.all()
+        schools = School.query.all()
         school_list = [{'id': s.id, 'name': s.name} for s in schools]
         # 获取年份范围
-        from app.services.admin_auth import EduAdmRecord
-        years = db.session.query(EduAdmRecord.year).distinct().order_by(EduAdmRecord.year).all()
+        from app.services.admin_auth import AdmRecord
+        years = db.session.query(AdmRecord.year).distinct().order_by(AdmRecord.year).all()
         years = [y[0] for y in years if y[0]]
         
         return jsonify({
