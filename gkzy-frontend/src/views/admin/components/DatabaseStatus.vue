@@ -89,7 +89,7 @@
 <script>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import request from '../../../utils/request'
+import request from '../../utils/request'
 
 export default {
   name: 'DatabaseStatus',

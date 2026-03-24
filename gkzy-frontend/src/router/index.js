@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Dashboard from '../views/Dashboard.vue'
 import SchoolList from '../views/SchoolList.vue'
-import MajorDetail from '../views/MajorDetail.vue'
+import MajorList from '../views/MajorList.vue'  // 新增
+import MajorDetail from '../views/MajorDetail.vue'  // 新增
 
 const routes = [
   {
@@ -27,6 +28,17 @@ const routes = [
     name: 'AdminDashboard',
     component: () => import('../views/admin/AdminDashboard.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/majors',
+    name: 'MajorList',
+    component: MajorList
+  },
+  {
+    path: '/major/:id',
+    name: 'MajorDetail',
+    component: MajorDetail,
+    props: true
   }
 ]
 

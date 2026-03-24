@@ -1,12 +1,19 @@
-from flask import Flask
+from flask import Flask, request
 from flask_cors import CORS
-from app.extensions import db
+from app.extensions import db, cors
 import mysql.connector
 from mysql.connector import Error
+from app.middleware.cors import init_cors
+from app.services.admin_auth import admin_auth_bp
+from app.routes.school import school_bp
+from app.routes.overview import overview_bp
+from app.routes.major import major_bp 
+from app.routes.heat import heat_bp
 
 def create_app():
     app = Flask(__name__)
-    CORS(app)
+    # CORS(app)
+    # init_cors(app)
     
     # MySQL 配置（远程）
     DB_USERNAME = 'root'
@@ -63,17 +70,34 @@ def create_app():
     
     # 初始化数据库
     db.init_app(app)
+    cors.init_app(app, resources={r"/*": {"origins": "*"}})
     
     # 注册蓝图
-    from app.services.admin_auth import admin_auth_bp
+
     app.register_blueprint(admin_auth_bp)
+    app.register_blueprint(school_bp)
+    app.register_blueprint(overview_bp)
+    app.register_blueprint(major_bp)
+    app.register_blueprint(heat_bp)
     
     # 创建表
-    with app.app_context():
-        try:
-            db.create_all()
-            print("✅ 数据库表创建/检查完成")
-        except Exception as e:
-            print(f"⚠️ 创建表时出错: {e}")
+    # with app.app_context():
+    #     try:
+    #         db.create_all()
+    #         print("✅ 数据库表创建/检查完成")
+    #     except Exception as e:
+    #         print(f"⚠️ 创建表时出错: {e}")
     
+
+    with app.app_context():
+        print("\n" + "="*60)
+        print("已注册的路由:")
+        for rule in app.url_map.iter_rules():
+            print(f"{rule.endpoint}: {rule}")
+        print("="*60 + "\n")
+
+    @app.before_request
+    def log_request():
+        print(f"收到请求: {request.method} {request.path}")
+
     return app

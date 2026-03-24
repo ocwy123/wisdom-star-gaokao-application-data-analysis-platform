@@ -4,6 +4,7 @@ from datetime import datetime
 
 class AdmRecord(db.Model):
     __tablename__ = 'edu_adm_record'
+    __table_args__ = {'extend_existing': True}   # 添加这一行
 
     id = db.Column(db.BigInteger, primary_key=True)
     school_id = db.Column(db.BigInteger, db.ForeignKey('edu_school.id'), nullable=False)

@@ -1,9 +1,9 @@
 from app.extensions import db
 from datetime import datetime
 
-
 class Major(db.Model):
     __tablename__ = 'edu_major'
+    __table_args__ = {'extend_existing': True}   # 添加这一行
 
     id = db.Column(db.BigInteger, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
@@ -14,8 +14,6 @@ class Major(db.Model):
     description = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now, onupdate=datetime.now)
-
-    schools = db.relationship('School', secondary='edu_school_major', back_populates='majors')
 
     def to_dict(self):
         return {

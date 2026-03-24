@@ -184,7 +184,7 @@ export default {
     // 配置数据
     const config = reactive({
       datasource: {
-        api_url: 'http://192.168.54.29:5000/api',
+        api_url: 'http://192.168.54.41:5000/api',
         db_host: '192.168.54.241',
         db_port: 3306,
         db_name: 'gkzy_mysql',
