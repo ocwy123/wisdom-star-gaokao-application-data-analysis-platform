@@ -8,7 +8,8 @@ const routes = [
   {
     path: '/',
     name: 'Home',
-    component: SchoolList
+    component: Dashboard,
+    meta: { requiresAuth: true }
   },
   // 用户认证路由
   {
@@ -27,6 +28,12 @@ const routes = [
     path: '/profile',
     name: 'Profile',
     component: () => import('../views/Profile.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path:'/dashboard',
+    name:'Dashboard',
+    component: () => import('../views/Dashboard.vue'),
     meta: { requiresAuth: true }
   },
   // 管理员路由
@@ -87,7 +94,7 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !userToken) {
     next('/login')
   } else if (to.meta.requiresGuest && userToken) {
-    next('/')
+    next('/dashboard')
   } else {
     next()
   }

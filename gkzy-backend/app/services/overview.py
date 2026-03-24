@@ -4,6 +4,7 @@ from app.models.adm_record import AdmRecord
 from app.extensions import db
 from sqlalchemy import func, distinct
 from datetime import datetime
+from sqlalchemy.orm import aliased
 
 
 class OverviewService:
@@ -40,21 +41,102 @@ class OverviewService:
             return []
 
     @staticmethod
-    def get_major_rank(limit=10):
-        from app.utils.hive_util import query_hive
-        sql = f"""
-            SELECT major_id, major_name, heat_score
-            FROM ana_major_heat
-            ORDER BY heat_score DESC
-            LIMIT {limit}
-        """
+    def get_hot_schools(limit=8):
+        """从 MySQL 的 ana_school_heat 表获取热门院校及其详细信息"""
         try:
-            columns, rows = query_hive(sql)
-            result = [dict(zip(columns, row)) for row in rows]
-            return result
+            # 使用 SQLAlchemy 查询 ana_school_heat 表，关联 edu_school 表
+            from app.models.school import School
+            from sqlalchemy import text
+            
+            # 构建 SQL 查询
+            sql = text("""
+                SELECT 
+                    s.id, 
+                    s.name, 
+                    s.province, 
+                    s.city, 
+                    s.type, 
+                    s.is_985, 
+                    s.is_211,
+                    h.heat_score
+                FROM ana_school_heat h
+                INNER JOIN edu_school s ON h.school_id = s.id
+                ORDER BY h.heat_score DESC
+                LIMIT :limit
+            """)
+            
+            # 执行查询
+            result = db.session.execute(sql, {'limit': limit}).fetchall()
+            
+            if not result:
+                return []
+            
+            # 转换为字典列表
+            schools = []
+            for row in result:
+                schools.append({
+                    'id': row.id,
+                    'name': row.name,
+                    'province': row.province,
+                    'city': row.city,
+                    'type': row.type,
+                    'is_985': bool(row.is_985) if row.is_985 is not None else False,
+                    'is_211': bool(row.is_211) if row.is_211 is not None else False,
+                    'heat_score': float(row.heat_score) if row.heat_score else 0
+                })
+            
+            return schools
         except Exception as e:
-            print(f"查询专业热度排行失败：{e}")
+            print(f"查询热门院校失败：{e}")
             return []
+
+    @staticmethod
+    def get_major_rank(limit=10):
+        """从 MySQL 获取热门专业及其就业数据"""
+        try:
+            from sqlalchemy import text
+            
+            # 使用原生 SQL 查询，避免模型关系冲突
+            sql = text("""
+                SELECT 
+                    m.id,
+                    m.name,
+                    m.code,
+                    m.description,
+                    me.avg_salary,
+                    me.year
+                FROM edu_major m
+                INNER JOIN ana_major_employment me ON m.id = me.major_id
+                ORDER BY me.avg_salary DESC
+                LIMIT :limit
+            """)
+            
+            result = db.session.execute(sql, {'limit': limit}).fetchall()
+            
+            if not result:
+                print("[DEBUG] 查询结果为空")
+                return []
+            
+            # 转换为字典列表
+            majors = []
+            for row in result:
+                majors.append({
+                    'id': row.id,
+                    'name': row.name,
+                    'code': row.code or '',
+                    'description': row.description or '',
+                    'avg_salary': row.avg_salary or 0,
+                    'year': row.year
+                })
+            
+            print(f"[DEBUG] 返回的专业数据：{majors}")
+            return majors
+        except Exception as e:
+            print(f"[ERROR] 查询热门专业失败：{e}")
+            import traceback
+            traceback.print_exc()
+            return []
+
 
     @staticmethod
     def get_score_trend(province=None, batch=None, years=5):

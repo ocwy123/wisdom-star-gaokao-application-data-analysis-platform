@@ -27,6 +27,17 @@ def get_school_rank():
         return error(message=str(e)), 500
 
 
+@overview_bp.route('/hot-schools', methods=['GET'])
+@cache.cached(timeout=300, key_prefix='hot_schools')
+def get_hot_schools():
+    try:
+        limit = request.args.get('limit', 8, type=int)
+        data = OverviewService.get_hot_schools(limit)
+        return success(data=data)
+    except Exception as e:
+        return error(message=str(e)), 500
+
+
 @overview_bp.route('/major-rank', methods=['GET'])
 @cache.cached(timeout=300, key_prefix='major_rank')
 def get_major_rank():

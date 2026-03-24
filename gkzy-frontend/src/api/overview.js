@@ -23,3 +23,7 @@ export function getProvinceDifficulty(params) {
 export function getPlanDistribution(params) {
   return service.get('/overview/plan-distribution', { params })
 }
+
+export function getHotSchools(params) {
+  return service.get('/overview/hot-schools', { params })
+}

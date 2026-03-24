@@ -24,7 +24,7 @@ class School(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.now, nullable=False)
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now, nullable=False)
 
-    majors = db.relationship('Major', secondary='edu_school_major', back_populates='schools')
+    majors = db.relationship('Major', secondary='edu_school_major', back_populates='schools', lazy='dynamic')
     adm_records = db.relationship('AdmRecord', back_populates='school')
     heat_stats = db.relationship('SchoolHeat', back_populates='school')
 
