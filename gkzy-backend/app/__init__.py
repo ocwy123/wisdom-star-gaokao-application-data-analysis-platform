@@ -30,10 +30,10 @@ import mysql.connector
 from mysql.connector import Error
 from app.middleware.cors import init_cors
 from app.services.admin_auth import admin_auth_bp
-from app.routes.school import school_bp
-from app.routes.overview import overview_bp
-from app.routes.major import major_bp
-from app.routes.heat import heat_bp
+# from app.routes.school import school_bp
+# from app.routes.overview import overview_bp
+# from app.routes.major import major_bp
+# from app.routes.heat import heat_bp
 
 # 导入所有模型，确保 SQLAlchemy 能正确建立关系
 from app.models.school import School
@@ -113,13 +113,16 @@ def create_app():
     # 注册蓝图
     from app.services.admin_auth import admin_auth_bp
     from app.routes.auth import auth_bp
-    from app.routes.overview import overview_bp
+    from app.routes.school import school_bp
+    # from app.routes.overview import overview_bp
+    # from app.routes.major import major_bp
+    # from app.routes.heat import heat_bp
     app.register_blueprint(admin_auth_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(school_bp)
-    app.register_blueprint(overview_bp)
-    app.register_blueprint(major_bp)
-    app.register_blueprint(heat_bp)
+    # app.register_blueprint(overview_bp)
+    # app.register_blueprint(major_bp)
+    # app.register_blueprint(heat_bp)
 
     # 创建表
     with app.app_context():

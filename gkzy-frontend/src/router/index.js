@@ -3,6 +3,7 @@ import Dashboard from '../views/Dashboard.vue'
 import SchoolList from '../views/SchoolList.vue'
 import MajorList from '../views/MajorList.vue'  // 新增
 import MajorDetail from '../views/MajorDetail.vue'  // 新增
+import SchoolDetail from '../views/SchoolDetail.vue'  // 新增
 
 const routes = [
   {
@@ -64,6 +65,12 @@ const routes = [
     path: '/major/:id',
     name: 'MajorDetail',
     component: MajorDetail,
+    props: true
+  },
+  {
+    path: '/school/:id',
+    name: 'SchoolDetail',
+    component: SchoolDetail,
     props: true
   }
 ]

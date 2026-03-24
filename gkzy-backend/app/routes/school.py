@@ -27,6 +27,7 @@ def get_school_list():
         return error(message=f"数据库查询失败: {str(e)}"), 500
 
 @school_bp.route('/<int:school_id>', methods=['GET'])
+@school_bp.route('/detail/<int:school_id>', methods=['GET'])
 def get_school_detail(school_id):
     """获取学校详情"""
     try:
