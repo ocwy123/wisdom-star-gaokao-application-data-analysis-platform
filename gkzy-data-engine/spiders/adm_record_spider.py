@@ -1,338 +1,296 @@
-# -*- coding: utf-8 -*-
-import csv
+import requests
+import json
 import time
-import random
-import logging
 import re
 import os
-from typing import List, Dict, Optional, Tuple
 
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
-from bs4 import BeautifulSoup
-
-# 配置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
-class GaoKaoCnSpider:
-    """掌上高考数据爬虫（使用 Selenium 处理动态页面）"""
-
-    BASE_URL = "https://www.gaokao.cn"
-
-    def __init__(self, output_dir: str = './data', proxy: Optional[str] = None,
-                 max_retries: int = 3, delay: float = 2, headless: bool = True,
-                 driver_path: Optional[str] = None):
-        """
-        初始化爬虫
-        :param output_dir: CSV输出目录
-        :param proxy: 代理地址（格式：http://ip:port）
-        :param max_retries: 最大重试次数（页面加载失败时）
-        :param delay: 操作间隔（秒）
-        :param headless: 是否无头模式
-        :param driver_path: ChromeDriver 路径（默认从 PATH 查找）
-        """
-        self.output_dir = output_dir
-        self.proxy = proxy
-        self.max_retries = max_retries
-        self.delay = delay
-        self.headless = headless
-        self.driver_path = driver_path
-        self.driver = None
-
-        # 创建输出目录
-        os.makedirs(self.output_dir, exist_ok=True)
-
-    def _init_driver(self):
-        """初始化 ChromeDriver"""
-        options = webdriver.ChromeOptions()
-        if self.headless:
-            options.add_argument('--headless')
-            options.add_argument('--disable-gpu')
-        options.add_argument('--no-sandbox')
-        options.add_argument('--disable-dev-shm-usage')
-        options.add_argument('--disable-blink-features=AutomationControlled')
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        options.add_experimental_option('useAutomationExtension', False)
-        if self.proxy:
-            options.add_argument(f'--proxy-server={self.proxy}')
-        # 自定义 User-Agent
-        options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')
-        if self.driver_path:
-            self.driver = webdriver.Chrome(executable_path=self.driver_path, options=options)
-        else:
-            self.driver = webdriver.Chrome(options=options)
-        self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-
-    def close(self):
-        """关闭浏览器"""
-        if self.driver:
-            self.driver.quit()
-
-    def fetch_school_name(self, school_id: str) -> Optional[str]:
-        """通过API获取学校名称（仍用requests）"""
-        import requests
-        url = f"https://static-data.gaokao.cn/www/2.0/school/{school_id}/info.json"
+def fix_unicode_string(s):
+    """修复Unicode转义字符串"""
+    if isinstance(s, str):
         try:
-            resp = requests.get(url, timeout=10)
-            if resp.status_code == 200:
-                data = resp.json()
-                if data.get('code') == '0000':
-                    return data['data'].get('name')
-        except Exception as e:
-            logger.error(f"获取学校名称失败: {e}")
-        return None
-
-    def wait_for_table(self, timeout=20):
-        """等待表格出现"""
-        try:
-            WebDriverWait(self.driver, timeout).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "table.tb-normal"))
-            )
-            return True
-        except TimeoutException:
-            logger.warning("表格加载超时")
-            return False
-
-    def select_dropdown_option(self, option_text: str, dropdown_selector: str, value_selector: str = None):
-        """
-        选择下拉框选项（通用方法）
-        :param option_text: 要选择的选项文本（如 "北京"）
-        :param dropdown_selector: 下拉框容器的 CSS 选择器
-        :param value_selector: 可选，选项元素的选择器（默认使用包含文本的 div）
-        """
-        try:
-            # 点击下拉框打开菜单
-            dropdown = self.driver.find_element(By.CSS_SELECTOR, dropdown_selector)
-            dropdown.click()
-            time.sleep(0.5)
-            # 查找选项
-            if value_selector:
-                option = self.driver.find_element(By.CSS_SELECTOR, f"{value_selector}[title='{option_text}']")
-            else:
-                # 查找包含文本的 div（或 li）
-                option = self.driver.find_element(By.XPATH, f"//div[contains(@class, 'score-plan_item__') and text()='{option_text}']")
-            option.click()
-            time.sleep(0.5)
-            logger.debug(f"选择下拉选项: {option_text}")
-        except Exception as e:
-            logger.error(f"选择下拉选项失败: {option_text}, 错误: {e}")
-
-    def get_major_groups(self) -> List[str]:
-        """获取专业组选项"""
-        groups = ['全部']
-        try:
-            group_box = self.driver.find_element(By.CSS_SELECTOR, "div[class*='score-plan_groupBox__']")
-            items = group_box.find_elements(By.CSS_SELECTOR, "div[class*='score-plan_item__']")
-            groups = [item.text.strip() for item in items if item.text.strip()]
-        except Exception:
-            pass
-        return groups
-
-    def parse_table(self, province: str, year: str, batch: str, major_group: str) -> List[Dict]:
-        """解析当前页面表格数据"""
-        records = []
-        try:
-            table = self.driver.find_element(By.CSS_SELECTOR, "table.tb-normal")
-            rows = table.find_elements(By.CSS_SELECTOR, "tbody tr")
-            for row in rows:
-                tds = row.find_elements(By.TAG_NAME, "td")
-                if len(tds) < 2:
-                    continue
-                # 第一个 td：专业信息
-                major_div = tds[0].find_element(By.CSS_SELECTOR, "div[class*='score-plan_majorInfoTd']")
-                # 专业名称
-                major_name = major_div.find_element(By.TAG_NAME, "h3").text.strip()
-                # 子专业名称（p标签）
-                try:
-                    major_second_name = major_div.find_element(By.TAG_NAME, "p").text.strip()
-                except:
-                    major_second_name = ""
-                # 选科要求
-                try:
-                    xkq_div = major_div.find_element(By.CSS_SELECTOR, "div[class*='score-plan_xkyq']")
-                    text = xkq_div.text.strip()
-                    match = re.search(r'选科要求[：:]\s*(.*?)(?:\(|$)', text)
-                    subject = match.group(1).strip() if match else ""
-                except:
-                    subject = ""
-                # 第二个 td：分数/位次
-                score_text = tds[1].text.strip()
-                min_score = None
-                min_rank = None
-                if '/' in score_text:
-                    parts = score_text.split('/')
-                    if len(parts) == 2:
-                        min_score = self._parse_int(parts[0])
-                        min_rank = self._parse_int(parts[1])
-                records.append({
-                    'major_name': major_name,
-                    'major_second_name': major_second_name,
-                    'subject': subject,
-                    'province': province,
-                    'year': year,
-                    'batch': batch,
-                    'major_group': major_group,
-                    'min_score': min_score,
-                    'min_rank': min_rank,
-                })
-        except Exception as e:
-            logger.error(f"解析表格失败: {e}")
-        return records
-
-    def fetch_plan_data(self, province: str, year: str, batch: str) -> Dict[Tuple[str, str, str], int]:
-        """获取招生计划数据（同样使用 Selenium）"""
-        plan_map = {}
-        url = f"{self.BASE_URL}/school/{self.school_id}/sturule"
-        self.driver.get(url)
-        # 等待页面加载（可能需要等待下拉框）
-        time.sleep(3)
-        # 选择省份、年份、批次（复用下拉选择方法）
-        self.select_dropdown_option(province, "div[class*='filter-compents_filterSeletcBox__']:nth-child(1) div.ant-select-selection", None)
-        self.select_dropdown_option(year, "div[class*='filter-compents_filterSeletcBox__']:nth-child(2) div.ant-select-selection", None)
-        self.select_dropdown_option(batch, "div[class*='filter-compents_filterSeletcBox__']:nth-child(3) div.ant-select-selection", None)
-        # 等待表格出现
-        if not self.wait_for_table():
-            return plan_map
-        # 解析表格
-        try:
-            table = self.driver.find_element(By.CSS_SELECTOR, "table.tb-normal")
-            rows = table.find_elements(By.CSS_SELECTOR, "tbody tr")
-            for row in rows:
-                tds = row.find_elements(By.TAG_NAME, "td")
-                if len(tds) < 2:
-                    continue
-                major_div = tds[0].find_element(By.CSS_SELECTOR, "div[class*='score-plan_majorInfoTd']")
-                major_name = major_div.find_element(By.TAG_NAME, "h3").text.strip()
-                try:
-                    major_second_name = major_div.find_element(By.TAG_NAME, "p").text.strip()
-                except:
-                    major_second_name = ""
-                try:
-                    xkq_div = major_div.find_element(By.CSS_SELECTOR, "div[class*='score-plan_xkyq']")
-                    text = xkq_div.text.strip()
-                    match = re.search(r'选科要求[：:]\s*(.*?)(?:\(|$)', text)
-                    subject = match.group(1).strip() if match else ""
-                except:
-                    subject = ""
-                plan_text = tds[1].text.strip()
-                plan_count = self._parse_int(plan_text)
-                key = (major_name, major_second_name, subject)
-                plan_map[key] = plan_count
-        except Exception as e:
-            logger.error(f"解析计划表失败: {e}")
-        return plan_map
-
-    def _parse_int(self, s: str) -> Optional[int]:
-        try:
-            return int(''.join(filter(str.isdigit, s)))
+            return re.sub(r'\\u([0-9a-fA-F]{4})', lambda m: chr(int(m.group(1), 16)), s)
         except:
-            return None
+            return s
+    return s
 
-    def fetch_school_data(self, school_id: str, school_name: str,
-                          provinces: List[str], years: List[str], batches: List[str]) -> int:
-        """爬取单个学校的全部数据"""
-        self.school_id = school_id
-        total = 0
-        output_file = os.path.join(self.output_dir, f"admission_{school_id}.csv")
-        fieldnames = ['school_name', 'major_name', 'major_second_name', 'province',
-                      'year', 'plan_count', 'subject', 'batch', 'major_group',
-                      'min_score', 'min_rank']
+def decode_all(data):
+    """递归解码所有字符串"""
+    if isinstance(data, dict):
+        return {k: decode_all(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [decode_all(item) for item in data]
+    elif isinstance(data, str):
+        return fix_unicode_string(data)
+    else:
+        return data
 
-        with open(output_file, 'a', newline='', encoding='utf-8-sig') as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            if os.path.getsize(output_file) == 0:
-                writer.writeheader()
+def get_school_name_mapping():
+    """获取学校ID到名称的映射"""
+    url = "https://static-data.gaokao.cn/www/2.0/school/school_code.json?a=www.gaokao.cn"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Referer': 'https://www.gaokao.cn/',
+        'Accept': 'application/json, text/plain, */*'
+    }
+    
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            decoded_data = decode_all(data)
+            
+            # 构建 school_id -> name 的映射
+            mapping = {}
+            for code, info in decoded_data.get("data", {}).items():
+                school_id = info.get("school_id")
+                name = info.get("name")
+                if school_id and name:
+                    mapping[school_id] = name
+            return mapping
+        else:
+            print(f"获取学校映射失败: {response.status_code}")
+            return {}
+    except Exception as e:
+        print(f"获取学校映射异常: {e}")
+        return {}
 
-            for province in provinces:
-                for year in years:
-                    for batch in batches:
-                        logger.info(f"处理 {school_name} - {province} {year} {batch}")
-                        url = f"{self.BASE_URL}/school/{school_id}/provinceline"
-                        self.driver.get(url)
-                        # 等待下拉框加载
-                        time.sleep(3)
-                        # 选择省份、年份、批次
-                        self.select_dropdown_option(province, "div[class*='filter-compents_filterSeletcBox__']:nth-child(1) div.ant-select-selection", None)
-                        self.select_dropdown_option(year, "div[class*='filter-compents_filterSeletcBox__']:nth-child(2) div.ant-select-selection", None)
-                        self.select_dropdown_option(batch, "div[class*='filter-compents_filterSeletcBox__']:nth-child(3) div.ant-select-selection", None)
-                        # 等待表格出现
-                        if not self.wait_for_table():
-                            continue
-                        # 获取专业组选项
-                        groups = self.get_major_groups()
-                        all_records = []
-                        for group in groups:
-                            if group != '全部':
-                                # 点击专业组选项（需要点击对应div）
-                                try:
-                                    group_div = self.driver.find_element(By.XPATH, f"//div[contains(@class, 'score-plan_item__') and text()='{group}']")
-                                    group_div.click()
-                                    time.sleep(1)
-                                except:
-                                    logger.warning(f"未找到专业组: {group}")
-                                    continue
-                            records = self.parse_table(province, year, batch, group)
-                            all_records.extend(records)
-                        if not all_records:
-                            continue
-                        # 获取计划数据
-                        plan_map = self.fetch_plan_data(province, year, batch)
-                        for rec in all_records:
-                            rec['school_name'] = school_name
-                            key = (rec['major_name'], rec['major_second_name'], rec['subject'])
-                            rec['plan_count'] = plan_map.get(key)
-                            writer.writerow(rec)
-                            total += 1
-                        f.flush()
-                        time.sleep(self.delay)
-        return total
+def fetch_special_benchmark(special_id, school_mapping):
+    """通过API获取专业分数线"""
+    # 专业分数线接口（推测）
+    url = f"https://static-data.gaokao.cn/www/2.0/special/{special_id}/benchmarkScore.json?a=www.gaokao.cn"
+    
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Referer': 'https://www.gaokao.cn/',
+        'Accept': 'application/json, text/plain, */*'
+    }
+    
+    try:
+        print(f"正在爬取专业 ID: {special_id}")
+        response = requests.get(url, headers=headers, timeout=10)
+        
+        if response.status_code == 200:
+            raw_text = response.text
+            data = json.loads(raw_text)
+            decoded_data = decode_all(data)
+            
+            # 如果是分数线数据，可以添加学校名称（如果需要）
+            if decoded_data.get("code") == "0000" and "data" in decoded_data:
+                # 分数线数据的键名如 "2025_11_3" 等，不直接包含学校ID
+                # 所以这里添加专业ID即可
+                decoded_data["专业ID"] = special_id
+            
+            return decoded_data
+            
+        elif response.status_code == 404:
+            print(f"  专业不存在")
+            return {
+                "专业ID": special_id,
+                "code": "404",
+                "message": "专业不存在"
+            }
+        else:
+            print(f"  返回错误: {response.status_code}")
+            return {
+                "专业ID": special_id,
+                "错误": f"HTTP {response.status_code}"
+            }
+            
+    except Exception as e:
+        print(f"  请求失败: {e}")
+        return {"专业ID": special_id, "错误": str(e)}
 
-    def run(self, school_ids: List[str], provinces: Optional[List[str]] = None,
-            years: Optional[List[str]] = None, batches: Optional[List[str]] = None):
-        """
-        运行爬虫
-        :param school_ids: 学校ID列表，如 ['330', '1']
-        :param provinces: 省份列表，None则自动从页面获取（暂不实现，使用默认）
-        :param years: 年份列表，None则自动获取
-        :param batches: 批次列表，None则自动获取
-        """
-        if provinces is None:
-            provinces = ['北京', '天津', '河北', '山西', '内蒙古', '辽宁', '吉林', '黑龙江', '上海', '江苏', '浙江',
-                         '安徽', '福建', '江西', '山东', '河南', '湖北', '湖南', '广东', '广西', '海南', '重庆',
-                         '四川', '贵州', '云南', '西藏', '陕西', '甘肃', '青海', '宁夏', '新疆']
-        if years is None:
-            years = ['2021', '2022', '2023', '2024', '2025']
-        if batches is None:
-            batches = ['本科批', '专科批']
+def fetch_school_benchmark(school_id, school_mapping):
+    """通过API获取学校分数线（原功能保留）"""
+    url = f"https://static-data.gaokao.cn/www/2.0/school/{school_id}/benchmarkScore.json?a=www.gaokao.cn"
+    
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Referer': 'https://www.gaokao.cn/',
+        'Accept': 'application/json, text/plain, */*'
+    }
+    
+    try:
+        print(f"正在爬取学校 ID: {school_id}")
+        response = requests.get(url, headers=headers, timeout=10)
+        
+        if response.status_code == 200:
+            raw_text = response.text
+            data = json.loads(raw_text)
+            decoded_data = decode_all(data)
+            
+            # 添加学校名称
+            school_name = school_mapping.get(str(school_id), "未知学校")
+            decoded_data["学校ID"] = school_id
+            decoded_data["学校名称"] = school_name
+            
+            return decoded_data
+            
+        elif response.status_code == 404:
+            print(f"  学校不存在")
+            return {
+                "学校ID": school_id,
+                "学校名称": school_mapping.get(str(school_id), "未知"),
+                "code": "404",
+                "message": "学校不存在"
+            }
+        else:
+            print(f"  返回错误: {response.status_code}")
+            return {
+                "学校ID": school_id,
+                "学校名称": school_mapping.get(str(school_id), "未知"),
+                "错误": f"HTTP {response.status_code}"
+            }
+            
+    except Exception as e:
+        print(f"  请求失败: {e}")
+        return {"学校ID": school_id, "错误": str(e)}
 
-        self._init_driver()
-        try:
-            for school_id in school_ids:
-                school_name = self.fetch_school_name(school_id)
-                if not school_name:
-                    logger.error(f"无法获取学校 {school_id} 的名称，跳过")
-                    continue
-                logger.info(f"开始爬取学校: {school_name} (ID: {school_id})")
-                total = self.fetch_school_data(school_id, school_name, provinces, years, batches)
-                logger.info(f"学校 {school_name} 爬取完成，共 {total} 条记录")
-        finally:
-            self.close()
+def crawl_all_schools(school_ids, filename="../data/adm_record_all.json"):
+    """爬取所有学校的分数线"""
+    print("="*60)
+    print(f"开始爬取 {len(school_ids)} 所学校")
+    print("="*60)
+    
+    # 先获取学校名称映射
+    print("正在获取学校名称映射...")
+    school_mapping = get_school_name_mapping()
+    print(f"已获取 {len(school_mapping)} 所学校信息\n")
+    
+    all_data = []
+    success_count = 0
+    fail_count = 0
+    
+    for idx, school_id in enumerate(school_ids, 1):
+        print(f"\n[{idx}/{len(school_ids)}] ", end="")
+        
+        detail = fetch_school_benchmark(school_id, school_mapping)
+        all_data.append(detail)
+        
+        if "错误" in detail or detail.get("code") == "404":
+            fail_count += 1
+        else:
+            success_count += 1
+        
+        # 实时保存
+        final_data = {
+            "爬取时间": time.strftime('%Y-%m-%d %H:%M:%S'),
+            "学校总数": len(school_ids),
+            "已爬取数量": len(all_data),
+            "成功数量": success_count,
+            "失败数量": fail_count,
+            "学校列表": all_data
+        }
+        
+        # 确保目录存在
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(final_data, f, ensure_ascii=False, indent=2)
+        
+        if idx % 10 == 0:
+            print(f"  💾 已保存进度")
+        
+        time.sleep(0.3)
+    
+    print("\n" + "="*60)
+    print(f"爬取完成！")
+    print(f"  成功: {success_count} 个")
+    print(f"  失败: {fail_count} 个")
+    print(f"  数据已保存到: {filename}")
+    
+    return final_data
 
+def get_all_school_ids_from_code():
+    """从 school_code.json 获取所有学校ID"""
+    url = "https://static-data.gaokao.cn/www/2.0/school/school_code.json?a=www.gaokao.cn"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    }
+    
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            decoded_data = decode_all(data)
+            
+            school_ids = []
+            for code, info in decoded_data.get("data", {}).items():
+                school_id = info.get("school_id")
+                if school_id:
+                    school_ids.append(int(school_id))
+            
+            return sorted(set(school_ids))
+        else:
+            print(f"获取学校列表失败: {response.status_code}")
+            return []
+    except Exception as e:
+        print(f"获取学校列表异常: {e}")
+        return []
+
+def test_single_school(school_id=140):
+    """测试单个学校"""
+    print(f"测试学校 ID: {school_id}")
+    
+    school_mapping = get_school_name_mapping()
+    data = fetch_school_benchmark(school_id, school_mapping)
+    
+    if "错误" not in data and data.get("code") != "404":
+        print(f"  ✓ 学校名称: {data.get('学校名称', 'N/A')}")
+        if 'data' in data:
+            d = data['data']
+            print(f"  ✓ 包含 {len(d)} 条分数线数据")
+            # 显示部分分数线示例
+            sample = list(d.items())[:5]
+            for key, value in sample:
+                print(f"    {key}: {value}")
+    else:
+        print(f"  ✗ 错误: {data.get('错误', data.get('message', '未知错误'))}")
+    
+    return data
+
+# def test_single_special(special_id=1):
+#     """测试单个专业（尝试专业接口）"""
+#     print(f"测试专业 ID: {special_id}")
+    
+#     school_mapping = get_school_name_mapping()
+#     data = fetch_special_benchmark(special_id, school_mapping)
+    
+#     if "错误" not in data and data.get("code") != "404":
+#         print(f"  ✓ 成功获取数据")
+#         if 'data' in data:
+#             d = data['data']
+#             print(f"  ✓ 包含 {len(d)} 条分数线数据")
+#             sample = list(d.items())[:5]
+#             for key, value in sample:
+#                 print(f"    {key}: {value}")
+#     else:
+#         print(f"  ✗ 错误: {data.get('错误', data.get('message', '未知错误'))}")
+    
+#     return data
 
 if __name__ == '__main__':
-    # 使用示例
-    spider = GaoKaoCnSpider(
-        output_dir='../data',
-        delay=3,          # 操作间隔（秒）
-        headless=True,    # 无头模式，设为 False 可看到浏览器窗口
-        # driver_path='C:/path/to/chromedriver.exe'  # 如需指定路径
-    )
-    spider.run(school_ids=['330'])  # 只爬取西安交通大学
+    print("="*60)
+    print("高考数据爬虫 - 学校分数线接口")
+    print("="*60)
+    
+    # 先测试一个已知学校
+    print("\n测试清华大学 (ID: 140)...")
+    test_single_school(140)
+    
+    print("\n" + "="*60)
+    print("获取所有学校ID...")
+    school_ids = get_all_school_ids_from_code()
+    print(f"共找到 {len(school_ids)} 所学校")
+    print(f"学校ID范围: {min(school_ids)} - {max(school_ids)}")
+    print(f"前10个ID: {school_ids[:10]}")
+    
+    print("\n" + "="*60)
+    print("是否开始爬取所有学校分数线？")
+    print("输入 y 开始爬取，输入 n 取消")
+    user_input = input().strip().lower()
+    
+    if user_input == 'y':
+        crawl_all_schools(school_ids)
+    else:
+        print("已取消")
