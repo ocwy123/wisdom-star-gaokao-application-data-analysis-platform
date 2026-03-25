@@ -111,7 +111,7 @@ const handleLogin = async () => {
         localStorage.removeItem('rememberedUser')
       }
       ElMessage.success('登录成功')
-      router.push('/dashboard')
+      router.push('/')
     }
   } catch (error) {
     ElMessage.error(error.response?.data?.message || '登录失败')
