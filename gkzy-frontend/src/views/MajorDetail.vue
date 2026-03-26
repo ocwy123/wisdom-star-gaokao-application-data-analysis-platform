@@ -1,8 +1,10 @@
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElLoading, ElTabs, ElTabPane, ElCard, ElTag, ElEmpty, ElButton } from 'element-plus'
+import { ElLoading, ElTabs, ElTabPane, ElCard, ElTag, ElEmpty, ElButton, ElMessage, ElIcon } from 'element-plus'
+import { Star, StarFilled } from '@element-plus/icons-vue'
 import { getMajorAnalysis, getMajorSchools } from '../api/major'
+import { addFavorite, removeFavorite, checkFavorite } from '../api/favorite'
 import * as echarts from 'echarts'
 
 const route = useRoute()
@@ -23,8 +25,75 @@ const schoolsPagination = ref({
 const loading = ref(true)
 const activeTab = ref('overview')
 
+// 收藏相关状态
+const isLoggedIn = ref(false)
+const isFavorited = ref(false)
+const favoriteLoading = ref(false)
+
 // 图表实例
 let provinceChart = null
+
+// 检查登录状态
+const checkLoginStatus = () => {
+  const token = localStorage.getItem('userToken')
+  isLoggedIn.value = !!token
+}
+
+// 检查收藏状态
+const checkFavoriteStatus = async () => {
+  if (!isLoggedIn.value) return
+  
+  try {
+    const res = await checkFavorite({
+      type: 'major',
+      target_id: majorId
+    })
+    if (res.success) {
+      isFavorited.value = res.data.is_favorited
+    }
+  } catch (error) {
+    console.error('检查收藏状态失败', error)
+  }
+}
+
+// 切换收藏状态
+const toggleFavorite = async () => {
+  if (!isLoggedIn.value) return
+  
+  favoriteLoading.value = true
+  try {
+    if (isFavorited.value) {
+      // 取消收藏
+      const res = await removeFavorite({
+        favorite_type: 'major',
+        target_id: majorId
+      })
+      if (res.success) {
+        isFavorited.value = false
+        ElMessage.success('取消收藏成功')
+      }
+    } else {
+      // 添加收藏
+      const res = await addFavorite({
+        favorite_type: 'major',
+        target_id: majorId
+      })
+      if (res.success) {
+        isFavorited.value = true
+        ElMessage.success('收藏成功')
+      }
+    }
+  } catch (error) {
+    ElMessage.error('操作失败，请重试')
+  } finally {
+    favoriteLoading.value = false
+  }
+}
+
+// 跳转到登录页面
+const handleLogin = () => {
+  router.push('/login')
+}
 
 // 加载分析数据
 const loadAnalysis = async () => {
@@ -138,8 +207,10 @@ const handlePageChange = (page) => {
   loadSchools(page)
 }
 
-onMounted(() => {
-  loadAnalysis()
+onMounted(async () => {
+  checkLoginStatus()
+  await loadAnalysis()
+  await checkFavoriteStatus()
 })
 </script>
 
@@ -176,6 +247,23 @@ onMounted(() => {
               <span class="label">学位</span>
               <span class="value">{{ analysisData.major_info.degree || '暂无' }}</span>
             </div>
+          </div>
+          
+          <!-- 收藏按钮 -->
+          <div class="header-actions">
+            <el-button 
+              v-if="isLoggedIn"
+              :type="isFavorited ? 'danger' : 'primary'"
+              @click="toggleFavorite"
+              :loading="favoriteLoading"
+            >
+              <el-icon v-if="isFavorited"><StarFilled /></el-icon>
+              <el-icon v-else><Star /></el-icon>
+              {{ isFavorited ? '已收藏' : '收藏' }}
+            </el-button>
+            <el-button v-else type="primary" @click="handleLogin">
+              <el-icon><Star /></el-icon> 登录后收藏
+            </el-button>
           </div>
         </div>
       </el-card>

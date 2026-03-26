@@ -30,6 +30,11 @@
       <el-tab-pane label="个人信息" name="profile">
         <AdminProfile />
       </el-tab-pane>
+      
+      <!-- 数据导入 -->
+      <el-tab-pane label="数据导入" name="import">
+        <DataImport />
+      </el-tab-pane>
     </el-tabs>
   </div>
 </template>
@@ -42,6 +47,7 @@ import UserManagement from './components/UserManagement.vue'
 import SystemConfig from './components/SystemConfig.vue'
 import AddUser from './components/AddUser.vue'
 import AdminProfile from './components/AdminProfile.vue'
+import DataImport from './components/DataImport.vue'
 
 export default {
   name: 'AdminDashboard',
@@ -49,7 +55,8 @@ export default {
     UserManagement,
     SystemConfig,
     AddUser,
-    AdminProfile
+    AdminProfile,
+    DataImport
   },
   setup() {
     const router = useRouter()

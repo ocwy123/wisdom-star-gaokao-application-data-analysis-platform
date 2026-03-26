@@ -8,38 +8,53 @@ const request = axios.create({
 
 request.interceptors.request.use(
   config => {
-    // 优先使用用户token，如果没有则使用管理员token
-    const userToken = localStorage.getItem('userToken')
-    const adminToken = localStorage.getItem('adminToken')
-    const token = userToken || adminToken
+    // 根据当前路径决定使用哪种token
+    const isAdminPath = config.url?.startsWith('/admin') || window.location.pathname.startsWith('/admin')
     
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`
+    if (isAdminPath) {
+      // 管理员路径：只使用管理员token
+      const adminToken = localStorage.getItem('adminToken')
+      if (adminToken) {
+        config.headers['Authorization'] = `Bearer ${adminToken}`
+      }
+    } else {
+      // 普通用户路径：使用用户token
+      const userToken = localStorage.getItem('userToken')
+      if (userToken) {
+        config.headers['Authorization'] = `Bearer ${userToken}`
+      }
     }
+    
     return config
   },
   error => Promise.reject(error)
 )
 
 request.interceptors.response.use(
-  response => response,
+  response => {
+    console.log('Response received:', response)
+    return response
+  },
   error => {
+    console.error('Response error:', error)
     if (error.response) {
       switch (error.response.status) {
         case 401:
           // 检查是否是管理员还是用户
           const isAdminPath = window.location.pathname.startsWith('/admin')
           if (isAdminPath) {
-            localStorage.removeItem('adminToken')
-            localStorage.removeItem('adminInfo')
+            // 只有在当前页面不是登录页时才跳转，避免循环跳转
             if (window.location.pathname !== '/admin/login') {
+              localStorage.removeItem('adminToken')
+              localStorage.removeItem('adminInfo')
               ElMessage.error('登录已过期，请重新登录')
               window.location.href = '/admin/login'
             }
           } else {
-            localStorage.removeItem('userToken')
-            localStorage.removeItem('userInfo')
+            // 只有在当前页面不是登录页时才跳转，避免循环跳转
             if (window.location.pathname !== '/login') {
+              localStorage.removeItem('userToken')
+              localStorage.removeItem('userInfo')
               ElMessage.error('登录已过期，请重新登录')
               window.location.href = '/login'
             }

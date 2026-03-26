@@ -1,15 +1,9 @@
 mysql:
-  host: 192.168.1.241
+  host: 192.168.54.241
   port: 3306
   user: root
   password: root
   database: gkzy_mysql
-
-hive:
-  host: 192.168.54.241
-  port: 10000
-  user: ''  # 无用户名密码
-  database: gkzy_hive
 
 crawler:
   user_agents:

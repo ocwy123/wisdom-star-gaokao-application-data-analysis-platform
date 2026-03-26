@@ -1,4 +1,5 @@
 from app.models.school import School
+from app.models.adm_record import AdmRecord
 from app import db
 from sqlalchemy import func, distinct
 
@@ -154,4 +155,56 @@ class SchoolService:
             return [t[0] for t in types if t[0]]
         except Exception as e:
             print(f"[ERROR] 获取学校类型列表失败：{e}")
+            raise e
+    
+    @staticmethod
+    def get_school_provinces(school_id):
+        """获取学校招生省份列表"""
+        try:
+            provinces = db.session.query(distinct(AdmRecord.province)).filter(
+                AdmRecord.school_id == school_id,
+                AdmRecord.province.isnot(None)
+            ).order_by(AdmRecord.province).all()
+            
+            return [p[0] for p in provinces if p[0]]
+        except Exception as e:
+            print(f"[ERROR] 获取学校招生省份列表失败：{e}")
+            raise e
+    
+    @staticmethod
+    def get_school_majors(school_id, province):
+        """获取学校在指定省份的专业列表"""
+        try:
+            majors = db.session.query(distinct(AdmRecord.major_name)).filter(
+                AdmRecord.school_id == school_id,
+                AdmRecord.province == province,
+                AdmRecord.major_name.isnot(None)
+            ).order_by(AdmRecord.major_name).all()
+            
+            return [m[0] for m in majors if m[0]]
+        except Exception as e:
+            print(f"[ERROR] 获取学校专业列表失败：{e}")
+            raise e
+    
+    @staticmethod
+    def get_school_scores(school_id, province, major):
+        """获取学校专业分数线数据"""
+        try:
+            scores = db.session.query(
+                AdmRecord.year,
+                AdmRecord.min_score,
+                AdmRecord.min_rank
+            ).filter(
+                AdmRecord.school_id == school_id,
+                AdmRecord.province == province,
+                AdmRecord.major_name == major
+            ).order_by(AdmRecord.year).all()
+            
+            return [{
+                'year': s.year,
+                'min_score': s.min_score,
+                'min_rank': s.min_rank
+            } for s in scores]
+        except Exception as e:
+            print(f"[ERROR] 获取学校分数线数据失败：{e}")
             raise e

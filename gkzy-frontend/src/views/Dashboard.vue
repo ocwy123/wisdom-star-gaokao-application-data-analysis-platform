@@ -13,16 +13,31 @@
             <router-link to="/schools" class="nav-item">查大学</router-link>
             <router-link to="/majors" class="nav-item">看专业</router-link>
             <router-link to="/recommendation" class="nav-item">志愿推荐</router-link>
-            <router-link to="/data" class="nav-item">数据分析</router-link>
+            <router-link to="/analysis/multi-dimension" class="nav-item">多维分析</router-link>
+            <router-link to="/analysis/deep-search" class="nav-item">深度检索</router-link>
           </nav>
         </div>
         <div class="header-right">
-          <div class="search-mini">
-            <input type="text" placeholder="搜索..." class="search-mini-input" v-model="miniSearch" @keyup.enter="handleSearch">
-            <span class="search-icon">🔍</span>
+          <button v-if="!isLoggedIn" class="btn btn-text" @click="handleLogin">登录</button>
+          <button class="btn btn-primary" @click="handleRegister">注册</button>
+          
+          <!-- 已登录状态 -->
+          <div v-if="isLoggedIn" class="user-menu">
+            <button class="btn btn-text user-info-btn">
+              <span class="username">{{ userInfo?.username || '用户' }}</span>
+              <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="user-dropdown">
+              <div class="dropdown-item" @click="goToProfile">
+                <i class="fas fa-user"></i>
+                <span>个人中心</span>
+              </div>
+              <div class="dropdown-item" @click="handleLogout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+              </div>
+            </div>
           </div>
-          <button class="btn btn-text">登录</button>
-          <button class="btn btn-primary">注册</button>
         </div>
       </div>
     </header>
@@ -198,19 +213,23 @@
         </div>
         <div class="majors-grid">
           <div class="major-card" v-for="major in topMajors" :key="major.id" @click="viewMajorDetail(major.id)">
-            <h3 class="major-name">{{ major.name }}</h3>
-            <div class="major-stats">
-              <div class="major-stat">
-                <span class="label">平均薪资</span>
-                <span class="value">{{ major.salary }}</span>
+            <div class="card-header">
+              <div class="title-wrapper">
+                <h3>{{ major.name }}</h3>
+                <el-tag size="small" type="primary">{{ major.code }}</el-tag>
               </div>
-              <div class="major-stat">
-                <span class="label">专业代码</span>
-                <span class="value">{{ major.code }}</span>
-              </div>
-              <div class="major-stat">
-                <span class="label">修业年限</span>
-                <span class="value">{{ major.duration }}</span>
+              <span class="arrow">→</span>
+            </div>
+            <div class="card-body">
+              <div class="major-meta">
+                <div class="meta-item">
+                  <span class="meta-label">平均薪资</span>
+                  <span class="meta-value">{{ major.salary }}</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">修业年限</span>
+                  <span class="meta-value">{{ major.duration }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -228,13 +247,10 @@
           </div>
         </div>
         <div class="faq-grid">
-          <div class="faq-item" v-for="(faq, index) in faqs" :key="index" @click="toggleFaq(index)">
+          <div class="faq-item" v-for="faq in faqs" :key="faq.id" @click="viewFaqDetail(faq)">
             <div class="faq-header">
               <h3 class="faq-question">{{ faq.question }}</h3>
-              <span class="faq-toggle" :class="{ active: expandedFaq === index }">+</span>
-            </div>
-            <div class="faq-answer" v-if="expandedFaq === index">
-              <p>{{ faq.answer }}</p>
+              <span class="faq-toggle">+</span>
             </div>
           </div>
         </div>
@@ -246,8 +262,8 @@
       <div class="container">
         <div class="cta-content">
           <h2 class="cta-title">准备好开始了吗？</h2>
-          <p class="cta-subtitle">立即注册，获取个性化志愿推荐方案</p>
-          <button class="cta-btn" @click="navigateTo('/register')">免费注册</button>
+          <p class="cta-subtitle">立即体验，获取个性化志愿推荐方案</p>
+          <button class="cta-btn" @click="navigateTo('/register')">立即体验</button>
         </div>
       </div>
     </section>
@@ -256,46 +272,13 @@
     <footer class="footer">
       <div class="container">
         <div class="footer-content">
-          <div class="footer-col">
+          <div class="footer-col-centered">
             <h4 class="footer-title">关于我们</h4>
-            <p class="footer-desc">高考志愿数据分析平台致力于为全国高考考生提供最专业、最全面的志愿填报服务，帮助考生科学决策。</p>
-            <div class="footer-social">
-              <a href="#" class="social-link">微信</a>
-              <a href="#" class="social-link">微博</a>
-              <a href="#" class="social-link">抖音</a>
-            </div>
-          </div>
-          <div class="footer-col">
-            <h4 class="footer-title">产品</h4>
-            <ul class="footer-links">
-              <li><a href="#">高校库</a></li>
-              <li><a href="#">专业库</a></li>
-              <li><a href="#">分数线查询</a></li>
-              <li><a href="#">志愿推荐</a></li>
-              <li><a href="#">数据分析</a></li>
-            </ul>
-          </div>
-          <div class="footer-col">
-            <h4 class="footer-title">资源</h4>
-            <ul class="footer-links">
-              <li><a href="#">填报指南</a></li>
-              <li><a href="#">政策解读</a></li>
-              <li><a href="#">院校排名</a></li>
-              <li><a href="#">就业前景</a></li>
-              <li><a href="#">常见问题</a></li>
-            </ul>
-          </div>
-          <div class="footer-col">
-            <h4 class="footer-title">联系我们</h4>
-            <p class="footer-contact">
-              <span>客服热线：400-123-4567</span><br>
-              <span>邮箱：service@gkzy.com</span><br>
-              <span>地址：四川成都市郫都区</span>
-            </p>
+            <p class="footer-desc">高考志愿数据分析平台致力于为全国高考考生<br>提供最专业、最全面的志愿填报服务，<br>帮助考生科学决策。</p>
           </div>
         </div>
         <div class="footer-bottom">
-          <p class="footer-copyright">© 2026 高考志愿数据分析平台 | 蜀ICP备XXXXXXXX号 | <a href="#">隐私政策</a> | <a href="#">服务条款</a></p>
+          <p class="footer-copyright">© 2026 高考志愿数据分析平台</p>
         </div>
       </div>
     </footer>
@@ -317,16 +300,40 @@ const showBackToTop = ref(false)
 const currentSlide = ref(0)
 const carouselTimer = ref(null)
 const schoolFilter = ref('all')
-const expandedFaq = ref(null)
+
+// 用户登录状态
+const isLoggedIn = ref(false)
+const userInfo = ref(null)
+
+// 检查登录状态
+const checkLoginStatus = () => {
+  const token = localStorage.getItem('userToken')
+  if (token) {
+    isLoggedIn.value = true
+    // 解析JWT token获取用户信息（这里简化处理）
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      userInfo.value = {
+        username: payload.username,
+        role: payload.role
+      }
+    } catch (error) {
+      console.error('解析token失败:', error)
+    }
+  } else {
+    isLoggedIn.value = false
+    userInfo.value = null
+  }
+}
 
 // 高考倒计时相关数据
 const countdownDays = ref(0)
 const countdownProgress = ref(0)
 
 const quickFunctions = [
-  { id: 1, icon: '🏫', name: '高校查询', desc: '3000+ 高校信息', route: '/schools' },
-  { id: 2, icon: '📚', name: '专业查询', desc: '700+ 专业详情', route: '/majors' },
-  { id: 3, icon: '📊', name: '分数线', desc: '5 年录取数据', route: '/scores' },
+  { id: 1, icon: '🏫', name: '高校查询', desc: '2900+ 高校信息', route: '/schools' },
+  { id: 2, icon: '📚', name: '专业查询', desc: '800+ 专业详情', route: '/majors' },
+  { id: 3, icon: '📊', name: '分数线', desc: '3 年录取数据', route: '/scores' },
   { id: 4, icon: '🎯', name: '志愿推荐', desc: '智能匹配方案', route: '/analysis' }
 ]
 
@@ -364,24 +371,34 @@ const topMajors = ref([])
 
 const faqs = [
   {
+    id: 1,
     question: '如何使用志愿推荐功能？',
     answer: '进入志愿推荐页面，输入你的高考成绩、全省位次、所在省份和选考科目，系统会根据大数据分析为你推荐冲、稳、保三个梯度的院校专业组合。'
   },
   {
-    question: '平台的数据准确性如何保证？',
-    answer: '我们的数据来自教育部、各省教育考试院等官方渠道，每年定期更新。所有数据都经过专业团队的验证和处理，确保准确性和时效性。'
+    id: 2,
+    question: '如何查看学校的录取分数线？',
+    answer: '在高校详情页面的"录取分析"标签中，可以查看该校近5年的录取分数线、位次变化趋势，支持按省份、科类、批次进行筛选，帮助你更好地评估录取概率。'
   },
   {
+    id: 3,
     question: '可以对比多所高校吗？',
-    answer: '可以。在高校详情页面点击"加入对比"，最多可以同时对比4所高校，系统会为你展示详细的对比分析报告。'
+    answer: '可以。在高校详情页面点击"加入对比"，最多可以同时对比 4 所高校，系统会为你展示详细的对比分析报告。'
   },
   {
+    id: 4,
     question: '如何查看历年分数线？',
-    answer: '在高校详情页面的"录取分析"标签中，可以查看该校近5年的录取分数线、位次变化趋势，帮助你更好地评估录取概率。'
+    answer: '在高校详情页面的"录取分析"标签中，可以查看该校近 5 年的录取分数线、位次变化趋势，帮助你更好地评估录取概率。'
   },
   {
+    id: 5,
     question: '平台是否提供一对一咨询服务？',
     answer: '我们提供在线客服支持和专业的填报指南。对于复杂的个性化问题，可以联系我们的专业顾问团队获得一对一的咨询服务。'
+  },
+  {
+    id: 6,
+    question: '如何收藏喜欢的学校和专业？',
+    answer: '登录后，在学校或专业详情页点击"收藏"按钮即可添加到个人收藏。你可以在个人中心的"我的收藏"中查看所有收藏的学校和专业。'
   }
 ]
 
@@ -402,6 +419,7 @@ const filteredSchools = computed(() => {
 })
 
 onMounted(async () => {
+  checkLoginStatus()
   setupScrollListener()
   startCarousel()
   setupCountdown()
@@ -595,16 +613,76 @@ function navigateTo(route) {
   router.push(route)
 }
 
+function viewFaqDetail(faq) {
+  console.log('查看 FAQ 详情:', faq)
+  router.push({
+    path: '/faq',
+    query: {
+      id: faq.id,
+      question: faq.question,
+      answer: faq.answer
+    }
+  }).then(() => {
+    console.log('成功跳转到 FAQ 详情页')
+  }).catch(err => {
+    console.error('跳转失败:', err)
+  })
+}
+
+// 登录注册相关函数
+function handleLogin() {
+  console.log('登录按钮被点击')
+  // 跳转到登录页面
+  router.push('/login').then(() => {
+    console.log('成功跳转到登录页面')
+  }).catch(err => {
+    console.error('跳转失败:', err)
+  })
+}
+
+function handleRegister() {
+  console.log('注册按钮被点击')
+  // 跳转到注册页面（即使已登录也可以访问）
+  router.push('/register').then(() => {
+    console.log('成功跳转到注册页面')
+  }).catch(err => {
+    console.error('跳转失败:', err)
+  })
+}
+
+function goToProfile() {
+  console.log('跳转到个人中心')
+  router.push('/profile').then(() => {
+    console.log('成功跳转到个人中心')
+  }).catch(err => {
+    console.error('跳转失败:', err)
+  })
+}
+
+function handleLogout() {
+  console.log('退出登录')
+  // 清除本地存储的token
+  localStorage.removeItem('userToken')
+  localStorage.removeItem('adminToken')
+  
+  // 更新登录状态
+  isLoggedIn.value = false
+  userInfo.value = null
+  
+  // 跳转到首页
+  router.push('/').then(() => {
+    console.log('退出登录成功，跳转到首页')
+    // 刷新页面以更新状态
+    window.location.reload()
+  })
+}
+
 function viewSchoolDetail(id) {
   router.push(`/school/${id}`)
 }
 
 function viewMajorDetail(id) {
-  router.push(`/majors/${id}`)
-}
-
-function toggleFaq(index) {
-  expandedFaq.value = expandedFaq.value === index ? null : index
+  router.push(`/major/${id}`)
 }
 
 function setupCountdown() {
@@ -815,6 +893,67 @@ function getMotivationText() {
 .btn-primary:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3);
+}
+
+/* 用户菜单样式 */
+.user-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.user-info-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.username {
+  font-weight: 500;
+  color: #1e88e5;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  min-width: 140px;
+  padding: 8px 0;
+  margin-top: 8px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.user-menu:hover .user-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  color: #666;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  background-color: #f5f5f5;
+  color: #1e88e5;
+}
+
+.dropdown-item i {
+  width: 16px;
+  text-align: center;
 }
 
 /* ===== Hero 搜索区域 ===== */
@@ -1786,91 +1925,96 @@ function getMotivationText() {
 }
 
 .major-card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
   cursor: pointer;
-  transition: all 0.2s;
-  border: 1px solid #e8e8e8;
-  position: relative;
+  transition: all 0.3s ease;
+  border-radius: 20px;
   overflow: hidden;
-}
-
-.major-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.2s;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f0f0;
 }
 
 .major-card:hover {
-  border-color: #f5576c;
-  box-shadow: 0 8px 24px rgba(245, 87, 108, 0.12);
-  transform: translateY(-4px);
+  transform: translateY(-8px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  border-color: #e0e0e0;
 }
 
-.major-card:hover::before {
-  transform: scaleX(1);
-}
-
-.major-header {
+.card-header {
+  padding: 20px 20px 16px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 12px;
+  border-bottom: 1px solid #f8f8f8;
+  background: linear-gradient(135deg, #f8fafc 0%, #f0f4f8 100%);
 }
 
-.major-icon {
-  font-size: 36px;
-}
-
-.major-badge {
-  padding: 4px 10px;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.major-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin: 0 0 8px 0;
-  line-height: 1.4;
-}
-
-.major-desc {
-  font-size: 13px;
-  color: #999;
-  margin: 0 0 16px 0;
-  line-height: 1.5;
-}
-
-.major-stats {
+.title-wrapper {
   display: flex;
-  gap: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #f0f0f0;
-}
-
-.major-stat {
+  flex-direction: column;
+  gap: 6px;
   flex: 1;
-  text-align: center;
 }
 
-.major-stat .label {
-  display: block;
-  font-size: 10px;
-  color: #999;
-  margin-bottom: 4px;
+.title-wrapper h3 {
+  font-size: 1.3rem;
+  margin: 0;
+  color: #1e3a8a;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.title-wrapper .el-tag {
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  align-self: center;
+  margin: 0 auto;
+}
+
+.arrow {
+  color: #1e88e5;
+  font-size: 1.3rem;
+  opacity: 0.6;
+  transition: all 0.3s ease;
+  margin-top: 4px;
+}
+
+.major-card:hover .arrow {
+  opacity: 1;
+  transform: translateX(3px);
+}
+
+.card-body {
+  padding: 16px 20px;
+  flex: 1;
+}
+
+.major-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.meta-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.meta-label {
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.meta-value {
+  color: #1a1a1a;
+  font-weight: 600;
+  font-size: 0.95rem;
 }
 
 .major-stat .value {
@@ -2114,74 +2258,31 @@ function getMotivationText() {
 }
 
 .footer-content {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 40px;
+  display: flex;
+  justify-content: center;
   margin-bottom: 40px;
 }
 
-.footer-col {
+.footer-col-centered {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 600px;
 }
 
 .footer-title {
   color: white;
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 700;
   margin: 0 0 16px 0;
 }
 
 .footer-desc {
-  font-size: 13px;
-  line-height: 1.6;
-  margin: 0 0 16px 0;
-}
-
-.footer-social {
-  display: flex;
-  gap: 12px;
-}
-
-.social-link {
-  color: #999;
-  text-decoration: none;
-  font-size: 13px;
-  transition: color 0.2s;
-}
-
-.social-link:hover {
-  color: white;
-}
-
-.footer-links {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.footer-links a {
-  color: #999;
-  text-decoration: none;
-  font-size: 13px;
-  transition: color 0.2s;
-}
-
-.footer-links a:hover {
-  color: white;
-}
-
-.footer-contact {
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.8;
   margin: 0;
-}
-
-.footer-contact span {
-  display: block;
+  color: #e0e0e0;
 }
 
 .footer-bottom {
@@ -2860,38 +2961,6 @@ function getMotivationText() {
   .footer-content {
     gap: 20px;
     margin-bottom: 20px;
-  }
-
-  .footer-title {
-    font-size: 14px;
-    margin-bottom: 12px;
-    margin-bottom: 12px;
-  }
-
-  .footer-desc {
-    font-size: 12px;
-    margin-bottom: 12px;
-  }
-
-  .footer-social {
-    gap: 10px;
-  }
-
-  .social-link {
-    font-size: 12px;
-  }
-
-  .footer-links {
-    gap: 6px;
-  }
-
-  .footer-links a {
-    font-size: 12px;
-  }
-
-  .footer-contact {
-    font-size: 12px;
-    line-height: 1.6;
   }
 
   .footer-copyright {
