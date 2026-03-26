@@ -17,14 +17,15 @@ from app.models.favorite import Favorite
 from app.models.data_source import DataSource
 
 # 注册蓝图
+from app.routes.favorite import favorite_bp
+from app.services.data_import import data_import_bp
 from app.services.admin_auth import admin_auth_bp
 from app.routes.auth import auth_bp
 from app.routes.overview import overview_bp
 from app.routes.school import school_bp
 from app.services.analysis import analysis_bp
 from app.routes.major import major_bp
-from app.routes.favorite import favorite_bp
-from app.services.data_import import data_import_bp
+from app.routes.recommendation import recommendation_bp
 
 def create_app():
     app = Flask(__name__)
@@ -88,14 +89,7 @@ def create_app():
     # 初始化缓存
     cache.init_app(app)
 
-    # 注册蓝图
-    from app.services.admin_auth import admin_auth_bp
-    from app.routes.auth import auth_bp
-    from app.routes.overview import overview_bp
-    from app.routes.school import school_bp
-    from app.services.analysis import analysis_bp
-    from app.routes.major import major_bp
-    from app.routes.recommendation import recommendation_bp
+
     # 注册所有蓝图路由
     app.register_blueprint(admin_auth_bp)
     app.register_blueprint(auth_bp)
