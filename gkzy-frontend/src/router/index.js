@@ -94,6 +94,11 @@ const routes = [
     name: 'SchoolDetail',
     component: SchoolDetail,
     props: true
+  },
+  {
+    path: '/faq',
+    name: 'FaqDetail',
+    component: () => import('../views/FaqDetail.vue')
   }
 ]
 

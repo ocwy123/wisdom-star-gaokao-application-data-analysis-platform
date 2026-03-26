@@ -247,13 +247,10 @@
           </div>
         </div>
         <div class="faq-grid">
-          <div class="faq-item" v-for="(faq, index) in faqs" :key="index" @click="toggleFaq(index)">
+          <div class="faq-item" v-for="faq in faqs" :key="faq.id" @click="viewFaqDetail(faq)">
             <div class="faq-header">
               <h3 class="faq-question">{{ faq.question }}</h3>
-              <span class="faq-toggle" :class="{ active: expandedFaq === index }">+</span>
-            </div>
-            <div class="faq-answer" v-if="expandedFaq === index">
-              <p>{{ faq.answer }}</p>
+              <span class="faq-toggle">+</span>
             </div>
           </div>
         </div>
@@ -265,8 +262,8 @@
       <div class="container">
         <div class="cta-content">
           <h2 class="cta-title">准备好开始了吗？</h2>
-          <p class="cta-subtitle">立即注册，获取个性化志愿推荐方案</p>
-          <button class="cta-btn" @click="navigateTo('/register')">免费注册</button>
+          <p class="cta-subtitle">立即体验，获取个性化志愿推荐方案</p>
+          <button class="cta-btn" @click="navigateTo('/register')">立即体验</button>
         </div>
       </div>
     </section>
@@ -275,46 +272,13 @@
     <footer class="footer">
       <div class="container">
         <div class="footer-content">
-          <div class="footer-col">
+          <div class="footer-col-centered">
             <h4 class="footer-title">关于我们</h4>
-            <p class="footer-desc">高考志愿数据分析平台致力于为全国高考考生提供最专业、最全面的志愿填报服务，帮助考生科学决策。</p>
-            <div class="footer-social">
-              <a href="#" class="social-link">微信</a>
-              <a href="#" class="social-link">微博</a>
-              <a href="#" class="social-link">抖音</a>
-            </div>
-          </div>
-          <div class="footer-col">
-            <h4 class="footer-title">产品</h4>
-            <ul class="footer-links">
-              <li><a href="#">高校库</a></li>
-              <li><a href="#">专业库</a></li>
-              <li><a href="#">分数线查询</a></li>
-              <li><a href="#">志愿推荐</a></li>
-              <li><a href="#">数据分析</a></li>
-            </ul>
-          </div>
-          <div class="footer-col">
-            <h4 class="footer-title">资源</h4>
-            <ul class="footer-links">
-              <li><a href="#">填报指南</a></li>
-              <li><a href="#">政策解读</a></li>
-              <li><a href="#">院校排名</a></li>
-              <li><a href="#">就业前景</a></li>
-              <li><a href="#">常见问题</a></li>
-            </ul>
-          </div>
-          <div class="footer-col">
-            <h4 class="footer-title">联系我们</h4>
-            <p class="footer-contact">
-              <span>客服热线：400-123-4567</span><br>
-              <span>邮箱：service@gkzy.com</span><br>
-              <span>地址：四川成都市郫都区</span>
-            </p>
+            <p class="footer-desc">高考志愿数据分析平台致力于为全国高考考生<br>提供最专业、最全面的志愿填报服务，<br>帮助考生科学决策。</p>
           </div>
         </div>
         <div class="footer-bottom">
-          <p class="footer-copyright">© 2026 高考志愿数据分析平台 | 蜀ICP备XXXXXXXX号 | <a href="#">隐私政策</a> | <a href="#">服务条款</a></p>
+          <p class="footer-copyright">© 2026 高考志愿数据分析平台</p>
         </div>
       </div>
     </footer>
@@ -336,7 +300,6 @@ const showBackToTop = ref(false)
 const currentSlide = ref(0)
 const carouselTimer = ref(null)
 const schoolFilter = ref('all')
-const expandedFaq = ref(null)
 
 // 用户登录状态
 const isLoggedIn = ref(false)
@@ -368,9 +331,9 @@ const countdownDays = ref(0)
 const countdownProgress = ref(0)
 
 const quickFunctions = [
-  { id: 1, icon: '🏫', name: '高校查询', desc: '3000+ 高校信息', route: '/schools' },
-  { id: 2, icon: '📚', name: '专业查询', desc: '700+ 专业详情', route: '/majors' },
-  { id: 3, icon: '📊', name: '分数线', desc: '5 年录取数据', route: '/scores' },
+  { id: 1, icon: '🏫', name: '高校查询', desc: '2900+ 高校信息', route: '/schools' },
+  { id: 2, icon: '📚', name: '专业查询', desc: '800+ 专业详情', route: '/majors' },
+  { id: 3, icon: '📊', name: '分数线', desc: '3 年录取数据', route: '/scores' },
   { id: 4, icon: '🎯', name: '志愿推荐', desc: '智能匹配方案', route: '/analysis' }
 ]
 
@@ -408,24 +371,34 @@ const topMajors = ref([])
 
 const faqs = [
   {
+    id: 1,
     question: '如何使用志愿推荐功能？',
     answer: '进入志愿推荐页面，输入你的高考成绩、全省位次、所在省份和选考科目，系统会根据大数据分析为你推荐冲、稳、保三个梯度的院校专业组合。'
   },
   {
-    question: '平台的数据准确性如何保证？',
-    answer: '我们的数据来自教育部、各省教育考试院等官方渠道，每年定期更新。所有数据都经过专业团队的验证和处理，确保准确性和时效性。'
+    id: 2,
+    question: '如何查看学校的录取分数线？',
+    answer: '在高校详情页面的"录取分析"标签中，可以查看该校近5年的录取分数线、位次变化趋势，支持按省份、科类、批次进行筛选，帮助你更好地评估录取概率。'
   },
   {
+    id: 3,
     question: '可以对比多所高校吗？',
-    answer: '可以。在高校详情页面点击"加入对比"，最多可以同时对比4所高校，系统会为你展示详细的对比分析报告。'
+    answer: '可以。在高校详情页面点击"加入对比"，最多可以同时对比 4 所高校，系统会为你展示详细的对比分析报告。'
   },
   {
+    id: 4,
     question: '如何查看历年分数线？',
-    answer: '在高校详情页面的"录取分析"标签中，可以查看该校近5年的录取分数线、位次变化趋势，帮助你更好地评估录取概率。'
+    answer: '在高校详情页面的"录取分析"标签中，可以查看该校近 5 年的录取分数线、位次变化趋势，帮助你更好地评估录取概率。'
   },
   {
+    id: 5,
     question: '平台是否提供一对一咨询服务？',
     answer: '我们提供在线客服支持和专业的填报指南。对于复杂的个性化问题，可以联系我们的专业顾问团队获得一对一的咨询服务。'
+  },
+  {
+    id: 6,
+    question: '如何收藏喜欢的学校和专业？',
+    answer: '登录后，在学校或专业详情页点击"收藏"按钮即可添加到个人收藏。你可以在个人中心的"我的收藏"中查看所有收藏的学校和专业。'
   }
 ]
 
@@ -640,6 +613,22 @@ function navigateTo(route) {
   router.push(route)
 }
 
+function viewFaqDetail(faq) {
+  console.log('查看 FAQ 详情:', faq)
+  router.push({
+    path: '/faq',
+    query: {
+      id: faq.id,
+      question: faq.question,
+      answer: faq.answer
+    }
+  }).then(() => {
+    console.log('成功跳转到 FAQ 详情页')
+  }).catch(err => {
+    console.error('跳转失败:', err)
+  })
+}
+
 // 登录注册相关函数
 function handleLogin() {
   console.log('登录按钮被点击')
@@ -694,10 +683,6 @@ function viewSchoolDetail(id) {
 
 function viewMajorDetail(id) {
   router.push(`/major/${id}`)
-}
-
-function toggleFaq(index) {
-  expandedFaq.value = expandedFaq.value === index ? null : index
 }
 
 function setupCountdown() {
@@ -2273,74 +2258,31 @@ function getMotivationText() {
 }
 
 .footer-content {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 40px;
+  display: flex;
+  justify-content: center;
   margin-bottom: 40px;
 }
 
-.footer-col {
+.footer-col-centered {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 600px;
 }
 
 .footer-title {
   color: white;
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 700;
   margin: 0 0 16px 0;
 }
 
 .footer-desc {
-  font-size: 13px;
-  line-height: 1.6;
-  margin: 0 0 16px 0;
-}
-
-.footer-social {
-  display: flex;
-  gap: 12px;
-}
-
-.social-link {
-  color: #999;
-  text-decoration: none;
-  font-size: 13px;
-  transition: color 0.2s;
-}
-
-.social-link:hover {
-  color: white;
-}
-
-.footer-links {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.footer-links a {
-  color: #999;
-  text-decoration: none;
-  font-size: 13px;
-  transition: color 0.2s;
-}
-
-.footer-links a:hover {
-  color: white;
-}
-
-.footer-contact {
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.8;
   margin: 0;
-}
-
-.footer-contact span {
-  display: block;
+  color: #e0e0e0;
 }
 
 .footer-bottom {
@@ -3019,38 +2961,6 @@ function getMotivationText() {
   .footer-content {
     gap: 20px;
     margin-bottom: 20px;
-  }
-
-  .footer-title {
-    font-size: 14px;
-    margin-bottom: 12px;
-    margin-bottom: 12px;
-  }
-
-  .footer-desc {
-    font-size: 12px;
-    margin-bottom: 12px;
-  }
-
-  .footer-social {
-    gap: 10px;
-  }
-
-  .social-link {
-    font-size: 12px;
-  }
-
-  .footer-links {
-    gap: 6px;
-  }
-
-  .footer-links a {
-    font-size: 12px;
-  }
-
-  .footer-contact {
-    font-size: 12px;
-    line-height: 1.6;
   }
 
   .footer-copyright {
