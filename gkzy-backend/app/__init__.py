@@ -95,7 +95,6 @@ def create_app():
     from app.routes.school import school_bp
     from app.services.analysis import analysis_bp
     from app.routes.major import major_bp
-    from app.routes.heat import heat_bp
     from app.routes.recommendation import recommendation_bp
     # 注册所有蓝图路由
     app.register_blueprint(admin_auth_bp)
