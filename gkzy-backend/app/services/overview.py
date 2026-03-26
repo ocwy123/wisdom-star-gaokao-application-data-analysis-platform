@@ -94,7 +94,7 @@ class OverviewService:
                     me.year
                 FROM edu_major m
                 INNER JOIN ana_major_employment me ON m.id = me.major_id
-                ORDER BY me.avg_salary DESC
+                ORDER BY me.major_id ASC
                 LIMIT :limit
             """)
             

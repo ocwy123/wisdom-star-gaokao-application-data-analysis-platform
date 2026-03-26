@@ -206,8 +206,7 @@
       <div class="container">
         <div class="section-header">
           <div class="section-title-group">
-            <h2 class="section-title">热门专业</h2>
-            <p class="section-subtitle">就业前景好，报考热度高</p>
+            <h2 class="section-title">专业概览</h2>
           </div>
           <a href="#" class="more-link" @click.prevent="navigateTo('/majors')">查看全部 →</a>
         </div>
