@@ -192,8 +192,7 @@ class SchoolService:
         try:
             scores = db.session.query(
                 AdmRecord.year,
-                AdmRecord.min_score,
-                AdmRecord.min_rank
+                AdmRecord.min_score
             ).filter(
                 AdmRecord.school_id == school_id,
                 AdmRecord.province == province,
@@ -202,8 +201,7 @@ class SchoolService:
             
             return [{
                 'year': s.year,
-                'min_score': s.min_score,
-                'min_rank': s.min_rank
+                'min_score': s.min_score
             } for s in scores]
         except Exception as e:
             print(f"[ERROR] 获取学校分数线数据失败：{e}")

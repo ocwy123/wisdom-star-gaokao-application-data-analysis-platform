@@ -349,7 +349,6 @@ def search_admissions(keyword, filters):
             'batch': adm.batch,
             'major_group': adm.major_group,
             'min_score': adm.min_score,
-            'min_rank': adm.min_rank,
             'relevance': relevance
         })
     

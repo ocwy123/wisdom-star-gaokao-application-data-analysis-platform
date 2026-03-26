@@ -430,7 +430,7 @@ def clean_adm_record_data(df):
     df_cleaned = df_cleaned.dropna(how='all')
     
     # 数值字段处理
-    numeric_cols = ['plan_count', 'min_score', 'min_rank']
+    numeric_cols = ['plan_count', 'min_score']
     for col in numeric_cols:
         if col in df.columns:
             df_cleaned[col] = pd.to_numeric(df_cleaned[col], errors='coerce')
