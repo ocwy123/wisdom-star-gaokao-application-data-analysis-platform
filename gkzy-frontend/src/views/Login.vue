@@ -52,21 +52,6 @@
           登录
         </el-button>
         
-        <div class="divider">
-          <span>或</span>
-        </div>
-        
-        <div class="social-login">
-          <el-button class="social-btn" type="default" size="large">
-            <el-icon class="social-icon"><Monitor /></el-icon>
-            微信登录
-          </el-button>
-          <el-button class="social-btn" type="default" size="large">
-            <el-icon class="social-icon"><Phone /></el-icon>
-            手机号登录
-          </el-button>
-        </div>
-        
         <div class="links">
           <span>还没有账号？</span>
           <router-link to="/register" class="register-link">立即注册</router-link>
@@ -126,51 +111,91 @@ const handleLogin = async () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  background: linear-gradient(135deg, var(--accent) 0%, #764ba2 100%);
-  transition: background 0.3s ease;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-container::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: float 6s ease-in-out infinite;
+}
+
+.login-container::after {
+  content: '';
+  position: absolute;
+  bottom: -30%;
+  left: -5%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: float 8s ease-in-out infinite 2s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
 }
 
 .login-box {
-  width: 420px;
+  width: 460px;
   padding: 48px;
-  background: var(--bg);
-  border-radius: 12px;
-  box-shadow: var(--shadow);
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
   animation: slideUp 0.5s ease-out;
+  position: relative;
+  z-index: 1;
 }
 
 .login-box:hover {
-  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.2);
   transform: translateY(-2px);
 }
 
 .logo-section {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 }
 
 .logo {
-  font-size: 32px;
+  font-size: 42px;
   font-weight: 700;
-  color: var(--accent);
-  margin: 0 0 8px 0;
-  letter-spacing: 2px;
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 12px 0;
+  letter-spacing: 3px;
 }
 
 .slogan {
-  font-size: 14px;
-  color: var(--text);
+  font-size: 15px;
+  color: #666;
   margin: 0;
+  font-weight: 500;
 }
 
 .title {
   text-align: center;
-  margin-bottom: 32px;
-  color: var(--text-h);
-  font-size: 24px;
-  font-weight: 600;
+  margin-bottom: 40px;
+  color: #1a1a1a;
+  font-size: 28px;
+  font-weight: 700;
 }
 
 .login-form {
@@ -178,23 +203,23 @@ const handleLogin = async () => {
 }
 
 .form-input {
-  border-radius: 8px;
+  border-radius: 12px;
   transition: all 0.3s ease;
-  border: 1px solid var(--border);
+  border: 2px solid #e8e8e8;
 }
 
 .form-input:hover {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-bg);
+  border-color: #1e88e5;
+  box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1);
 }
 
 .form-input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-bg);
+  border-color: #1e88e5;
+  box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.1);
 }
 
 .input-icon {
-  color: var(--text);
+  color: #999;
   font-size: 18px;
 }
 
@@ -202,104 +227,55 @@ const handleLogin = async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 16px 0 24px 0;
+  margin: 20px 0 24px 0;
 }
 
 .remember-checkbox {
-  color: var(--text);
+  color: #666;
   font-size: 14px;
 }
 
 .forgot-password {
-  color: var(--accent);
+  color: #1e88e5;
   font-size: 14px;
   text-decoration: none;
   transition: color 0.3s ease;
+  font-weight: 500;
 }
 
 .forgot-password:hover {
-  color: var(--accent);
+  color: #1565c0;
   text-decoration: underline;
 }
 
 .login-btn {
   width: 100%;
-  margin-top: 8px;
-  height: 48px;
-  border-radius: 8px;
+  margin-top: 12px;
+  height: 50px;
+  border-radius: 12px;
   font-size: 16px;
   font-weight: 600;
-  background: var(--accent);
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
   border: none;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(30, 136, 229, 0.2);
 }
 
 .login-btn:hover {
-  background: #9631e8;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(170, 59, 255, 0.3);
-}
-
-.divider {
-  position: relative;
-  text-align: center;
-  margin: 32px 0;
-  color: var(--text);
-  font-size: 14px;
-}
-
-.divider::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: var(--border);
-  z-index: 0;
-}
-
-.divider span {
-  position: relative;
-  background: var(--bg);
-  padding: 0 16px;
-  z-index: 1;
-}
-
-.social-login {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 32px;
-}
-
-.social-btn {
-  flex: 1;
-  height: 44px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  transition: all 0.3s ease;
-}
-
-.social-btn:hover {
-  border-color: var(--accent);
-  background: var(--accent-bg);
-  transform: translateY(-1px);
-}
-
-.social-icon {
-  margin-right: 8px;
-  font-size: 18px;
+  background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(30, 136, 229, 0.3);
 }
 
 .links {
-  margin-top: 16px;
+  margin-top: 20px;
   text-align: center;
   font-size: 14px;
-  color: var(--text);
+  color: #666;
 }
 
 .register-link {
-  color: var(--accent);
+  color: #1e88e5;
   font-weight: 600;
   text-decoration: none;
   margin-left: 4px;
@@ -307,14 +283,14 @@ const handleLogin = async () => {
 }
 
 .register-link:hover {
-  color: #9631e8;
+  color: #1565c0;
   text-decoration: underline;
 }
 
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
@@ -327,7 +303,15 @@ const handleLogin = async () => {
   .login-box {
     width: 90%;
     max-width: 400px;
-    padding: 32px;
+    padding: 36px 28px;
+  }
+  
+  .logo {
+    font-size: 36px;
+  }
+  
+  .title {
+    font-size: 24px;
   }
   
   .social-login {

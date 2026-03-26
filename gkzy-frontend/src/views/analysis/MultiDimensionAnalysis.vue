@@ -1,5 +1,47 @@
 <template>
   <div class="multi-dimension-analysis">
+    <!-- 顶部导航栏 -->
+    <header class="header">
+      <div class="container">
+        <div class="header-left">
+          <div class="logo" @click="scrollToTop">
+            <span class="logo-icon">🎓</span>
+            <span class="logo-text">高考志愿</span>
+          </div>
+          <nav class="nav">
+            <router-link to="/" class="nav-item">首页</router-link>
+            <router-link to="/schools" class="nav-item">查大学</router-link>
+            <router-link to="/majors" class="nav-item">看专业</router-link>
+            <router-link to="/志愿" class="nav-item">志愿填报</router-link>
+            <router-link to="/analysis/multi-dimension" class="nav-item active">多维分析</router-link>
+            <router-link to="/analysis/deep-search" class="nav-item">深度检索</router-link>
+          </nav>
+        </div>
+        <div class="header-right">
+          <button v-if="!isLoggedIn" class="btn btn-text" @click="handleLogin">登录</button>
+          <button class="btn btn-primary" @click="handleRegister">注册</button>
+          
+          <!-- 已登录状态 -->
+          <div v-if="isLoggedIn" class="user-menu">
+            <button class="btn btn-text user-info-btn">
+              <span class="username">{{ userInfo?.username || '用户' }}</span>
+              <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="user-dropdown">
+              <div class="dropdown-item" @click="goToProfile">
+                <i class="fas fa-user"></i>
+                <span>个人中心</span>
+              </div>
+              <div class="dropdown-item" @click="handleLogout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
     <!-- 页面标题 -->
     <div class="page-header">
       <h2>多维对比分析</h2>
@@ -206,6 +248,7 @@
 
 <script>
 import { ref, reactive, onMounted, nextTick, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Plus, Folder, Download, DataAnalysis } from '@element-plus/icons-vue'
 import request from '@/utils/request'
@@ -217,6 +260,56 @@ export default {
     Plus, Folder, Download, DataAnalysis
   },
   setup() {
+    const router = useRouter()
+    
+    // 导航栏相关
+    const isLoggedIn = ref(false)
+    const userInfo = ref(null)
+    
+    // 检查登录状态
+    const checkLoginStatus = () => {
+      const token = localStorage.getItem('userToken')
+      const user = localStorage.getItem('userInfo')
+      if (token && user) {
+        isLoggedIn.value = true
+        userInfo.value = JSON.parse(user)
+      }
+    }
+    
+    // 滚动到顶部
+    const scrollToTop = () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+    
+    // 处理登录
+    const handleLogin = () => {
+      router.push('/login')
+    }
+    
+    // 处理注册
+    const handleRegister = () => {
+      router.push('/register')
+    }
+    
+    // 跳转到个人中心
+    const goToProfile = () => {
+      router.push('/profile')
+    }
+    
+    // 处理登出
+    const handleLogout = () => {
+      localStorage.removeItem('userToken')
+      localStorage.removeItem('userInfo')
+      isLoggedIn.value = false
+      userInfo.value = null
+      ElMessage.success('已退出登录')
+      router.push('/')
+    }
+    
+    // 在挂载时检查登录状态
+    onMounted(() => {
+      checkLoginStatus()
+    })
     // 维度选项（单选）
     const selectedDimension = ref('')
     const dimensionOptions = [
@@ -661,6 +754,14 @@ export default {
     })
     
     return {
+      // 导航栏相关
+      isLoggedIn,
+      userInfo,
+      scrollToTop,
+      handleLogin,
+      handleRegister,
+      goToProfile,
+      handleLogout,
       selectedDimension,
       dimensionOptions,
       commonMetrics,
@@ -702,62 +803,314 @@ export default {
 <style scoped>
 .multi-dimension-analysis {
   padding: 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  min-height: 100vh;
+}
+
+/* ===== 顶部导航 ===== */
+.header {
+  background: #fff;
+  border-bottom: 1px solid #e8e8e8;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.header .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 64px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.logo:hover {
+  opacity: 0.7;
+}
+
+.logo-icon {
+  font-size: 28px;
+}
+
+.logo-text {
+  font-size: 20px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.nav {
+  display: flex;
+  gap: 32px;
+}
+
+.nav-item {
+  color: #666;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  transition: color 0.2s;
+  position: relative;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  color: #1e88e5;
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #1e88e5;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.btn {
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-text {
+  background: transparent;
+  color: #666;
+}
+
+.btn-text:hover {
+  color: #1a1a1a;
+  background: #f0f0f0;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(30, 136, 229, 0.2);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3);
+}
+
+/* 用户菜单样式 */
+.user-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.user-info-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.username {
+  font-weight: 500;
+  color: #1e88e5;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  min-width: 140px;
+  padding: 8px 0;
+  margin-top: 8px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.user-menu:hover .user-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  color: #666;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  background-color: #f5f5f5;
+  color: #1e88e5;
+}
+
+.dropdown-item i {
+  width: 16px;
+  text-align: center;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+  width: 100%;
 }
 
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
+  padding: 30px 0 20px 0;
+  border-bottom: 1px solid #e8e8e8;
 }
 
 .page-header h2 {
   margin: 0;
-  color: #333;
+  color: #1a1a1a;
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .header-actions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
+}
+
+.header-actions .el-button {
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.header-actions .el-button--primary {
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  border: none;
+  box-shadow: 0 2px 8px rgba(30, 136, 229, 0.2);
+}
+
+.header-actions .el-button--primary:hover {
+  background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3);
+}
+
+.header-actions .el-button:not(.el-button--primary) {
+  border: 1px solid #e8e8e8;
+  color: #666;
+}
+
+.header-actions .el-button:not(.el-button--primary):hover {
+  border-color: #1e88e5;
+  color: #1e88e5;
+  background: #e3f2fd;
 }
 
 .dimension-card,
 .compare-card,
 .metric-card,
 .result-card {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.dimension-card:hover,
+.compare-card:hover,
+.metric-card:hover,
+.result-card:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.card-header span {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.card-header .el-button {
+  color: #1e88e5;
+  font-weight: 500;
+}
+
+.card-header .el-button:hover {
+  color: #1565c0;
 }
 
 .dimension-item {
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  border: 2px solid #e8e8e8;
+  border-radius: 12px;
   padding: 20px 10px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 120px;  /* 固定高度 */
+  height: 120px;
   box-sizing: border-box;
+  background: white;
 }
 
 .dimension-item:hover {
-  border-color: #409eff;
-  box-shadow: 0 2px 12px rgba(64,158,255,0.2);
+  border-color: #1e88e5;
+  box-shadow: 0 4px 15px rgba(30, 136, 229, 0.15);
+  transform: translateY(-2px);
 }
 
 .dimension-item.active {
-  border-color: #409eff;
-  background-color: #ecf5ff;
-  color: #409eff;
+  border-color: #1e88e5;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  color: #1e88e5;
 }
 
 .dimension-item .el-icon {
@@ -768,17 +1121,18 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 40px;  /* 固定图标区域高度 */
+  height: 40px;
 }
 
 .dimension-item span {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.2;
   margin: 5px 0 0 0;
   padding: 0;
   display: block;
 }
+
 .action-bar {
   text-align: center;
   margin: 30px 0;
@@ -786,6 +1140,20 @@ export default {
 
 .action-bar .el-button {
   min-width: 200px;
+  height: 50px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  border: none;
+  box-shadow: 0 4px 15px rgba(30, 136, 229, 0.2);
+  transition: all 0.3s ease;
+}
+
+.action-bar .el-button:hover {
+  background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(30, 136, 229, 0.3);
 }
 
 .chart-container {
@@ -800,9 +1168,115 @@ export default {
 
 :deep(.el-transfer-panel) {
   width: 300px;
+  border-radius: 12px;
+  border: 1px solid #e8e8e8;
+}
+
+:deep(.el-transfer-panel__header) {
+  background: #f5f7fa;
+  border-bottom: 1px solid #e8e8e8;
+  border-radius: 12px 12px 0 0;
 }
 
 :deep(.el-slider) {
   padding: 0 20px;
+}
+
+:deep(.el-table) {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+:deep(.el-table__header) {
+  background: linear-gradient(135deg, #f5f7fa 0%, #e3f2fd 100%);
+}
+
+:deep(.el-table th) {
+  background: transparent;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+:deep(.el-table--striped .el-table__body tr.el-table__row--striped td) {
+  background: #f8f9fa;
+}
+
+:deep(.el-table .el-table__row:hover td) {
+  background: #e3f2fd;
+}
+
+:deep(.el-checkbox-group) {
+  width: 100%;
+}
+
+:deep(.el-checkbox) {
+  margin-bottom: 12px;
+}
+
+:deep(.el-checkbox__label) {
+  font-weight: 500;
+}
+
+:deep(.el-radio-group) {
+  display: flex;
+  gap: 8px;
+}
+
+:deep(.el-radio-button) {
+  border-radius: 6px;
+}
+
+:deep(.el-radio-button__inner) {
+  border-radius: 6px;
+  border: 1px solid #e8e8e8;
+}
+
+:deep(.el-radio-button__orig-radio:checked + .el-radio-button__inner) {
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  border-color: #1e88e5;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .multi-dimension-analysis {
+    padding: 16px;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  
+  .page-header h2 {
+    font-size: 24px;
+  }
+  
+  .header-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .dimension-item {
+    height: 100px;
+    padding: 16px 8px;
+  }
+  
+  .dimension-item .el-icon {
+    font-size: 28px;
+  }
+  
+  .dimension-item span {
+    font-size: 12px;
+  }
+  
+  :deep(.el-transfer) {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  :deep(.el-transfer-panel) {
+    width: 100%;
+  }
 }
 </style>
