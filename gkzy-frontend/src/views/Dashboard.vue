@@ -244,6 +244,11 @@
             <h2 class="section-title">一分一段表</h2>
             <p class="section-subtitle">查看各分数段的考生分布情况</p>
           </div>
+          <div class="section-actions">
+            <el-button type="primary" size="small" @click="exportToWord" :disabled="chartData.length === 0">
+              <el-icon><Document /></el-icon> 导出 Word
+            </el-button>
+          </div>
         </div>
         
         <!-- 筛选器 -->
@@ -349,8 +354,13 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
+import { Document } from '@element-plus/icons-vue'
+import { ElMessage, ElLoading } from 'element-plus'
 import { getHotSchools, getMajorRank, getScoreSegment, getScoreSegmentOptions } from '../api/overview'
 import * as echarts from 'echarts'
+import * as docx from 'docx'
+import { saveAs } from 'file-saver'
+import jsPDF from 'jspdf'
 
 const router = useRouter()
 const searchQuery = ref('')
@@ -973,6 +983,191 @@ function updateChart() {
 function handleResize() {
   if (chartInstance) {
     chartInstance.resize()
+  }
+}
+
+// 导出功能
+async function getChartImage() {
+  if (!chartInstance) return null
+  
+  // 获取图表的 canvas 元素
+  const chartDom = scoreSegmentChart.value
+  if (!chartDom) return null
+  
+  const canvas = chartDom.querySelector('canvas')
+  if (!canvas) return null
+  
+  return canvas.toDataURL('image/png')
+}
+
+async function exportToWord() {
+  if (chartData.value.length === 0) {
+    ElMessage.warning('没有数据可导出')
+    return
+  }
+  
+  try {
+    const loading = ElLoading.service({
+      lock: true,
+      text: '正在生成 Word 文档...',
+      background: 'rgba(0, 0, 0, 0.7)'
+    })
+    
+    // 获取图表图片
+    const chartImage = await getChartImage()
+    
+    // 解析 base64 图片
+    const base64Data = chartImage.split(',')[1]
+    const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
+    
+    // 创建文档
+    const doc = new docx.Document({
+      sections: [{
+        properties: {},
+        children: [
+          new docx.Paragraph({
+            text: `一分一段表 - ${filterForm.value.province} ${filterForm.value.year}年 ${filterForm.value.subject}`,
+            heading: docx.HeadingLevel.HEADING_1,
+            alignment: docx.AlignmentType.CENTER,
+            spacing: { after: 200 }
+          }),
+          new docx.Paragraph({
+            text: `导出时间：${new Date().toLocaleString('zh-CN')}`,
+            alignment: docx.AlignmentType.CENTER,
+            spacing: { after: 300 }
+          }),
+          new docx.Paragraph({
+            children: [
+              new docx.ImageRun({
+                data: imageBuffer,
+                transformation: {
+                  width: 500,
+                  height: 350
+                }
+              })
+            ],
+            alignment: docx.AlignmentType.CENTER,
+            spacing: { after: 300 }
+          }),
+          new docx.Paragraph({
+            text: `图表说明：该图表展示了${filterForm.value.province}${filterForm.value.year}年${filterForm.value.subject}的一分一段表数据，横轴表示分数，纵轴表示对应分数的同分人数。`,
+            alignment: docx.AlignmentType.CENTER,
+            spacing: { after: 200 }
+          }),
+          new docx.Paragraph({
+            text: `数据说明：本数据来源于官方统计，共包含 ${chartData.value.length} 个分数段的详细信息。`,
+            alignment: docx.AlignmentType.LEFT,
+            spacing: { after: 200 }
+          })
+        ]
+      }]
+    })
+    
+    // 导出文档
+    const blob = await docx.Packer.toBlob(doc)
+    saveAs(blob, `一分一段表-${filterForm.value.province}-${filterForm.value.year}-${filterForm.value.subject}.docx`)
+    
+    ElMessage.success('导出成功！')
+    loading.close()
+  } catch (error) {
+    console.error('导出 Word 失败:', error)
+    ElMessage.error('导出失败，请重试')
+  }
+}
+
+async function exportToPDF() {
+  if (chartData.value.length === 0) {
+    ElMessage.warning('没有数据可导出')
+    return
+  }
+  
+  try {
+    const loading = ElLoading.service({
+      lock: true,
+      text: '正在生成 PDF 文档...',
+      background: 'rgba(0, 0, 0, 0.7)'
+    })
+    
+    // 获取图表图片
+    const chartImage = await getChartImage()
+    
+    // 创建 PDF (A4 尺寸：210mm x 297mm)
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    })
+    
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+    
+    // 由于 jsPDF 默认不支持中文，我们使用以下方案：
+    // 1. 标题使用英文
+    // 2. 在 PDF 中添加说明文字时，使用拼音或英文
+    
+    // 添加标题（使用英文）
+    pdf.setFont('helvetica', 'bold')
+    pdf.setFontSize(16)
+    const title = `Score Distribution - ${filterForm.value.province} ${filterForm.value.year} ${filterForm.value.subject}`
+    const titleWidth = pdf.getTextWidth(title)
+    pdf.text(title, (pageWidth - titleWidth) / 2, 20)
+    
+    // 添加导出时间
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(10)
+    const timeText = `Export Time: ${new Date().toLocaleString('en-GB')}`
+    const timeWidth = pdf.getTextWidth(timeText)
+    pdf.text(timeText, (pageWidth - timeWidth) / 2, 30)
+    
+    // 添加图表图片（调整大小以适应页面）
+    const imgWidth = 160
+    const imgHeight = 110
+    const imgX = (pageWidth - imgWidth) / 2
+    pdf.addImage(chartImage, 'PNG', imgX, 40, imgWidth, imgHeight)
+    
+    // 添加图表说明（使用英文）
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(9)
+    const descText = `Chart Description: This chart shows the score distribution for ${filterForm.value.province} in ${filterForm.value.year} (${filterForm.value.subject}). The horizontal axis represents scores, and the vertical axis represents the number of students with the same score.`
+    const descLines = pdf.splitTextToSize(descText, pageWidth - 40)
+    pdf.text(descLines, 20, 160)
+    
+    // 添加数据说明
+    const dataText = `Data Source: Official statistics, containing ${chartData.value.length} score segments.`
+    pdf.text(dataText, 20, 180)
+    
+    // 添加中文说明（作为图片嵌入）
+    // 创建一个临时的 canvas 来渲染中文文字
+    const canvas = document.createElement('canvas')
+    canvas.width = 600
+    canvas.height = 200
+    const ctx = canvas.getContext('2d')
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.fillStyle = '#333333'
+    ctx.font = '16px "Microsoft YaHei", sans-serif'
+    ctx.textAlign = 'center'
+    
+    const chineseText1 = `图表说明：该图表展示了${filterForm.value.province}${filterForm.value.year}年${filterForm.value.subject}的一分一段表数据`
+    const chineseText2 = `横轴表示分数，纵轴表示对应分数的同分人数。`
+    const chineseText3 = `数据来源：官方统计，共包含 ${chartData.value.length} 个分数段的详细信息。`
+    
+    ctx.fillText(chineseText1, canvas.width / 2, 40)
+    ctx.fillText(chineseText2, canvas.width / 2, 80)
+    ctx.fillText(chineseText3, canvas.width / 2, 120)
+    
+    // 将中文说明作为图片添加到 PDF
+    const chineseImage = canvas.toDataURL('image/png')
+    pdf.addImage(chineseImage, 'PNG', 20, 190, 170, 57)
+    
+    // 保存 PDF
+    pdf.save(`一分一段表-${filterForm.value.province}-${filterForm.value.year}-${filterForm.value.subject}.pdf`)
+    
+    ElMessage.success('导出成功！')
+    loading.close()
+  } catch (error) {
+    console.error('导出 PDF 失败:', error)
+    ElMessage.error('导出失败，请重试')
   }
 }
 </script>
@@ -1937,9 +2132,15 @@ function handleResize() {
 .section-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 32px;
   gap: 24px;
+}
+
+.section-actions {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
 .section-title-group {
