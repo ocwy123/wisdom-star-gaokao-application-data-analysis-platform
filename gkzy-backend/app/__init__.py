@@ -24,7 +24,6 @@ from app.routes.school import school_bp
 from app.services.analysis import analysis_bp
 from app.routes.major import major_bp
 from app.routes.favorite import favorite_bp
-# from app.routes.heat import heat_bp
 from app.services.data_import import data_import_bp
 
 def create_app():
@@ -95,7 +94,6 @@ def create_app():
     app.register_blueprint(school_bp)
     app.register_blueprint(major_bp)
     app.register_blueprint(favorite_bp)
-    # app.register_blueprint(heat_bp)
     app.register_blueprint(analysis_bp)
     app.register_blueprint(data_import_bp)
 

@@ -95,6 +95,7 @@ def deep_search():
 def search_schools(keyword, filters):
     """搜索学校"""
     from app.services.admin_auth import School
+    from sqlalchemy import case
     
     query = School.query
     
@@ -107,6 +108,30 @@ def search_schools(keyword, filters):
                 School.city.contains(keyword)
             )
         )
+        
+        # 添加相关性排序：完全匹配 > 开头匹配 > 包含匹配
+        # 同一优先级下，优先显示 985/211/双一流学校
+        relevance_score = case(
+            (School.name == keyword, 3),
+            (School.name.like(keyword + '%'), 2),
+            (School.name.like('%' + keyword + '%'), 1),
+            else_=0
+        )
+        
+        # 学校标签加分：985/211/双一流学校获得额外加分
+        school_priority = case(
+            (and_(School.is_985, School.is_211, School.is_double_first), 10),  # 三者都是
+            (and_(School.is_985, School.is_211), 9),  # 985+211
+            (and_(School.is_985, School.is_double_first), 9),  # 985+双一流
+            (and_(School.is_211, School.is_double_first), 9),  # 211+双一流
+            (School.is_985, 8),  # 仅 985
+            (School.is_211, 7),  # 仅 211
+            (School.is_double_first, 6),  # 仅双一流
+            else_=0
+        )
+        
+        # 先按相关性排序，再按学校优先级排序，最后按名称排序
+        query = query.order_by(desc(relevance_score), desc(school_priority), School.name)
     
     # 筛选条件
     if filters.get('province'):
@@ -138,7 +163,7 @@ def search_schools(keyword, filters):
         if school.name == keyword:
             relevance = 1.0
         elif school.name.startswith(keyword):
-            relevance = max(relevance, 0.9)
+            relevance = max(relevance, 0.8)
         
         results.append({
             'id': school.id,
@@ -424,7 +449,28 @@ def sort_results(results, sort_by, sort_order):
     reverse = (sort_order == 'desc')
     
     if sort_by == 'relevance':
-        return sorted(results, key=lambda x: x.get('relevance', 0), reverse=reverse)
+        # 按相关性排序，当 relevance 相同时，优先显示 985/211/双一流学校
+        def get_sort_key(item):
+            relevance = item.get('relevance', 0)
+            
+            # 计算学校标签优先级
+            school_priority = 0
+            if item.get('type') == 'school':
+                if item.get('is_985') and item.get('is_211') and item.get('is_double_first'):
+                    school_priority = 10
+                elif item.get('is_985') and item.get('is_211'):
+                    school_priority = 9
+                elif item.get('is_985'):
+                    school_priority = 8
+                elif item.get('is_211'):
+                    school_priority = 7
+                elif item.get('is_double_first'):
+                    school_priority = 6
+            
+            # 返回元组：(相关性，学校优先级)
+            return (relevance, school_priority)
+        
+        return sorted(results, key=get_sort_key, reverse=reverse)
     elif sort_by == 'heat_score':
         return sorted(results, key=lambda x: x.get('heat_score', 0), reverse=reverse)
     elif sort_by == 'avg_salary':
@@ -473,10 +519,6 @@ def multi_dimension_compare():
             result['data'] = compare_majors(filters, metrics, time_range)
         elif dimension == 'province':
             result['data'] = compare_by_province(filters, metrics, time_range)
-        elif dimension == 'year':
-            result['data'] = analyze_year_trend(filters, metrics, time_range)
-        elif dimension == 'score':
-            result['data'] = analyze_by_score_segment(filters, metrics, time_range)
         elif dimension == 'heat':
             result['data'] = analyze_heat_trend(filters, metrics, time_range)
         
@@ -677,130 +719,6 @@ def compare_by_province(filters, metrics, time_range):
         if 'city_count' in metrics:
             cities = set([s.city for s in schools if s.city])
             item['data']['city_count'] = len(cities)
-        
-        result.append(item)
-    
-    return result
-
-def analyze_year_trend(filters, metrics, time_range):
-    """年份趋势分析"""
-    from app.services.admin_auth import AdmRecord
-    
-    result = []
-    for year in range(time_range[0], time_range[1] + 1):
-        query = AdmRecord.query.filter_by(year=year)
-        
-        if filters.get('school_ids'):
-            query = query.filter(AdmRecord.school_id.in_(filters['school_ids']))
-        
-        # if filters.get('major_ids'):
-        #     query = query.filter(AdmRecord.major_id.in_(filters['major_ids']))
-        
-        admissions = query.all()
-        
-        item = {
-            'dimension': 'year',
-            'dimension_value': year,
-            'data': {}
-        }
-        
-        # 获取招生数据统计
-        if 'avg_score' in metrics:
-            scores = [a.min_score for a in admissions if a.min_score]
-            item['data']['avg_score'] = sum(scores) / len(scores) if scores else 0
-        
-        if 'min_score' in metrics:
-            scores = [a.min_score for a in admissions if a.min_score]
-            item['data']['min_score'] = min(scores) if scores else 0
-        
-        if 'max_score' in metrics:
-            scores = [a.min_score for a in admissions if a.min_score]
-            item['data']['max_score'] = max(scores) if scores else 0
-        
-        if 'admission_count' in metrics:
-            item['data']['admission_count'] = len(admissions)
-        
-        if 'plan_count' in metrics:
-            total_plan = sum([a.plan_count for a in admissions if a.plan_count])
-            item['data']['plan_count'] = total_plan
-        
-        if 'school_count' in metrics:
-            school_ids = set([a.school_id for a in admissions])
-            item['data']['school_count'] = len(school_ids)
-        
-        if 'major_count' in metrics:
-            major_names = set([a.major_name for a in admissions])
-            item['data']['major_count'] = len(major_names)
-        
-        if 'province_count' in metrics:
-            provinces = set([a.province for a in admissions])
-            item['data']['province_count'] = len(provinces)
-        
-        result.append(item)
-    
-    return result
-
-def analyze_by_score_segment(filters, metrics, time_range):
-    """分数段分析"""
-    from app.services.admin_auth import AdmRecord
-    
-    segments = [
-        {'name': '600 分以上', 'min': 600, 'max': 750},
-        {'name': '550-600 分', 'min': 550, 'max': 600},
-        {'name': '500-550 分', 'min': 500, 'max': 550},
-        {'name': '450-500 分', 'min': 450, 'max': 500},
-        {'name': '400-450 分', 'min': 400, 'max': 450},
-        {'name': '400 分以下', 'min': 0, 'max': 400}
-    ]
-    
-    result = []
-    for segment in segments:
-        query = AdmRecord.query.filter(
-            AdmRecord.min_score.between(segment['min'], segment['max']),
-            AdmRecord.year.between(time_range[0], time_range[1])
-        )
-        
-        if filters.get('province'):
-            query = query.filter(AdmRecord.province == filters['province'])
-        
-        admissions = query.all()
-        
-        item = {
-            'dimension': 'score_segment',
-            'dimension_value': segment['name'],
-            'data': {
-                'count': len(admissions)
-            }
-        }
-        
-        # 获取分数段统计数据
-        if 'school_count' in metrics:
-            school_ids = set([a.school_id for a in admissions])
-            item['data']['school_count'] = len(school_ids)
-        
-        if 'major_count' in metrics:
-            major_names = set([a.major_name for a in admissions])
-            item['data']['major_count'] = len(major_names)
-        
-        if 'province_count' in metrics:
-            provinces = set([a.province for a in admissions])
-            item['data']['province_count'] = len(provinces)
-        
-        if 'avg_score' in metrics:
-            scores = [a.min_score for a in admissions if a.min_score]
-            item['data']['avg_score'] = sum(scores) / len(scores) if scores else 0
-        
-        if 'min_score' in metrics:
-            scores = [a.min_score for a in admissions if a.min_score]
-            item['data']['min_score'] = min(scores) if scores else 0
-        
-        if 'max_score' in metrics:
-            scores = [a.min_score for a in admissions if a.min_score]
-            item['data']['max_score'] = max(scores) if scores else 0
-        
-        if 'plan_count' in metrics:
-            total_plan = sum([a.plan_count for a in admissions if a.plan_count])
-            item['data']['plan_count'] = total_plan
         
         result.append(item)
     
@@ -1066,8 +984,6 @@ def get_dimension_name(dimension_code):
         'school': '学校对比',
         'major': '专业对比',
         'province': '省份对比',
-        'year': '年份趋势',
-        'score': '分数段分析',
         'heat': '热度趋势'
     }
     return dimension_names.get(dimension_code, dimension_code)

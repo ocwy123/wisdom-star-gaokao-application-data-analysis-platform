@@ -127,9 +127,9 @@
               <el-button :type="viewMode === 'card' ? 'primary' : 'default'" @click="viewMode = 'card'">
                 <el-icon><Grid /></el-icon> 卡片
               </el-button>
-              <el-button :type="viewMode === 'chart' ? 'primary' : 'default'" @click="viewMode = 'chart'">
+              <!-- <el-button :type="viewMode === 'chart' ? 'primary' : 'default'" @click="viewMode = 'chart'">
                 <el-icon><DataLine /></el-icon> 图表
-              </el-button>
+              </el-button> -->
             </el-button-group>
             <el-button @click="exportResults" style="margin-left: 10px;">
               <el-icon><Download /></el-icon> 导出

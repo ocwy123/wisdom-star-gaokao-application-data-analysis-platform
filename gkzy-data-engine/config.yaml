@@ -5,12 +5,6 @@ mysql:
   password: root
   database: gkzy_mysql
 
-hive:
-  host: 192.168.54.241
-  port: 10000
-  user: ''  # 无用户名密码
-  database: gkzy_hive
-
 crawler:
   user_agents:
     - "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
