@@ -8,6 +8,14 @@
 
     <!-- 学校详情内容 -->
     <div v-else-if="school" class="school-content">
+      <!-- 返回按钮 -->
+      <div class="back-button-container">
+        <el-button class="back-button" @click="goBack">
+          <el-icon><ArrowLeft /></el-icon>
+          返回
+        </el-button>
+      </div>
+      
       <!-- 头部信息区 -->
       <div class="school-header">
         <div class="header-background">
@@ -25,7 +33,10 @@
             </div>
             <div class="school-title-section">
               <h1 class="school-name">{{ school.name }}</h1>
-              <p class="school-code">{{ school.code }}</p>
+              <p class="school-code">
+                <span class="code-label">院校代码</span>
+                <span class="code-value">{{ school.code }}</span>
+              </p>
               <div class="school-tags">
                 <el-tag v-if="school.is_985" type="danger" effect="dark" class="tag-985">985</el-tag>
                 <el-tag v-if="school.is_211" type="warning" effect="dark" class="tag-211">211</el-tag>
@@ -34,9 +45,30 @@
               </div>
             </div>
           </div>
-          <div class="school-location">
-            <el-icon class="location-icon"><Position /></el-icon>
-            <span>{{ school.province }} {{ school.city }}</span>
+          
+          <div class="location-actions-row">
+            <div class="school-location">
+              <el-icon class="location-icon"><Position /></el-icon>
+              <span>{{ school.province }} {{ school.city }}</span>
+            </div>
+            
+            <!-- 收藏按钮 -->
+            <div class="header-actions">
+              <el-button 
+                v-if="isLoggedIn"
+                :type="isFavorited ? 'danger' : 'primary'"
+                @click="toggleFavorite"
+                :loading="favoriteLoading"
+                class="favorite-btn"
+              >
+                <el-icon v-if="isFavorited"><StarFilled /></el-icon>
+                <el-icon v-else><Star /></el-icon>
+                {{ isFavorited ? '已收藏' : '收藏' }}
+              </el-button>
+              <el-button v-else type="primary" @click="handleLogin" class="favorite-btn">
+                <el-icon><Star /></el-icon> 登录后收藏
+              </el-button>
+            </div>
           </div>
         </div>
       </div>
@@ -186,9 +218,6 @@
 
       <!-- 装饰元素 -->
       <div class="decorative-elements">
-        <div class="decorative-circle circle-1"></div>
-        <div class="decorative-circle circle-2"></div>
-        <div class="decorative-circle circle-3"></div>
       </div>
     </div>
 
@@ -204,15 +233,23 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { getSchoolDetail, getSchoolProvinces, getSchoolMajors, getAdmissionScores } from '../api/school'
-import { Position, ArrowRight, Warning, Loading, Timer, Star, Medal, Link, Document, CollectionTag, Top, Trophy, Flag, Location, Briefcase, DataAnalysis, DocumentRemove, InfoFilled } from '@element-plus/icons-vue'
+import { addFavorite, removeFavorite, checkFavorite } from '../api/favorite'
+import { Position, ArrowRight, ArrowLeft, Warning, Loading, Timer, Star, Medal, Link, Document, CollectionTag, Top, Trophy, Flag, Location, Briefcase, DataAnalysis, DocumentRemove, InfoFilled, StarFilled } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
+import { ElMessage } from 'element-plus'
 
 const route = useRoute()
+const router = useRouter()
 const loading = ref(true)
 const school = ref(null)
 const defaultLogo = 'https://via.placeholder.com/120x120?text=Logo'
+
+// 收藏相关状态
+const isLoggedIn = ref(false)
+const isFavorited = ref(false)
+const favoriteLoading = ref(false)
 
 // 分数线相关变量
 const provinces = ref([])
@@ -240,6 +277,72 @@ const descriptionParagraphs = computed(() => {
 // 处理校徽图片加载失败
 const handleLogoError = (event) => {
   event.target.src = defaultLogo
+}
+
+// 检查登录状态
+const checkLoginStatus = () => {
+  const token = localStorage.getItem('userToken')
+  isLoggedIn.value = !!token
+}
+
+// 检查收藏状态
+const checkFavoriteStatus = async () => {
+  if (!isLoggedIn.value) return
+  
+  try {
+    const res = await checkFavorite({
+      type: 'school',
+      target_id: route.params.id
+    })
+    if (res.success) {
+      isFavorited.value = res.data.is_favorited
+    }
+  } catch (error) {
+    console.error('检查收藏状态失败', error)
+  }
+}
+
+// 切换收藏状态
+const toggleFavorite = async () => {
+  if (!isLoggedIn.value) return
+  
+  favoriteLoading.value = true
+  try {
+    if (isFavorited.value) {
+      // 取消收藏
+      const res = await removeFavorite({
+        favorite_type: 'school',
+        target_id: route.params.id
+      })
+      if (res.success) {
+        isFavorited.value = false
+        ElMessage.success('取消收藏成功')
+      }
+    } else {
+      // 添加收藏
+      const res = await addFavorite({
+        favorite_type: 'school',
+        target_id: route.params.id
+      })
+      if (res.success) {
+        isFavorited.value = true
+        ElMessage.success('收藏成功')
+      }
+    }
+  } catch (error) {
+    ElMessage.error('操作失败，请重试')
+  } finally {
+    favoriteLoading.value = false
+  }
+}
+
+// 跳转到登录页面
+const handleLogin = () => {
+  router.push('/login')
+}
+
+const goBack = () => {
+  router.back()
 }
 
 // 获取学校详情
@@ -535,8 +638,10 @@ const handleResize = () => {
 }
 
 // 组件挂载时获取学校详情
-onMounted(() => {
-  fetchSchoolDetail()
+onMounted(async () => {
+  checkLoginStatus()
+  await fetchSchoolDetail()
+  await checkFavoriteStatus()
 })
 
 // 测试API调用
@@ -567,10 +672,40 @@ onUnmounted(() => {
   margin: 0 auto;
   padding: 24px;
   min-height: 100vh;
-  background: var(--bg);
-  color: var(--text);
+  background: #fafbfc;
+  color: #333;
   position: relative;
   overflow: hidden;
+}
+
+/* ===== 返回按钮 ===== */
+.back-button-container {
+  margin-bottom: 20px;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border: none;
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(30, 136, 229, 0.2);
+}
+
+.back-button:hover {
+  transform: translateX(-4px);
+  box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3);
+}
+
+.back-button .el-icon {
+  font-size: 16px;
 }
 
 .loading-container {
@@ -586,7 +721,7 @@ onUnmounted(() => {
 
 .loading-icon {
   font-size: 48px;
-  color: var(--accent);
+  color: #1e88e5;
   animation: spin 1s linear infinite;
 }
 
@@ -628,7 +763,8 @@ onUnmounted(() => {
   border-radius: 16px;
   overflow: hidden;
   margin-bottom: 32px;
-  box-shadow: var(--shadow);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f0f0;
   transition: all 0.3s ease;
   background: white;
 }
@@ -644,7 +780,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   height: 200px;
-  background: linear-gradient(135deg, var(--accent) 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
   z-index: 1;
 }
 
@@ -654,7 +790,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0) 100%);
+  background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 100%);
 }
 
 .header-content {
@@ -712,7 +848,7 @@ onUnmounted(() => {
 .school-name {
   font-size: 36px;
   font-weight: 700;
-  color: var(--text-h);
+  color: #1a1a1a;
   margin: 0 0 12px 0;
   letter-spacing: 1px;
   text-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -720,8 +856,79 @@ onUnmounted(() => {
 
 .school-code {
   font-size: 16px;
-  color: var(--text);
-  margin: 0 0 20px 0;
+  color: #333;
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.school-code .code-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+  letter-spacing: 1px;
+}
+
+.school-code .code-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e88e5;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 2px solid #90caf9;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 8px rgba(30, 136, 229, 0.15);
+  transition: all 0.3s ease;
+}
+
+.school-code .code-value:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(30, 136, 229, 0.25);
+  border-color: #1e88e5;
+}
+
+.location-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.school-location {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  color: #1e88e5;
+  background: #e3f2fd;
+  padding: 12px 20px;
+  border-radius: 25px;
+  transition: all 0.3s ease;
+  border: 2px solid #bbdefb;
+  font-weight: 500;
+}
+
+.school-location:hover {
+  background: #1e88e5;
+  color: white;
+  transform: translateX(8px);
+  border-color: #1565c0;
+}
+
+.location-icon {
+  color: #1e88e5;
+  font-size: 18px;
+  transition: all 0.3s ease;
+}
+
+.school-location:hover .location-icon {
+  color: white;
 }
 
 .school-tags {
@@ -743,34 +950,31 @@ onUnmounted(() => {
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
-.school-location {
+/* 收藏按钮样式 */
+.header-actions {
+  flex-shrink: 0;
+}
+
+.favorite-btn {
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 25px;
+  border: none;
+  box-shadow: 0 4px 15px rgba(30, 136, 229, 0.2);
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 16px;
-  color: var(--text);
-  margin-top: 20px;
-  background: var(--accent-bg);
-  padding: 12px 20px;
-  border-radius: 25px;
-  width: fit-content;
-  transition: all 0.3s ease;
+  gap: 8px;
 }
 
-.school-location:hover {
-  background: var(--accent);
-  color: white;
-  transform: translateX(8px);
+.favorite-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(30, 136, 229, 0.3);
 }
 
-.location-icon {
-  color: var(--accent);
-  font-size: 18px;
-  transition: all 0.3s ease;
-}
-
-.school-location:hover .location-icon {
-  color: white;
+.favorite-btn:active {
+  transform: translateY(-1px);
 }
 
 /* 统计信息卡片 */
@@ -785,10 +989,11 @@ onUnmounted(() => {
   background: white;
   border-radius: 16px;
   padding: 24px;
-  box-shadow: var(--shadow);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   display: flex;
   align-items: center;
   gap: 20px;
+  border: 1px solid #f0f0f0;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -801,7 +1006,7 @@ onUnmounted(() => {
   left: 0;
   width: 4px;
   height: 100%;
-  background: var(--accent);
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
   transition: all 0.3s ease;
 }
 
@@ -816,7 +1021,7 @@ onUnmounted(() => {
 
 .stat-icon {
   font-size: 32px;
-  color: var(--accent);
+  color: #1e88e5;
   flex-shrink: 0;
   transition: all 0.3s ease;
 }
@@ -833,14 +1038,14 @@ onUnmounted(() => {
 .stat-value {
   font-size: 28px;
   font-weight: 700;
-  color: var(--text-h);
+  color: #1a1a1a;
   margin: 0 0 4px 0;
   line-height: 1;
 }
 
 .stat-label {
   font-size: 14px;
-  color: var(--text);
+  color: #666;
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -851,7 +1056,7 @@ onUnmounted(() => {
 }
 
 .website-link {
-  color: var(--accent);
+  color: #1e88e5;
   text-decoration: none;
   font-weight: 600;
   transition: all 0.3s ease;
@@ -861,7 +1066,7 @@ onUnmounted(() => {
 }
 
 .website-link:hover {
-  color: #9631e8;
+  color: #1565c0;
   text-decoration: underline;
   transform: translateX(4px);
 }
@@ -871,7 +1076,8 @@ onUnmounted(() => {
   background: white;
   border-radius: 16px;
   padding: 32px;
-  box-shadow: var(--shadow);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f0f0;
   margin-bottom: 32px;
   transition: all 0.3s ease;
   position: relative;
@@ -889,27 +1095,26 @@ onUnmounted(() => {
   gap: 12px;
   margin-bottom: 24px;
   padding-bottom: 16px;
-  border-bottom: 2px solid var(--accent-bg);
+  border-bottom: 2px solid #e3f2fd;
 }
 
 .section-icon {
   font-size: 24px;
-  color: var(--accent);
+  color: #1e88e5;
   flex-shrink: 0;
 }
 
 .section-title {
   font-size: 24px;
-  font-weight: 600;
-  color: var(--text-h);
+  font-weight: 700;
+  color: #1a1a1a;
   margin: 0;
-  flex: 1;
 }
 
 .description-content {
   line-height: 1.8;
   font-size: 16px;
-  color: var(--text);
+  color: #333;
   position: relative;
   z-index: 1;
 }
@@ -929,7 +1134,7 @@ onUnmounted(() => {
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: var(--accent);
+  background: #1e88e5;
 }
 
 .description-paragraph:last-child {
@@ -941,7 +1146,8 @@ onUnmounted(() => {
   background: white;
   border-radius: 16px;
   padding: 32px;
-  box-shadow: var(--shadow);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f0f0;
   transition: all 0.3s ease;
   margin-bottom: 32px;
 }
@@ -962,7 +1168,7 @@ onUnmounted(() => {
   align-items: center;
   gap: 12px;
   padding: 16px;
-  background: var(--accent-bg);
+  background: #e3f2fd;
   border-radius: 12px;
   transition: all 0.3s ease;
   border: 1px solid transparent;
@@ -970,14 +1176,14 @@ onUnmounted(() => {
 
 .feature-item:hover {
   background: white;
-  border-color: var(--accent);
+  border-color: #1e88e5;
   transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 16px rgba(30, 136, 229, 0.15);
 }
 
 .feature-icon {
   font-size: 20px;
-  color: var(--accent);
+  color: #1e88e5;
   flex-shrink: 0;
   transition: all 0.3s ease;
 }
@@ -989,7 +1195,7 @@ onUnmounted(() => {
 
 .feature-text {
   font-size: 14px;
-  color: var(--text-h);
+  color: #1a1a1a;
   font-weight: 500;
   flex: 1;
 }
@@ -999,7 +1205,8 @@ onUnmounted(() => {
   background: white;
   border-radius: 16px;
   padding: 32px;
-  box-shadow: var(--shadow);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f0f0;
   transition: all 0.3s ease;
   margin-bottom: 32px;
   position: relative;
@@ -1015,13 +1222,13 @@ onUnmounted(() => {
 .filter-section {
   margin-bottom: 32px;
   padding: 24px;
-  background: var(--accent-bg);
+  background: #e3f2fd;
   border-radius: 12px;
   transition: all 0.3s ease;
 }
 
 .filter-section:hover {
-  background: rgba(170, 59, 255, 0.15);
+  background: #bbdefb;
 }
 
 .filter-form {
@@ -1063,20 +1270,20 @@ onUnmounted(() => {
   text-align: center;
   background: #f9f9f9;
   border-radius: 12px;
-  border: 2px dashed var(--border);
+  border: 2px dashed #e0e0e0;
 }
 
 .no-data-icon,
 .select-tip-icon {
   font-size: 48px;
-  color: var(--text);
+  color: #999;
   opacity: 0.5;
 }
 
 .no-data-container p,
 .select-tip-container p {
   font-size: 16px;
-  color: var(--text);
+  color: #666;
   margin: 0;
 }
 
@@ -1116,38 +1323,6 @@ onUnmounted(() => {
   bottom: 0;
   pointer-events: none;
   z-index: 0;
-}
-
-.decorative-circle {
-  position: absolute;
-  border-radius: 50%;
-  background: var(--accent-bg);
-  opacity: 0.5;
-  animation: float 6s ease-in-out infinite;
-}
-
-.circle-1 {
-  width: 300px;
-  height: 300px;
-  top: 10%;
-  right: -150px;
-  animation-delay: 0s;
-}
-
-.circle-2 {
-  width: 200px;
-  height: 200px;
-  bottom: 20%;
-  left: -100px;
-  animation-delay: 2s;
-}
-
-.circle-3 {
-  width: 150px;
-  height: 150px;
-  top: 60%;
-  right: 10%;
-  animation-delay: 4s;
 }
 
 @keyframes float {

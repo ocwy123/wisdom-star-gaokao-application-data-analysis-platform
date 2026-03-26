@@ -2,8 +2,7 @@ from flask import Flask, request
 from flask import Flask
 from flask_cors import CORS
 from app.extensions import db, cors, cache
-import mysql.connector
-from mysql.connector import Error
+import pymysql
 from app.middleware.cors import init_cors
 from app.services.admin_auth import admin_auth_bp
 
@@ -24,6 +23,7 @@ from app.routes.overview import overview_bp
 from app.routes.school import school_bp
 from app.services.analysis import analysis_bp
 from app.routes.major import major_bp
+from app.routes.favorite import favorite_bp
 # from app.routes.heat import heat_bp
 
 def create_app():
@@ -34,12 +34,12 @@ def create_app():
     # MySQL 配置（远程）
     DB_USERNAME = 'root'
     DB_PASSWORD = 'root'
-    DB_HOST = '192.168.43.241'
+    DB_HOST = '192.168.54.241'
     DB_PORT = '3306'
     DB_NAME = 'gkzy_mysql'
     
-    # 使用 mysql-connector-python
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+mysqlconnector://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+    # 使用 PyMySQL
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
     
     # 添加连接参数
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
@@ -47,11 +47,8 @@ def create_app():
         'pool_recycle': 3600,
         'pool_pre_ping': True,
         'connect_args': {
-            'use_pure': True,
-            'connection_timeout': 10,
-            'charset': 'utf8mb4',
-            'use_unicode': True,
-            'ssl_disabled': True
+            'connect_timeout': 10,
+            'charset': 'utf8mb4'
         }
     }
     
@@ -63,19 +60,18 @@ def create_app():
     # 先测试连接
     try:
         # 直接测试连接
-        conn = mysql.connector.connect(
+        conn = pymysql.connect(
             host=DB_HOST,
             user=DB_USERNAME,
             password=DB_PASSWORD,
-            port=DB_PORT,
+            port=int(DB_PORT),
             database=DB_NAME,
-            use_pure=True,
-            connection_timeout=10
+            connect_timeout=10
         )
         print("=" * 60)
         print("✅ 远程数据库连接测试成功！")
         conn.close()
-    except Error as e:
+    except Exception as e:
         print(f"❌ 数据库连接测试失败: {e}")
         print("\n请检查:")
         print("1. 远程服务器 MySQL 是否允许远程连接")
@@ -97,6 +93,7 @@ def create_app():
     app.register_blueprint(overview_bp)
     app.register_blueprint(school_bp)
     app.register_blueprint(major_bp)
+    app.register_blueprint(favorite_bp)
     # app.register_blueprint(heat_bp)
     app.register_blueprint(analysis_bp)
 

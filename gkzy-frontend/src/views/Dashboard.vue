@@ -18,12 +18,26 @@
           </nav>
         </div>
         <div class="header-right">
-          <div class="search-mini">
-            <input type="text" placeholder="搜索..." class="search-mini-input" v-model="miniSearch" @keyup.enter="handleSearch">
-            <span class="search-icon">🔍</span>
+          <button v-if="!isLoggedIn" class="btn btn-text" @click="handleLogin">登录</button>
+          <button class="btn btn-primary" @click="handleRegister">注册</button>
+          
+          <!-- 已登录状态 -->
+          <div v-if="isLoggedIn" class="user-menu">
+            <button class="btn btn-text user-info-btn">
+              <span class="username">{{ userInfo?.username || '用户' }}</span>
+              <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="user-dropdown">
+              <div class="dropdown-item" @click="goToProfile">
+                <i class="fas fa-user"></i>
+                <span>个人中心</span>
+              </div>
+              <div class="dropdown-item" @click="handleLogout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+              </div>
+            </div>
           </div>
-          <button class="btn btn-text">登录</button>
-          <button class="btn btn-primary">注册</button>
         </div>
       </div>
     </header>
@@ -199,19 +213,23 @@
         </div>
         <div class="majors-grid">
           <div class="major-card" v-for="major in topMajors" :key="major.id" @click="viewMajorDetail(major.id)">
-            <h3 class="major-name">{{ major.name }}</h3>
-            <div class="major-stats">
-              <div class="major-stat">
-                <span class="label">平均薪资</span>
-                <span class="value">{{ major.salary }}</span>
+            <div class="card-header">
+              <div class="title-wrapper">
+                <h3>{{ major.name }}</h3>
+                <el-tag size="small" type="primary">{{ major.code }}</el-tag>
               </div>
-              <div class="major-stat">
-                <span class="label">专业代码</span>
-                <span class="value">{{ major.code }}</span>
-              </div>
-              <div class="major-stat">
-                <span class="label">修业年限</span>
-                <span class="value">{{ major.duration }}</span>
+              <span class="arrow">→</span>
+            </div>
+            <div class="card-body">
+              <div class="major-meta">
+                <div class="meta-item">
+                  <span class="meta-label">平均薪资</span>
+                  <span class="meta-value">{{ major.salary }}</span>
+                </div>
+                <div class="meta-item">
+                  <span class="meta-label">修业年限</span>
+                  <span class="meta-value">{{ major.duration }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -320,6 +338,31 @@ const carouselTimer = ref(null)
 const schoolFilter = ref('all')
 const expandedFaq = ref(null)
 
+// 用户登录状态
+const isLoggedIn = ref(false)
+const userInfo = ref(null)
+
+// 检查登录状态
+const checkLoginStatus = () => {
+  const token = localStorage.getItem('userToken')
+  if (token) {
+    isLoggedIn.value = true
+    // 解析JWT token获取用户信息（这里简化处理）
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      userInfo.value = {
+        username: payload.username,
+        role: payload.role
+      }
+    } catch (error) {
+      console.error('解析token失败:', error)
+    }
+  } else {
+    isLoggedIn.value = false
+    userInfo.value = null
+  }
+}
+
 // 高考倒计时相关数据
 const countdownDays = ref(0)
 const countdownProgress = ref(0)
@@ -403,6 +446,7 @@ const filteredSchools = computed(() => {
 })
 
 onMounted(async () => {
+  checkLoginStatus()
   setupScrollListener()
   startCarousel()
   setupCountdown()
@@ -594,6 +638,54 @@ function quickSearch(tag) {
 
 function navigateTo(route) {
   router.push(route)
+}
+
+// 登录注册相关函数
+function handleLogin() {
+  console.log('登录按钮被点击')
+  // 跳转到登录页面
+  router.push('/login').then(() => {
+    console.log('成功跳转到登录页面')
+  }).catch(err => {
+    console.error('跳转失败:', err)
+  })
+}
+
+function handleRegister() {
+  console.log('注册按钮被点击')
+  // 跳转到注册页面（即使已登录也可以访问）
+  router.push('/register').then(() => {
+    console.log('成功跳转到注册页面')
+  }).catch(err => {
+    console.error('跳转失败:', err)
+  })
+}
+
+function goToProfile() {
+  console.log('跳转到个人中心')
+  router.push('/profile').then(() => {
+    console.log('成功跳转到个人中心')
+  }).catch(err => {
+    console.error('跳转失败:', err)
+  })
+}
+
+function handleLogout() {
+  console.log('退出登录')
+  // 清除本地存储的token
+  localStorage.removeItem('userToken')
+  localStorage.removeItem('adminToken')
+  
+  // 更新登录状态
+  isLoggedIn.value = false
+  userInfo.value = null
+  
+  // 跳转到首页
+  router.push('/').then(() => {
+    console.log('退出登录成功，跳转到首页')
+    // 刷新页面以更新状态
+    window.location.reload()
+  })
 }
 
 function viewSchoolDetail(id) {
@@ -816,6 +908,67 @@ function getMotivationText() {
 .btn-primary:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3);
+}
+
+/* 用户菜单样式 */
+.user-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.user-info-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.username {
+  font-weight: 500;
+  color: #1e88e5;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  min-width: 140px;
+  padding: 8px 0;
+  margin-top: 8px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.user-menu:hover .user-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  color: #666;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  background-color: #f5f5f5;
+  color: #1e88e5;
+}
+
+.dropdown-item i {
+  width: 16px;
+  text-align: center;
 }
 
 /* ===== Hero 搜索区域 ===== */
@@ -1787,91 +1940,96 @@ function getMotivationText() {
 }
 
 .major-card {
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
   cursor: pointer;
-  transition: all 0.2s;
-  border: 1px solid #e8e8e8;
-  position: relative;
+  transition: all 0.3s ease;
+  border-radius: 20px;
   overflow: hidden;
-}
-
-.major-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.2s;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f0f0;
 }
 
 .major-card:hover {
-  border-color: #f5576c;
-  box-shadow: 0 8px 24px rgba(245, 87, 108, 0.12);
-  transform: translateY(-4px);
+  transform: translateY(-8px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  border-color: #e0e0e0;
 }
 
-.major-card:hover::before {
-  transform: scaleX(1);
-}
-
-.major-header {
+.card-header {
+  padding: 20px 20px 16px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 12px;
+  border-bottom: 1px solid #f8f8f8;
+  background: linear-gradient(135deg, #f8fafc 0%, #f0f4f8 100%);
 }
 
-.major-icon {
-  font-size: 36px;
-}
-
-.major-badge {
-  padding: 4px 10px;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.major-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin: 0 0 8px 0;
-  line-height: 1.4;
-}
-
-.major-desc {
-  font-size: 13px;
-  color: #999;
-  margin: 0 0 16px 0;
-  line-height: 1.5;
-}
-
-.major-stats {
+.title-wrapper {
   display: flex;
-  gap: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #f0f0f0;
-}
-
-.major-stat {
+  flex-direction: column;
+  gap: 6px;
   flex: 1;
-  text-align: center;
 }
 
-.major-stat .label {
-  display: block;
-  font-size: 10px;
-  color: #999;
-  margin-bottom: 4px;
+.title-wrapper h3 {
+  font-size: 1.3rem;
+  margin: 0;
+  color: #1e3a8a;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.title-wrapper .el-tag {
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  align-self: center;
+  margin: 0 auto;
+}
+
+.arrow {
+  color: #1e88e5;
+  font-size: 1.3rem;
+  opacity: 0.6;
+  transition: all 0.3s ease;
+  margin-top: 4px;
+}
+
+.major-card:hover .arrow {
+  opacity: 1;
+  transform: translateX(3px);
+}
+
+.card-body {
+  padding: 16px 20px;
+  flex: 1;
+}
+
+.major-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.meta-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.meta-label {
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.meta-value {
+  color: #1a1a1a;
+  font-weight: 600;
+  font-size: 0.95rem;
 }
 
 .major-stat .value {
