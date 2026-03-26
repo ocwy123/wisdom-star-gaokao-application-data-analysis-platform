@@ -24,7 +24,7 @@ from app.routes.overview import overview_bp
 from app.routes.school import school_bp
 from app.services.analysis import analysis_bp
 from app.routes.major import major_bp
-from app.routes.heat import heat_bp
+# from app.routes.heat import heat_bp
 
 def create_app():
     app = Flask(__name__)
@@ -97,7 +97,7 @@ def create_app():
     app.register_blueprint(overview_bp)
     app.register_blueprint(school_bp)
     app.register_blueprint(major_bp)
-    app.register_blueprint(heat_bp)
+    # app.register_blueprint(heat_bp)
     app.register_blueprint(analysis_bp)
 
     with app.app_context():

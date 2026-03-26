@@ -37,12 +37,6 @@ const routes = [
     name: 'SchoolList',
     component: SchoolList
   },
-    {
-    path: '/school/:id',
-    name: 'SchoolDetail',
-    component: SchoolDetail,
-    props: true
-  },
   // 专业相关路由
   {
     path: '/majors',
@@ -84,7 +78,23 @@ const routes = [
     component: () => import('../views/admin/AdminDashboard.vue'),
     meta: { requiresAuth: true, adminOnly: true }
   },
-
+  {
+    path: '/majors',
+    name: 'MajorList',
+    component: MajorList
+  },
+  {
+    path: '/major/:id',
+    name: 'MajorDetail',
+    component: MajorDetail,
+    props: true
+  },
+  {
+    path: '/school/:id',
+    name: 'SchoolDetail',
+    component: SchoolDetail,
+    props: true
+  }
 ]
 
 const router = createRouter({
@@ -113,7 +123,7 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !userToken) {
     next('/login')
   } else if (to.meta.requiresGuest && userToken) {
-    next('/')
+    next('/dashboard')
   } else {
     next()
   }

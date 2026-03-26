@@ -126,6 +126,64 @@
         </div>
       </div>
 
+      <!-- 分数线趋势图区 -->
+      <div class="score-trend-section">
+        <div class="section-header">
+          <el-icon class="section-icon"><DataAnalysis /></el-icon>
+          <h2 class="section-title">历年分数线趋势</h2>
+        </div>
+        
+        <!-- 筛选条件 -->
+        <div class="filter-section">
+          <el-form :inline="true" class="filter-form">
+            <el-form-item label="省份">
+              <el-select 
+                v-model="selectedProvince" 
+                placeholder="请选择省份"
+                @change="handleProvinceChange"
+                class="filter-select"
+              >
+                <el-option 
+                  v-for="province in provinces" 
+                  :key="province" 
+                  :label="province" 
+                  :value="province"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="专业">
+              <el-select 
+                v-model="selectedMajor" 
+                placeholder="请选择专业"
+                @change="handleMajorChange"
+                class="filter-select"
+                :disabled="!selectedProvince"
+              >
+                <el-option 
+                  v-for="major in majors" 
+                  :key="major" 
+                  :label="major" 
+                  :value="major"
+                />
+              </el-select>
+            </el-form-item>
+          </el-form>
+        </div>
+        
+        <!-- 图表区域 -->
+        <div v-if="scoreData.length > 0" class="chart-container">
+          <div ref="chartRef" class="score-chart"></div>
+        </div>
+        <div v-else-if="selectedProvince && selectedMajor" class="no-data-container">
+          <el-icon class="no-data-icon"><DocumentRemove /></el-icon>
+          <p>暂无该专业的分数线数据</p>
+        </div>
+        <div v-else class="select-tip-container">
+          <el-icon class="select-tip-icon"><InfoFilled /></el-icon>
+          <p>请选择省份和专业查看分数线趋势</p>
+        </div>
+      </div>
+
       <!-- 装饰元素 -->
       <div class="decorative-elements">
         <div class="decorative-circle circle-1"></div>
@@ -139,23 +197,39 @@
       <el-icon class="error-icon"><Warning /></el-icon>
       <p>加载学校信息失败，请稍后重试</p>
       <el-button type="primary" @click="fetchSchoolDetail">重新加载</el-button>
+      <el-button type="info" @click="testApi">测试API</el-button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
-import { getSchoolDetail } from '../api/school'
-import { Position, ArrowRight, Warning, Loading, Timer, Star, Medal, Link, Document, CollectionTag, Top, Trophy, Flag, Location, Briefcase } from '@element-plus/icons-vue'
+import { getSchoolDetail, getSchoolProvinces, getSchoolMajors, getAdmissionScores } from '../api/school'
+import { Position, ArrowRight, Warning, Loading, Timer, Star, Medal, Link, Document, CollectionTag, Top, Trophy, Flag, Location, Briefcase, DataAnalysis, DocumentRemove, InfoFilled } from '@element-plus/icons-vue'
+import * as echarts from 'echarts'
 
 const route = useRoute()
 const loading = ref(true)
 const school = ref(null)
 const defaultLogo = 'https://via.placeholder.com/120x120?text=Logo'
 
+// 分数线相关变量
+const provinces = ref([])
+const majors = ref([])
+const scoreData = ref([])
+const selectedProvince = ref('')
+const selectedMajor = ref('')
+const chartRef = ref(null)
+let chartInstance = null
+
 // 从URL参数获取学校ID，默认使用298（西安交通大学）
-const schoolId = computed(() => route.params.id || 298)
+const schoolId = computed(() => {
+  console.log('Route params:', route.params)
+  const id = route.params.id || 298
+  console.log('School ID:', id)
+  return id
+})
 
 // 将学校简介按换行符分割成段落
 const descriptionParagraphs = computed(() => {
@@ -172,22 +246,318 @@ const handleLogoError = (event) => {
 const fetchSchoolDetail = async () => {
   loading.value = true
   try {
-    const response = await getSchoolDetail(schoolId.value)
-    console.log('Fetching school detail for ID:', schoolId.value)
-    console.log('+++School detail response:', response)
-    if (response.data.code === 200) {
-      school.value = response.data.data
+    console.log('=== Fetching school detail ===')
+    console.log('School ID:', schoolId.value)
+    
+    // 直接使用fetch API测试
+    const response = await fetch(`http://localhost:5000/api/school/detail/${schoolId.value}`)
+    console.log('Fetch response:', response)
+    
+    if (response.ok) {
+      const data = await response.json()
+      console.log('Parsed data:', data)
+      
+      if (data.code === 200 && data.data) {
+        school.value = data.data
+        console.log('School value set:', school.value)
+        // 获取学校招生省份列表
+        await fetchProvinces()
+      } else {
+        console.log('Invalid response data:', data)
+      }
+    } else {
+      console.log('Response not ok:', response.status)
     }
   } catch (error) {
-    console.error('Failed to fetch school detail:', error)
+    console.error('=== Error fetching school detail ===')
+    console.error('Error message:', error.message)
+    console.error('Error stack:', error.stack)
   } finally {
     loading.value = false
+    console.log('=== Fetch school detail completed ===')
+    console.log('School value:', school.value)
+    console.log('Loading value:', loading.value)
+  }
+}
+
+// 获取学校招生省份列表
+const fetchProvinces = async () => {
+  try {
+    console.log('=== Fetching provinces ===')
+    // 直接使用fetch API测试
+    const response = await fetch(`http://localhost:5000/api/school/${schoolId.value}/provinces`)
+    console.log('Provinces fetch response:', response)
+    
+    if (response.ok) {
+      const data = await response.json()
+      console.log('Provinces parsed data:', data)
+      
+      if (data.code === 200 && data.data) {
+        provinces.value = data.data
+        console.log('Provinces value set:', provinces.value)
+      } else {
+        console.log('Invalid provinces response data:', data)
+      }
+    } else {
+      console.log('Provinces response not ok:', response.status)
+    }
+  } catch (error) {
+    console.error('Failed to fetch provinces:', error)
+  }
+}
+
+// 获取学校在指定省份的专业列表
+const fetchMajors = async (province) => {
+  try {
+    console.log('=== Fetching majors ===')
+    // 直接使用fetch API测试
+    const response = await fetch(`http://localhost:5000/api/school/${schoolId.value}/majors?province=${encodeURIComponent(province)}`)
+    console.log('Majors fetch response:', response)
+    
+    if (response.ok) {
+      const data = await response.json()
+      console.log('Majors parsed data:', data)
+      
+      if (data.code === 200 && data.data) {
+        majors.value = data.data
+        console.log('Majors value set:', majors.value)
+      } else {
+        console.log('Invalid majors response data:', data)
+      }
+    } else {
+      console.log('Majors response not ok:', response.status)
+    }
+  } catch (error) {
+    console.error('Failed to fetch majors:', error)
+  }
+}
+
+// 获取学校专业分数线数据
+const fetchScores = async (province, major) => {
+  try {
+    console.log('=== Fetching scores ===')
+    // 直接使用fetch API测试
+    const response = await fetch(`http://localhost:5000/api/school/${schoolId.value}/scores?province=${encodeURIComponent(province)}&major=${encodeURIComponent(major)}`)
+    console.log('Scores fetch response:', response)
+    
+    if (response.ok) {
+      const data = await response.json()
+      console.log('Scores parsed data:', data)
+      
+      if (data.code === 200 && data.data) {
+        scoreData.value = data.data
+        console.log('Score data set:', scoreData.value)
+        // 等待DOM更新后再渲染图表
+        nextTick(() => {
+          console.log('After nextTick - Chart ref:', chartRef.value)
+          renderChart()
+        })
+      } else {
+        console.log('Invalid scores response data:', data)
+      }
+    } else {
+      console.log('Scores response not ok:', response.status)
+    }
+  } catch (error) {
+    console.error('Failed to fetch scores:', error)
+  }
+}
+
+// 处理省份选择变化
+const handleProvinceChange = (province) => {
+  selectedMajor.value = ''
+  scoreData.value = []
+  if (province) {
+    fetchMajors(province)
+  }
+}
+
+// 处理专业选择变化
+const handleMajorChange = (major) => {
+  scoreData.value = []
+  if (selectedProvince.value && major) {
+    fetchScores(selectedProvince.value, major)
+  }
+}
+
+// 渲染分数线趋势图
+const renderChart = () => {
+  console.log('=== Rendering chart ===')
+  console.log('Chart ref:', chartRef.value)
+  console.log('Score data length:', scoreData.value.length)
+  
+  if (!chartRef.value) {
+    console.log('Chart ref is null')
+    return
+  }
+  
+  if (scoreData.value.length === 0) {
+    console.log('Score data is empty')
+    return
+  }
+  
+  try {
+    // 销毁旧图表
+    if (chartInstance) {
+      console.log('Disposing old chart instance')
+      chartInstance.dispose()
+    }
+    
+    // 创建新图表
+    console.log('Creating new chart instance')
+    chartInstance = echarts.init(chartRef.value)
+    
+    // 准备数据
+    console.log('Preparing chart data')
+    const years = scoreData.value.map(item => item.year)
+    const scores = scoreData.value.map(item => item.min_score)
+    const ranks = scoreData.value.map(item => item.min_rank)
+    
+    console.log('Years:', years)
+    console.log('Scores:', scores)
+    console.log('Ranks:', ranks)
+    
+    // 检查数据有效性
+    if (scores.some(isNaN) || ranks.some(isNaN)) {
+      console.log('Invalid data detected')
+      return
+    }
+    
+    // 计算图表配置参数
+    const minScore = Math.min(...scores)
+    const maxScore = Math.max(...scores)
+    const maxRank = Math.max(...ranks)
+    
+    console.log('Min score:', minScore)
+    console.log('Max score:', maxScore)
+    console.log('Max rank:', maxRank)
+    
+    // 图表配置
+    const option = {
+      title: {
+        text: `${school.value.name} ${selectedMajor.value}专业分数线趋势`,
+        left: 'center'
+      },
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'cross',
+          crossStyle: {
+            color: '#999'
+          }
+        }
+      },
+      legend: {
+        data: ['最低分', '最低位次'],
+        top: 30
+      },
+      xAxis: [
+        {
+          type: 'category',
+          data: years,
+          axisPointer: {
+            type: 'shadow'
+          }
+        }
+      ],
+      yAxis: [
+        {
+          type: 'value',
+          name: '最低分',
+          min: Math.floor(minScore * 0.9),
+          max: Math.ceil(maxScore * 1.1),
+          interval: 20,
+          axisLabel: {
+            formatter: '{value}'
+          }
+        },
+        {
+          type: 'value',
+          name: '最低位次',
+          min: 0,
+          max: Math.ceil(maxRank * 1.1),
+          interval: Math.ceil(maxRank / 5),
+          axisLabel: {
+            formatter: '{value}'
+          }
+        }
+      ],
+      series: [
+        {
+          name: '最低分',
+          type: 'line',
+          data: scores,
+          smooth: true,
+          itemStyle: {
+            color: '#aa3bff'
+          },
+          lineStyle: {
+            width: 3
+          },
+          symbol: 'circle',
+          symbolSize: 8
+        },
+        {
+          name: '最低位次',
+          type: 'line',
+          yAxisIndex: 1,
+          data: ranks,
+          smooth: true,
+          itemStyle: {
+            color: '#409eff'
+          },
+          lineStyle: {
+            width: 3
+          },
+          symbol: 'circle',
+          symbolSize: 8
+        }
+      ]
+    }
+    
+    // 应用配置
+    console.log('Setting chart option')
+    chartInstance.setOption(option)
+    console.log('Chart rendered successfully')
+    
+    // 监听窗口大小变化
+    window.addEventListener('resize', handleResize)
+  } catch (error) {
+    console.error('Error rendering chart:', error)
+  }
+}
+
+// 处理窗口大小变化
+const handleResize = () => {
+  if (chartInstance) {
+    chartInstance.resize()
   }
 }
 
 // 组件挂载时获取学校详情
 onMounted(() => {
   fetchSchoolDetail()
+})
+
+// 测试API调用
+const testApi = async () => {
+  try {
+    console.log('=== Testing API ===')
+    const response = await fetch('http://localhost:5000/api/school/detail/298')
+    console.log('Fetch response:', response)
+    const data = await response.json()
+    console.log('Parsed data:', data)
+  } catch (error) {
+    console.error('Error testing API:', error)
+  }
+}
+
+// 组件卸载时清理
+onUnmounted(() => {
+  if (chartInstance) {
+    chartInstance.dispose()
+  }
+  window.removeEventListener('resize', handleResize)
 })
 </script>
 
@@ -622,6 +992,119 @@ onMounted(() => {
   color: var(--text-h);
   font-weight: 500;
   flex: 1;
+}
+
+/* 分数线趋势图区 */
+.score-trend-section {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: var(--shadow);
+  transition: all 0.3s ease;
+  margin-bottom: 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.score-trend-section:hover {
+  box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+}
+
+/* 筛选条件 */
+.filter-section {
+  margin-bottom: 32px;
+  padding: 24px;
+  background: var(--accent-bg);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.filter-section:hover {
+  background: rgba(170, 59, 255, 0.15);
+}
+
+.filter-form {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-select {
+  width: 200px;
+}
+
+/* 图表容器 */
+.chart-container {
+  position: relative;
+  height: 400px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  background: #f9f9f9;
+  padding: 24px;
+}
+
+.score-chart {
+  width: 100%;
+  height: 100%;
+}
+
+/* 无数据状态 */
+.no-data-container,
+.select-tip-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  gap: 16px;
+  text-align: center;
+  background: #f9f9f9;
+  border-radius: 12px;
+  border: 2px dashed var(--border);
+}
+
+.no-data-icon,
+.select-tip-icon {
+  font-size: 48px;
+  color: var(--text);
+  opacity: 0.5;
+}
+
+.no-data-container p,
+.select-tip-container p {
+  font-size: 16px;
+  color: var(--text);
+  margin: 0;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .score-trend-section {
+    padding: 24px;
+  }
+  
+  .filter-form {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  
+  .filter-select {
+    width: 100%;
+  }
+  
+  .chart-container {
+    height: 300px;
+    padding: 16px;
+  }
+  
+  .no-data-container,
+  .select-tip-container {
+    height: 200px;
+  }
 }
 
 /* 装饰元素 */
