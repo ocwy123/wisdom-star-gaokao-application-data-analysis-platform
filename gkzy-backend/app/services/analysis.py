@@ -304,12 +304,6 @@ def search_admissions(keyword, filters):
     if filters.get('year'):
         query = query.filter(AdmRecord.year == filters['year'])
     
-    if filters.get('batch'):
-        query = query.filter(AdmRecord.batch == filters['batch'])
-    
-    if filters.get('subject'):
-        query = query.filter(AdmRecord.subject == filters['subject'])
-    
     if filters.get('score_range'):
         min_score, max_score = filters['score_range']
         query = query.filter(
@@ -341,13 +335,8 @@ def search_admissions(keyword, filters):
             'school_id': adm.school_id,
             'school_name': school.name if school else '未知',
             'major_name': adm.major_name,
-            'major_second_name': adm.major_second_name,
             'province': adm.province,
             'year': adm.year,
-            'plan_count': adm.plan_count,
-            'subject': adm.subject,
-            'batch': adm.batch,
-            'major_group': adm.major_group,
             'min_score': adm.min_score,
             'relevance': relevance
         })
@@ -592,13 +581,6 @@ def compare_schools(filters, metrics, time_range):
         if 'is_double_first' in metrics:
             item['data']['is_double_first'] = 1 if school.is_double_first else 0
         
-        # 获取招生统计数据
-        if 'admission_count' in metrics:
-            item['data']['admission_count'] = len(admissions)
-        if 'plan_count' in metrics:
-            total_plan = sum([a.plan_count for a in admissions if a.plan_count])
-            item['data']['plan_count'] = total_plan
-        
         result.append(item)
     
     return result
@@ -693,11 +675,7 @@ def compare_by_province(filters, metrics, time_range):
         
         if 'admission_count' in metrics:
             item['data']['admission_count'] = len(admissions)
-        
-        if 'plan_count' in metrics:
-            total_plan = sum([a.plan_count for a in admissions if a.plan_count])
-            item['data']['plan_count'] = total_plan
-        
+
         # 获取省份学校统计信息
         if '985_count' in metrics:
             count_985 = sum([1 for s in schools if s.is_985])
@@ -958,7 +936,6 @@ def get_metric_name(metric_code):
         'is_211': '是否 211',
         'is_double_first': '是否双一流',
         'admission_count': '招生数量',
-        'plan_count': '计划人数',
         'avg_salary': '平均薪资',
         'employment_rate': '就业率',
         'school_count': '学校数量',

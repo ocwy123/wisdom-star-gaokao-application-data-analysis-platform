@@ -30,11 +30,6 @@
       <el-tab-pane label="个人信息" name="profile">
         <AdminProfile />
       </el-tab-pane>
-      
-      <!-- 数据导入 -->
-      <el-tab-pane label="数据导入" name="import">
-        <DataImport />
-      </el-tab-pane>
     </el-tabs>
   </div>
 </template>

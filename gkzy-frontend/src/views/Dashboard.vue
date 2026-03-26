@@ -20,7 +20,7 @@
         <div class="header-right">
           <button v-if="!isLoggedIn" class="btn btn-text" @click="handleLogin">登录</button>
           <button class="btn btn-primary" @click="handleRegister">注册</button>
-          
+
           <!-- 已登录状态 -->
           <div v-if="isLoggedIn" class="user-menu">
             <button class="btn btn-text user-info-btn">
@@ -95,12 +95,8 @@
           <!-- 轮播图 -->
           <div class="carousel-main">
             <div class="carousel">
-              <div
-                class="carousel-item"
-                v-for="(slide, index) in carouselSlides"
-                :key="index"
-                :class="{ active: currentSlide === index }"
-              >
+              <div class="carousel-item" v-for="(slide, index) in carouselSlides" :key="index"
+                :class="{ active: currentSlide === index }">
                 <div class="slide-content" :style="{ background: slide.gradient }">
                   <div class="slide-text">
                     <div class="slide-badge">{{ slide.badge }}</div>
@@ -115,13 +111,8 @@
               <div class="carousel-controls">
                 <button class="control-btn" @click="prevSlide">‹</button>
                 <div class="carousel-dots">
-                  <span
-                    class="dot"
-                    v-for="(slide, index) in carouselSlides"
-                    :key="index"
-                    :class="{ active: currentSlide === index }"
-                    @click="goToSlide(index)"
-                  ></span>
+                  <span class="dot" v-for="(slide, index) in carouselSlides" :key="index"
+                    :class="{ active: currentSlide === index }" @click="goToSlide(index)"></span>
                 </div>
                 <button class="control-btn" @click="nextSlide">›</button>
               </div>
@@ -133,7 +124,8 @@
             <div class="module-card">
               <h3 class="module-title">快捷功能</h3>
               <div class="quick-functions">
-                <div class="function-item" v-for="func in quickFunctions" :key="func.id" @click="navigateTo(func.route)">
+                <div class="function-item" v-for="func in quickFunctions" :key="func.id"
+                  @click="navigateTo(func.route)">
                   <div class="function-content">
                     <span class="function-name">{{ func.name }}</span>
                     <span class="function-desc">{{ func.desc }}</span>
@@ -163,27 +155,25 @@
           </div>
           <div class="section-controls">
             <div class="filter-tabs">
-              <button class="filter-tab" :class="{ active: schoolFilter === 'all' }" @click="schoolFilter = 'all'">全部</button>
-              <button class="filter-tab" :class="{ active: schoolFilter === '985' }" @click="schoolFilter = '985'">985</button>
-              <button class="filter-tab" :class="{ active: schoolFilter === '211' }" @click="schoolFilter = '211'">211</button>
-              <button class="filter-tab" :class="{ active: schoolFilter === 'double' }" @click="schoolFilter = 'double'">双一流</button>
+              <button class="filter-tab" :class="{ active: schoolFilter === 'all' }"
+                @click="schoolFilter = 'all'">全部</button>
+              <button class="filter-tab" :class="{ active: schoolFilter === '985' }"
+                @click="schoolFilter = '985'">985</button>
+              <button class="filter-tab" :class="{ active: schoolFilter === '211' }"
+                @click="schoolFilter = '211'">211</button>
+              <button class="filter-tab" :class="{ active: schoolFilter === 'double' }"
+                @click="schoolFilter = 'double'">双一流</button>
             </div>
             <a href="#" class="more-link" @click.prevent="navigateTo('/schools')">查看全部 →</a>
           </div>
         </div>
         <div class="schools-grid">
-          <div
-            class="school-card"
-            v-for="school in filteredSchools.slice(0, 16)"
-            :key="school.id"
-            @click="viewSchoolDetail(school.id)"
-          >
+          <div class="school-card" v-for="school in filteredSchools.slice(0, 16)" :key="school.id"
+            @click="viewSchoolDetail(school.id)">
             <div class="school-logo-wrapper">
               <!-- 如果是图片 URL，显示图片；如果是 emoji，直接显示文本 -->
-              <img v-if="school.logo && school.logo.startsWith('http')" 
-                   :src="school.logo" 
-                   :alt="school.name" 
-                   class="school-logo-img" />
+              <img v-if="school.logo && school.logo.startsWith('http')" :src="school.logo" :alt="school.name"
+                class="school-logo-img" />
               <div v-else class="school-logo-emoji">{{ school.logo }}</div>
             </div>
             <div class="school-content">
@@ -244,45 +234,35 @@
             <h2 class="section-title">一分一段表</h2>
             <p class="section-subtitle">查看各分数段的考生分布情况</p>
           </div>
-          <div class="section-actions">
-            <el-button type="primary" size="small" @click="exportToWord" :disabled="chartData.length === 0">
-              <el-icon><Document /></el-icon> 导出 Word
-            </el-button>
-          </div>
         </div>
-        
+
         <!-- 筛选器 -->
         <div class="filter-container">
           <el-form :inline="true" class="filter-form">
             <el-form-item label="省份">
-              <el-select v-model="filterForm.province" placeholder="请选择省份" @change="loadScoreSegmentData" style="width: 150px;">
-                <el-option
-                  v-for="item in options.provinces"
-                  :key="item"
-                  :label="item"
-                  :value="item"
-                />
+              <el-select v-model="filterForm.province" placeholder="请选择省份" @change="loadScoreSegmentData"
+                style="width: 150px;">
+                <el-option v-for="item in options.provinces" :key="item" :label="item" :value="item" />
               </el-select>
             </el-form-item>
             <el-form-item label="年份">
-              <el-select v-model="filterForm.year" placeholder="请选择年份" @change="loadScoreSegmentData" style="width: 120px;">
-                <el-option
-                  v-for="item in options.years"
-                  :key="item"
-                  :label="item"
-                  :value="item"
-                />
+              <el-select v-model="filterForm.year" placeholder="请选择年份" @change="loadScoreSegmentData"
+                style="width: 120px;">
+                <el-option v-for="item in options.years" :key="item" :label="item" :value="item" />
               </el-select>
             </el-form-item>
             <el-form-item label="选科">
-              <el-select v-model="filterForm.subject" placeholder="请选择选科" @change="loadScoreSegmentData" style="width: 120px;">
-                <el-option
-                  v-for="item in options.subjects"
-                  :key="item"
-                  :label="item"
-                  :value="item"
-                />
+              <el-select v-model="filterForm.subject" placeholder="请选择选科" @change="loadScoreSegmentData"
+                style="width: 120px;">
+                <el-option v-for="item in options.subjects" :key="item" :label="item" :value="item" />
               </el-select>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" size="small" @click="exportToWord" :disabled="chartData.length === 0">
+                <el-icon>
+                  <Document />
+                </el-icon> 导出 Word
+              </el-button>
             </el-form-item>
           </el-form>
         </div>
@@ -403,7 +383,7 @@ const quickFunctions = [
   { id: 1, icon: '🏫', name: '高校查询', desc: '2900+ 高校信息', route: '/schools' },
   { id: 2, icon: '📚', name: '专业查询', desc: '800+ 专业详情', route: '/majors' },
   { id: 3, icon: '📊', name: '分数线', desc: '3 年录取数据', route: '/scores' },
-  { id: 4, icon: '🎯', name: '志愿推荐', desc: '智能匹配方案', route: '/analysis' }
+  { id: 4, icon: '🎯', name: '志愿推荐', desc: '智能匹配方案', route: '/recommendations' }
 ]
 
 const carouselSlides = [
@@ -412,7 +392,7 @@ const carouselSlides = [
     title: '志愿智能分析',
     description: '基于大数据和AI算法，为你的志愿填报提供科学决策支持',
     buttonText: '立即体验',
-    link: '/analysis',
+    link: '/recommendation',
     icon: '🎓',
     gradient: '#1e88e5'
   },
@@ -537,9 +517,9 @@ async function loadHotSchools() {
             location = city
           }
         })
-        
+
         const tags = getSchoolTags(school)
-        
+
         return {
           ...school,
           location,
@@ -559,14 +539,14 @@ async function loadHotSchools() {
 async function loadTopMajors() {
   try {
     const res = await getMajorRank({ limit: 6 })
-    
+
     let majorsData = []
     if (res && res.data && Array.isArray(res.data)) {
       majorsData = res.data
     } else if (res && Array.isArray(res)) {
       majorsData = res
     }
-    
+
     if (majorsData && majorsData.length > 0) {
       topMajors.value = majorsData.map(major => {
         return {
@@ -605,7 +585,7 @@ function getMajorIcon(majorName) {
     '体育': '⚽',
     '农业': '🌾'
   }
-  
+
   for (const [key, icon] of Object.entries(iconMap)) {
     if (majorName.includes(key)) {
       return icon
@@ -757,11 +737,11 @@ function handleLogout() {
   // 清除本地存储的token
   localStorage.removeItem('userToken')
   localStorage.removeItem('adminToken')
-  
+
   // 更新登录状态
   isLoggedIn.value = false
   userInfo.value = null
-  
+
   // 跳转到首页
   router.push('/').then(() => {
     console.log('退出登录成功，跳转到首页')
@@ -782,13 +762,13 @@ function setupCountdown() {
   // 设置高考日期为2026年6月7日
   const gaokaoDate = new Date(2026, 5, 7) // 月份从0开始，5代表6月
   const today = new Date()
-  
+
   // 计算剩余天数
   const timeDiff = gaokaoDate.getTime() - today.getTime()
   const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24))
-  
+
   countdownDays.value = daysDiff > 0 ? daysDiff : 0
-  
+
   // 计算进度（假设备考周期为365天）
   const totalDays = 365
   const passedDays = totalDays - daysDiff
@@ -867,16 +847,16 @@ async function loadScoreSegmentData() {
 
 function initChart() {
   if (!scoreSegmentChart.value) return
-  
+
   chartInstance = echarts.init(scoreSegmentChart.value)
-  
+
   const option = {
     tooltip: {
       trigger: 'axis',
       axisPointer: {
         type: 'cross'
       },
-      formatter: function(params) {
+      formatter: function (params) {
         return `分数：${params[0].name}<br/>人数：${params[0].value}`
       }
     },
@@ -894,7 +874,7 @@ function initChart() {
       nameGap: 30,
       boundaryGap: false,
       axisLabel: {
-        interval: function(index, value) {
+        interval: function (index, value) {
           // 每隔 50 分显示一次标签
           const score = parseInt(value)
           return score % 50 === 0
@@ -958,16 +938,16 @@ function initChart() {
       }
     ]
   }
-  
+
   chartInstance.setOption(option)
 }
 
 function updateChart() {
   if (!chartInstance || chartData.value.length === 0) return
-  
+
   const scores = chartData.value.map(item => item.score.toString())
   const counts = chartData.value.map(item => item.same_score_count)
-  
+
   chartInstance.setOption({
     xAxis: {
       data: scores
@@ -989,14 +969,14 @@ function handleResize() {
 // 导出功能
 async function getChartImage() {
   if (!chartInstance) return null
-  
+
   // 获取图表的 canvas 元素
   const chartDom = scoreSegmentChart.value
   if (!chartDom) return null
-  
+
   const canvas = chartDom.querySelector('canvas')
   if (!canvas) return null
-  
+
   return canvas.toDataURL('image/png')
 }
 
@@ -1005,21 +985,21 @@ async function exportToWord() {
     ElMessage.warning('没有数据可导出')
     return
   }
-  
+
   try {
     const loading = ElLoading.service({
       lock: true,
       text: '正在生成 Word 文档...',
       background: 'rgba(0, 0, 0, 0.7)'
     })
-    
+
     // 获取图表图片
     const chartImage = await getChartImage()
-    
+
     // 解析 base64 图片
     const base64Data = chartImage.split(',')[1]
     const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
-    
+
     // 创建文档
     const doc = new docx.Document({
       sections: [{
@@ -1062,11 +1042,11 @@ async function exportToWord() {
         ]
       }]
     })
-    
+
     // 导出文档
     const blob = await docx.Packer.toBlob(doc)
     saveAs(blob, `一分一段表-${filterForm.value.province}-${filterForm.value.year}-${filterForm.value.subject}.docx`)
-    
+
     ElMessage.success('导出成功！')
     loading.close()
   } catch (error) {
@@ -1080,62 +1060,62 @@ async function exportToPDF() {
     ElMessage.warning('没有数据可导出')
     return
   }
-  
+
   try {
     const loading = ElLoading.service({
       lock: true,
       text: '正在生成 PDF 文档...',
       background: 'rgba(0, 0, 0, 0.7)'
     })
-    
+
     // 获取图表图片
     const chartImage = await getChartImage()
-    
+
     // 创建 PDF (A4 尺寸：210mm x 297mm)
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4'
     })
-    
+
     const pageWidth = pdf.internal.pageSize.getWidth()
     const pageHeight = pdf.internal.pageSize.getHeight()
-    
+
     // 由于 jsPDF 默认不支持中文，我们使用以下方案：
     // 1. 标题使用英文
     // 2. 在 PDF 中添加说明文字时，使用拼音或英文
-    
+
     // 添加标题（使用英文）
     pdf.setFont('helvetica', 'bold')
     pdf.setFontSize(16)
     const title = `Score Distribution - ${filterForm.value.province} ${filterForm.value.year} ${filterForm.value.subject}`
     const titleWidth = pdf.getTextWidth(title)
     pdf.text(title, (pageWidth - titleWidth) / 2, 20)
-    
+
     // 添加导出时间
     pdf.setFont('helvetica', 'normal')
     pdf.setFontSize(10)
     const timeText = `Export Time: ${new Date().toLocaleString('en-GB')}`
     const timeWidth = pdf.getTextWidth(timeText)
     pdf.text(timeText, (pageWidth - timeWidth) / 2, 30)
-    
+
     // 添加图表图片（调整大小以适应页面）
     const imgWidth = 160
     const imgHeight = 110
     const imgX = (pageWidth - imgWidth) / 2
     pdf.addImage(chartImage, 'PNG', imgX, 40, imgWidth, imgHeight)
-    
+
     // 添加图表说明（使用英文）
     pdf.setFont('helvetica', 'normal')
     pdf.setFontSize(9)
     const descText = `Chart Description: This chart shows the score distribution for ${filterForm.value.province} in ${filterForm.value.year} (${filterForm.value.subject}). The horizontal axis represents scores, and the vertical axis represents the number of students with the same score.`
     const descLines = pdf.splitTextToSize(descText, pageWidth - 40)
     pdf.text(descLines, 20, 160)
-    
+
     // 添加数据说明
     const dataText = `Data Source: Official statistics, containing ${chartData.value.length} score segments.`
     pdf.text(dataText, 20, 180)
-    
+
     // 添加中文说明（作为图片嵌入）
     // 创建一个临时的 canvas 来渲染中文文字
     const canvas = document.createElement('canvas')
@@ -1147,22 +1127,22 @@ async function exportToPDF() {
     ctx.fillStyle = '#333333'
     ctx.font = '16px "Microsoft YaHei", sans-serif'
     ctx.textAlign = 'center'
-    
+
     const chineseText1 = `图表说明：该图表展示了${filterForm.value.province}${filterForm.value.year}年${filterForm.value.subject}的一分一段表数据`
     const chineseText2 = `横轴表示分数，纵轴表示对应分数的同分人数。`
     const chineseText3 = `数据来源：官方统计，共包含 ${chartData.value.length} 个分数段的详细信息。`
-    
+
     ctx.fillText(chineseText1, canvas.width / 2, 40)
     ctx.fillText(chineseText2, canvas.width / 2, 80)
     ctx.fillText(chineseText3, canvas.width / 2, 120)
-    
+
     // 将中文说明作为图片添加到 PDF
     const chineseImage = canvas.toDataURL('image/png')
     pdf.addImage(chineseImage, 'PNG', 20, 190, 170, 57)
-    
+
     // 保存 PDF
     pdf.save(`一分一段表-${filterForm.value.province}-${filterForm.value.year}-${filterForm.value.subject}.pdf`)
-    
+
     ElMessage.success('导出成功！')
     loading.close()
   } catch (error) {
@@ -1595,7 +1575,8 @@ async function exportToPDF() {
   display: grid;
   grid-template-columns: 200px 1fr 200px;
   gap: 16px;
-  align-items: stretch;  /* 改为 stretch，让所有列对齐 */
+  align-items: stretch;
+  /* 改为 stretch，让所有列对齐 */
 }
 
 .side-module {
@@ -1639,14 +1620,16 @@ async function exportToPDF() {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 16px;  /* 减少间距 */
+  margin-bottom: 16px;
+  /* 减少间距 */
 }
 
 .countdown-content {
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-bottom: 16px;  /* 减少间距 */
+  margin-bottom: 16px;
+  /* 减少间距 */
 }
 
 .countdown-days {
@@ -1686,7 +1669,8 @@ async function exportToPDF() {
 }
 
 .countdown-progress {
-  margin-top: 12px;  /* 减少间距 */
+  margin-top: 12px;
+  /* 减少间距 */
 }
 
 .progress-bar {
@@ -1695,7 +1679,8 @@ async function exportToPDF() {
   background: #f0f0f0;
   border-radius: 3px;
   overflow: hidden;
-  margin-bottom: 6px;  /* 减少间距 */
+  margin-bottom: 6px;
+  /* 减少间距 */
 }
 
 .progress-fill {
@@ -1712,17 +1697,21 @@ async function exportToPDF() {
 }
 
 .countdown-stats {
-  margin-top: 12px;  /* 减少间距 */
-  padding-top: 12px;  /* 减少间距 */
+  margin-top: 12px;
+  /* 减少间距 */
+  padding-top: 12px;
+  /* 减少间距 */
   border-top: 1px solid #f0f0f0;
-  flex: 1;  /* 让统计信息占据剩余空间 */
+  flex: 1;
+  /* 让统计信息占据剩余空间 */
 }
 
 .stat-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;  /* 减少间距 */
+  margin-bottom: 8px;
+  /* 减少间距 */
 }
 
 .stat-item:last-child {
@@ -1744,8 +1733,10 @@ async function exportToPDF() {
 }
 
 .countdown-motivation {
-  margin-top: auto;  /* 推到底部 */
-  padding: 12px 12px 12px 8px;  /* 左内边距减少，文字向左偏移 */
+  margin-top: auto;
+  /* 推到底部 */
+  padding: 12px 12px 12px 8px;
+  /* 左内边距减少，文字向左偏移 */
   background: #fff5f5;
   border-radius: 8px;
   display: flex;
@@ -1833,128 +1824,129 @@ async function exportToPDF() {
 }
 
 
- /* 高考倒计时样式 */
- .countdown-header {
-   display: flex;
-   align-items: center;
-   gap: 8px;
-   margin-bottom: 20px;
- }
+/* 高考倒计时样式 */
+.countdown-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
 
- .countdown-content {
-   display: flex;
-   align-items: center;
-   gap: 16px;
-   margin-bottom: 20px;
- }
+.countdown-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
 
- .countdown-days {
-   display: flex;
-   align-items: baseline;
-   gap: 4px;
- }
+.countdown-days {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
 
- .days-number {
-   font-size: 32px;
-   font-weight: 700;
-   color: #ff6b6b;
-   line-height: 1;
- }
+.days-number {
+  font-size: 32px;
+  font-weight: 700;
+  color: #ff6b6b;
+  line-height: 1;
+}
 
- .days-label {
-   font-size: 14px;
-   color: #999;
-   font-weight: 500;
- }
+.days-label {
+  font-size: 14px;
+  color: #999;
+  font-weight: 500;
+}
 
- .countdown-info {
-   flex: 1;
- }
+.countdown-info {
+  flex: 1;
+}
 
- .countdown-date {
-   font-size: 12px;
-   color: #666;
-   margin: 0 0 4px 0;
-   font-weight: 500;
- }
+.countdown-date {
+  font-size: 12px;
+  color: #666;
+  margin: 0 0 4px 0;
+  font-weight: 500;
+}
 
- .countdown-desc {
-   font-size: 11px;
-   color: #999;
-   margin: 0;
- }
+.countdown-desc {
+  font-size: 11px;
+  color: #999;
+  margin: 0;
+}
 
- .countdown-progress {
-   margin-top: 16px;
- }
+.countdown-progress {
+  margin-top: 16px;
+}
 
- .progress-bar {
-   width: 100%;
-   height: 6px;
-   background: #f0f0f0;
-   border-radius: 3px;
-   overflow: hidden;
-   margin-bottom: 8px;
- }
+.progress-bar {
+  width: 100%;
+  height: 6px;
+  background: #f0f0f0;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
 
- .progress-fill {
-   height: 100%;
-   background: #ff6b6b;
-   border-radius: 3px;
-   transition: width 0.3s ease;
- }
+.progress-fill {
+  height: 100%;
+  background: #ff6b6b;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
 
- .progress-text {
-   font-size: 10px;
-   color: #999;
-   text-align: center;
- }
+.progress-text {
+  font-size: 10px;
+  color: #999;
+  text-align: center;
+}
 
- .countdown-stats {
-   margin-top: auto;
-   padding-top: 20px;
-   border-top: 1px solid #f0f0f0;
- }
+.countdown-stats {
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid #f0f0f0;
+}
 
- .stat-item {
-   display: flex;
-   justify-content: space-between;
-   align-items: center;
-   margin-bottom: 10px;
- }
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
 
- .stat-label {
-   font-size: 11px;
-   color: #666;
- }
+.stat-label {
+  font-size: 11px;
+  color: #666;
+}
 
- .stat-value {
-   font-size: 11px;
-   font-weight: 600;
-   color: #ff6b6b;
-   background: #fff5f5;
-   padding: 2px 6px;
-   border-radius: 3px;
- }
+.stat-value {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ff6b6b;
+  background: #fff5f5;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
 
- .countdown-motivation {
-   margin-top: 16px;
-   padding: 14px 14px 14px 10px;  /* 左内边距减少，文字向左偏移 */
-   background: #fff5f5;
-   border-radius: 8px;
-   display: flex;
-   align-items: center;
-   gap: 8px;
-   border: 1px solid #ff6b6b;
-   border-left: 3px solid #ff6b6b;
- }
+.countdown-motivation {
+  margin-top: 16px;
+  padding: 14px 14px 14px 10px;
+  /* 左内边距减少，文字向左偏移 */
+  background: #fff5f5;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #ff6b6b;
+  border-left: 3px solid #ff6b6b;
+}
 
- .motivation-icon {
-   font-size: 16px;
-   flex-shrink: 0;
- }
+.motivation-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
 
- .motivation-text {
+.motivation-text {
   font-size: 11px;
   color: #ff6b6b;
   font-weight: 500;
@@ -1963,9 +1955,9 @@ async function exportToPDF() {
   white-space: nowrap;
 }
 
- .carousel-main {
-   position: relative;
- }
+.carousel-main {
+  position: relative;
+}
 
 .carousel {
   position: relative;
@@ -2026,7 +2018,7 @@ async function exportToPDF() {
   font-size: 40px;
   font-weight: 700;
   color: #ffffff;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   margin: 0 0 24px 0;
   line-height: 1.2;
   letter-spacing: -0.5px;
@@ -2080,11 +2072,11 @@ async function exportToPDF() {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.15);
   color: #1e88e5;
   font-size: 22px;
   border: none;
-  box-shadow: 0 4px 12px rgba(102,126,234,0.25);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
   transition: background 0.3s ease, transform 0.2s ease;
   cursor: pointer;
   display: flex;
@@ -2093,7 +2085,7 @@ async function exportToPDF() {
 }
 
 .control-btn:hover {
-  background: rgba(255,255,255,0.35);
+  background: rgba(255, 255, 255, 0.35);
   color: #1565c0;
   transform: scale(1.1);
 }
@@ -2318,7 +2310,8 @@ async function exportToPDF() {
   color: #555;
   font-weight: 500;
   white-space: nowrap;
-  margin: 0; /* 确保左右边距相等 */
+  margin: 0;
+  /* 确保左右边距相等 */
 }
 
 .school-tags .tag.985 {
@@ -2682,6 +2675,7 @@ async function exportToPDF() {
     opacity: 0;
     max-height: 0;
   }
+
   to {
     opacity: 1;
     max-height: 500px;

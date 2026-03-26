@@ -71,17 +71,6 @@ def get_province_difficulty():
         return error(message=str(e)), 500
 
 
-@overview_bp.route('/plan-distribution', methods=['GET'])
-@cache.cached(timeout=600, key_prefix='plan_distribution')
-def get_plan_distribution():
-    try:
-        year = request.args.get('year', type=int)
-        data = OverviewService.get_plan_distribution(year)
-        return success(data=data)
-    except Exception as e:
-        return error(message=str(e)), 500
-
-
 @overview_bp.route('/score-segment', methods=['GET'])
 def get_score_segment():
     try:

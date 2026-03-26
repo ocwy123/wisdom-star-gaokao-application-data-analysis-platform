@@ -138,9 +138,7 @@ class OverviewService:
 
         if province:
             query = query.filter(AdmRecord.province == province)
-        if batch:
-            query = query.filter(AdmRecord.batch == batch)
-
+            
         query = query.order_by(desc(AdmRecord.year)).limit(years)
         results = query.all()
 
@@ -172,26 +170,6 @@ class OverviewService:
             for r in results
         ]
 
-    @staticmethod
-    def get_plan_distribution(year=None):
-        query = db.session.query(
-            AdmRecord.province,
-            func.sum(AdmRecord.plan_count).label('total_plan')
-        )
-
-        if year:
-            query = query.filter(AdmRecord.year == year)
-
-        query = query.group_by(AdmRecord.province).order_by(func.sum(AdmRecord.plan_count).desc())
-        results = query.all()
-
-        return [
-            {
-                'province': r.province,
-                'total_plan': r.total_plan or 0
-            }
-            for r in results
-        ]
 
     @staticmethod
     def get_score_segment(province=None, year=None, subject=None):
