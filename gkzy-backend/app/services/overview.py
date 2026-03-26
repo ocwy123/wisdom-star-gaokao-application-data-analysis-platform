@@ -24,23 +24,6 @@ class OverviewService:
         }
 
     @staticmethod
-    def get_school_rank(limit=10):
-        from app.utils.hive_util import query_hive
-        sql = f"""
-            SELECT school_id, school_name, heat_score
-            FROM ana_school_heat
-            ORDER BY heat_score DESC
-            LIMIT {limit}
-        """
-        try:
-            columns, rows = query_hive(sql)
-            result = [dict(zip(columns, row)) for row in rows]
-            return result
-        except Exception as e:
-            print(f"查询高校热度排行失败：{e}")
-            return []
-
-    @staticmethod
     def get_hot_schools(limit=8):
         """从 MySQL 的 ana_school_heat 表获取热门院校及其详细信息"""
         try:

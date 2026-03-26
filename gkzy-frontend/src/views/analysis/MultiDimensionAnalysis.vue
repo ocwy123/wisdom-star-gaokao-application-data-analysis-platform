@@ -85,29 +85,6 @@
             />
           </div>
           
-          <!-- 年份趋势 -->
-          <div v-else-if="selectedDimension === 'year'">
-            <el-slider
-              v-model="selectedYears"
-              range
-              :min="2018"
-              :max="2024"
-              :marks="yearMarks"
-            />
-          </div>
-          
-          <!-- 分数段 -->
-          <div v-else-if="selectedDimension === 'score'">
-            <el-select v-model="selectedScoreSegment" placeholder="请选择分数段" clearable>
-              <el-option label="600分以上" value="600+" />
-              <el-option label="550-600分" value="550-600" />
-              <el-option label="500-550分" value="500-550" />
-              <el-option label="450-500分" value="450-500" />
-              <el-option label="400-450分" value="400-450" />
-              <el-option label="400分以下" value="400-" />
-            </el-select>
-          </div>
-          
           <!-- 热度分析 -->
           <div v-else-if="selectedDimension === 'heat'">
             <el-select v-model="selectedHeatType" placeholder="请选择热度类型" clearable>
@@ -246,8 +223,6 @@ export default {
       { value: 'school', label: '学校对比', icon: 'School' },
       { value: 'major', label: '专业对比', icon: 'Reading' },
       { value: 'province', label: '地域对比', icon: 'Location' },
-      { value: 'year', label: '年份趋势', icon: 'Timer' },
-      { value: 'score', label: '分数段', icon: 'TrendCharts' },
       { value: 'heat', label: '热度分析', icon: 'Fire' }
     ]
     
@@ -256,31 +231,19 @@ export default {
       { value: 'avg_score', label: '平均分' },
       { value: 'min_score', label: '最低分' },
       { value: 'max_score', label: '最高分' },
-      { value: 'admission_rate', label: '录取率' },
-      { value: 'plan_count', label: '招生计划' },
       { value: 'admission_count', label: '录取人数' },
       { value: 'avg_salary', label: '平均薪资' },
-      { value: 'max_salary', label: '最高薪资' },
-      { value: 'min_salary', label: '最低薪资' },
-      { value: 'employment_rate', label: '就业率' },
       { value: 'heat_score', label: '综合热度' },
       { value: 'search_count', label: '搜索量' },
       { value: 'favorite_count', label: '收藏量' },
       { value: 'view_count', label: '浏览量' },
       { value: 'school_count', label: '学校数量' },
-      { value: 'major_count', label: '专业数量' },
-      { value: 'province_count', label: '省份数量' },
       { value: 'city_count', label: '城市数量' },
       { value: '985_count', label: '985院校数' },
       { value: '211_count', label: '211院校数' },
       { value: 'double_first_count', label: '双一流院校数' },
       { value: 'phd_count', label: '博士点数量' },
-      { value: 'master_count', label: '硕士点数量' },
-      { value: 'duration_avg', label: '平均学制' },
-      { value: 'competition_rate', label: '竞争比' },
-      { value: 'enrollment_trend', label: '招生趋势' },
-      { value: 'salary_growth', label: '薪资增长率' },
-      { value: 'employment_quality', label: '就业质量' }
+      { value: 'master_count', label: '硕士点数量' }
     ]
     
     // 状态
