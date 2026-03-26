@@ -421,9 +421,9 @@ const renderChart = () => {
       return
     }
     
-    // 计算线性回归并预测下一年分数
-    let predictedYear = null
-    let predictedScore = null
+    // 计算线性回归并预测到2026年的分数
+    let predictedYears = []
+    let predictedScores = []
     
     if (years.length >= 2) {
       // 计算线性回归参数
@@ -436,19 +436,23 @@ const renderChart = () => {
       const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX)
       const intercept = (sumY - slope * sumX) / n
       
-      // 预测下一年分数
-      predictedYear = Math.max(...years) + 1
-      predictedScore = slope * predictedYear + intercept
+      // 预测到2026年的分数
+      const maxYear = Math.max(...years)
+      for (let year = maxYear + 1; year <= 2026; year++) {
+        predictedYears.push(year)
+        predictedScores.push(slope * year + intercept)
+      }
       
       console.log('Linear regression - Slope:', slope)
       console.log('Linear regression - Intercept:', intercept)
-      console.log('Predicted year:', predictedYear)
-      console.log('Predicted score:', predictedScore)
+      console.log('Predicted years:', predictedYears)
+      console.log('Predicted scores:', predictedScores)
     }
     
     // 计算图表配置参数
-    const minScore = Math.min(...scores, predictedScore || Infinity)
-    const maxScore = Math.max(...scores, predictedScore || -Infinity)
+    const allScores = [...scores, ...predictedScores]
+    const minScore = Math.min(...allScores)
+    const maxScore = Math.max(...allScores)
     
     console.log('Min score:', minScore)
     console.log('Max score:', maxScore)
@@ -475,7 +479,7 @@ const renderChart = () => {
       xAxis: [
         {
           type: 'category',
-          data: predictedYear ? [...years, predictedYear] : years,
+          data: [...years, ...predictedYears],
           axisPointer: {
             type: 'shadow'
           }
@@ -511,7 +515,7 @@ const renderChart = () => {
         {
           name: '预测分数',
           type: 'line',
-          data: predictedScore ? [...scores, predictedScore] : [],
+          data: [...Array(scores.length).fill(null), ...predictedScores],
           smooth: true,
           itemStyle: {
             color: '#ff7875'
