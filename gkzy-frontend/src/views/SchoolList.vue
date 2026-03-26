@@ -12,7 +12,7 @@
             <router-link to="/" class="nav-item">首页</router-link>
             <router-link to="/schools" class="nav-item active">查大学</router-link>
             <router-link to="/majors" class="nav-item">看专业</router-link>
-            <router-link to="/志愿" class="nav-item">志愿填报</router-link>
+            <router-link to="/recommendation" class="nav-item">志愿推荐</router-link>
             <router-link to="/data" class="nav-item">数据分析</router-link>
           </nav>
         </div>

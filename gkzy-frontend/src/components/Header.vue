@@ -21,7 +21,7 @@
       <router-link to="/">首页</router-link>
       <router-link to="/schools">高校查询</router-link>
       <router-link to="/majors">专业查询</router-link>
-      <router-link to="/volunteer">志愿填报</router-link>
+      <router-link to="/recommendation">志愿推荐</router-link>
     </nav>
 
     <div class="user-info">
