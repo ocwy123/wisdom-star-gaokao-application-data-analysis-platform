@@ -1,5 +1,47 @@
 <template>
   <div class="deep-search">
+    <!-- 顶部导航栏 -->
+    <header class="header">
+      <div class="container">
+        <div class="header-left">
+          <div class="logo" @click="scrollToTop">
+            <span class="logo-icon">🎓</span>
+            <span class="logo-text">高考志愿</span>
+          </div>
+          <nav class="nav">
+            <router-link to="/" class="nav-item">首页</router-link>
+            <router-link to="/schools" class="nav-item">查大学</router-link>
+            <router-link to="/majors" class="nav-item">看专业</router-link>
+            <router-link to="/志愿" class="nav-item">志愿填报</router-link>
+            <router-link to="/analysis/multi-dimension" class="nav-item">多维分析</router-link>
+            <router-link to="/analysis/deep-search" class="nav-item active">深度检索</router-link>
+          </nav>
+        </div>
+        <div class="header-right">
+          <button v-if="!isLoggedIn" class="btn btn-text" @click="handleLogin">登录</button>
+          <button class="btn btn-primary" @click="handleRegister">注册</button>
+          
+          <!-- 已登录状态 -->
+          <div v-if="isLoggedIn" class="user-menu">
+            <button class="btn btn-text user-info-btn">
+              <span class="username">{{ userInfo?.username || '用户' }}</span>
+              <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="user-dropdown">
+              <div class="dropdown-item" @click="goToProfile">
+                <i class="fas fa-user"></i>
+                <span>个人中心</span>
+              </div>
+              <div class="dropdown-item" @click="handleLogout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
     <!-- 搜索头部 -->
     <div class="search-header">
       <h2>深度信息检索</h2>
@@ -272,6 +314,7 @@
 
 <script>
 import { ref, reactive, onMounted, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Search, List, Grid, DataLine, Download } from '@element-plus/icons-vue'
 import request from '@/utils/request'
@@ -283,6 +326,57 @@ export default {
     Search, List, Grid, DataLine, Download
   },
   setup() {
+    const router = useRouter()
+    
+    // 导航栏相关
+    const isLoggedIn = ref(false)
+    const userInfo = ref(null)
+    
+    // 检查登录状态
+    const checkLoginStatus = () => {
+      const token = localStorage.getItem('userToken')
+      const user = localStorage.getItem('userInfo')
+      if (token && user) {
+        isLoggedIn.value = true
+        userInfo.value = JSON.parse(user)
+      }
+    }
+    
+    // 滚动到顶部
+    const scrollToTop = () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+    
+    // 处理登录
+    const handleLogin = () => {
+      router.push('/login')
+    }
+    
+    // 处理注册
+    const handleRegister = () => {
+      router.push('/register')
+    }
+    
+    // 跳转到个人中心
+    const goToProfile = () => {
+      router.push('/profile')
+    }
+    
+    // 处理登出
+    const handleLogout = () => {
+      localStorage.removeItem('userToken')
+      localStorage.removeItem('userInfo')
+      isLoggedIn.value = false
+      userInfo.value = null
+      ElMessage.success('已退出登录')
+      router.push('/')
+    }
+    
+    // 在挂载时检查登录状态
+    onMounted(() => {
+      checkLoginStatus()
+      fetchFilterOptions()
+    })
     const searchKeyword = ref('')
     const searching = ref(false)
     const results = ref([])
@@ -514,6 +608,14 @@ export default {
     })
     
     return {
+      // 导航栏相关
+      isLoggedIn,
+      userInfo,
+      scrollToTop,
+      handleLogin,
+      handleRegister,
+      goToProfile,
+      handleLogout,
       searchKeyword,
       searching,
       results,
@@ -549,15 +651,209 @@ export default {
 <style scoped>
 .deep-search {
   padding: 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  min-height: 100vh;
 }
 
+/* ===== 顶部导航 ===== */
+.header {
+  background: #fff;
+  border-bottom: 1px solid #e8e8e8;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.header .container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 64px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.logo:hover {
+  opacity: 0.7;
+}
+
+.logo-icon {
+  font-size: 28px;
+}
+
+.logo-text {
+  font-size: 20px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.nav {
+  display: flex;
+  gap: 32px;
+}
+
+.nav-item {
+  color: #666;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  transition: color 0.2s;
+  position: relative;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  color: #1e88e5;
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #1e88e5;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.btn {
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn-text {
+  background: transparent;
+  color: #666;
+}
+
+.btn-text:hover {
+  color: #1a1a1a;
+  background: #f0f0f0;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(30, 136, 229, 0.2);
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3);
+}
+
+/* 用户菜单样式 */
+.user-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.user-info-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.username {
+  font-weight: 500;
+  color: #1e88e5;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  min-width: 140px;
+  padding: 8px 0;
+  margin-top: 8px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.user-menu:hover .user-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  color: #666;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  background-color: #f5f5f5;
+  color: #1e88e5;
+}
+
+.dropdown-item i {
+  width: 16px;
+  text-align: center;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+  width: 100%;
+}
+
+/* 搜索头部 */
 .search-header {
-  margin-bottom: 20px;
+  margin-bottom: 30px;
+  padding: 30px 0 20px 0;
+  border-bottom: 1px solid #e8e8e8;
+  text-align: center;
 }
 
 .search-header h2 {
-  margin-bottom: 15px;
-  color: #333;
+  margin-bottom: 20px;
+  color: #1a1a1a;
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .search-box {
@@ -565,27 +861,87 @@ export default {
   margin: 0 auto;
 }
 
-.filter-card {
-  margin-bottom: 20px;
+.search-box :deep(.el-input-group__append) {
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  border: none;
+}
+
+.search-box :deep(.el-input-group__append .el-button) {
+  color: white;
+  font-weight: 600;
+}
+
+/* 卡片样式 */
+.filter-card,
+.result-card {
+  margin-bottom: 24px;
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.filter-card:hover,
+.result-card:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
+.card-header span {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.card-header .el-button {
+  color: #1e88e5;
+  font-weight: 500;
+}
+
+.card-header .el-button:hover {
+  color: #1565c0;
+}
+
+/* 筛选器样式 */
 .filter-item {
-  margin-bottom: 15px;
+  margin-bottom: 20px;
 }
 
 .filter-item label {
   display: block;
   margin-bottom: 8px;
-  font-weight: 500;
+  font-weight: 600;
   color: #666;
 }
 
+.filter-item :deep(.el-checkbox-group) {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-item :deep(.el-checkbox) {
+  margin-right: 0;
+}
+
+.filter-item :deep(.el-checkbox__label) {
+  font-weight: 500;
+}
+
+.filter-item :deep(.el-select),
+.filter-item :deep(.el-slider) {
+  width: 100%;
+}
+
+/* 搜索结果样式 */
 .result-card {
   min-height: 500px;
 }
@@ -593,7 +949,7 @@ export default {
 .result-name {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
 }
 
 .school-tag {
@@ -604,14 +960,25 @@ export default {
   background-color: #ffeb3b;
   font-weight: bold;
   padding: 0 2px;
+  border-radius: 3px;
 }
 
+/* 卡片视图 */
 .card-view {
   margin-top: 20px;
 }
 
 .result-card-item {
   margin-bottom: 20px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.result-card-item:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
 }
 
 .card-type {
@@ -625,6 +992,7 @@ export default {
   font-weight: bold;
   margin-bottom: 10px;
   padding-right: 60px;
+  color: #1a1a1a;
 }
 
 .card-info {
@@ -644,17 +1012,99 @@ export default {
   padding-top: 10px;
 }
 
-.chart-view {
-  margin-top: 20px;
+/* 表格样式优化 */
+:deep(.el-table) {
+  border-radius: 12px;
+  overflow: hidden;
 }
 
-.pagination {
-  margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
+:deep(.el-table__header) {
+  background: linear-gradient(135deg, #f5f7fa 0%, #e3f2fd 100%);
+}
+
+:deep(.el-table th) {
+  background: transparent;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+:deep(.el-table--striped .el-table__body tr.el-table__row--striped td) {
+  background: #f8f9fa;
+}
+
+:deep(.el-table .el-table__row:hover td) {
+  background: #e3f2fd;
+}
+
+:deep(.el-tag) {
+  font-weight: 500;
 }
 
 :deep(.el-rate) {
-  display: inline-block;
+  display: inline-flex;
+}
+
+/* 分页样式 */
+:deep(.el-pagination) {
+  margin-top: 20px;
+  justify-content: center;
+}
+
+:deep(.el-pagination.is-background .el-pager li:not(.disabled).active) {
+  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+}
+
+/* 按钮组样式 */
+:deep(.el-button-group) {
+  display: flex;
+  gap: 0;
+}
+
+:deep(.el-button-group .el-button) {
+  border-radius: 0;
+}
+
+:deep(.el-button-group .el-button:first-child) {
+  border-radius: 6px 0 0 6px;
+}
+
+:deep(.el-button-group .el-button:last-child) {
+  border-radius: 0 6px 6px 0;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .deep-search {
+    padding: 16px;
+  }
+  
+  .search-header {
+    padding: 20px 0 15px 0;
+  }
+  
+  .search-header h2 {
+    font-size: 24px;
+  }
+  
+  .search-box {
+    max-width: 100%;
+  }
+  
+  .card-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  
+  .filter-item :deep(.el-checkbox-group) {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  
+  .result-name {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
 }
 </style>
