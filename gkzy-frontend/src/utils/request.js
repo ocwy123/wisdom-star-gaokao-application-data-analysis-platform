@@ -31,8 +31,12 @@ request.interceptors.request.use(
 )
 
 request.interceptors.response.use(
-  response => response,
+  response => {
+    console.log('Response received:', response)
+    return response
+  },
   error => {
+    console.error('Response error:', error)
     if (error.response) {
       switch (error.response.status) {
         case 401:

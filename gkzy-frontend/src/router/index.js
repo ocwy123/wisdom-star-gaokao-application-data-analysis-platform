@@ -37,12 +37,6 @@ const routes = [
     name: 'SchoolList',
     component: SchoolList
   },
-    {
-    path: '/school/:id',
-    name: 'SchoolDetail',
-    component: SchoolDetail,
-    props: true
-  },
   // 专业相关路由
   {
     path: '/majors',
@@ -84,7 +78,23 @@ const routes = [
     component: () => import('../views/admin/AdminDashboard.vue'),
     meta: { requiresAuth: true, adminOnly: true }
   },
-
+  {
+    path: '/majors',
+    name: 'MajorList',
+    component: MajorList
+  },
+  {
+    path: '/major/:id',
+    name: 'MajorDetail',
+    component: MajorDetail,
+    props: true
+  },
+  {
+    path: '/school/:id',
+    name: 'SchoolDetail',
+    component: SchoolDetail,
+    props: true
+  }
 ]
 
 const router = createRouter({
@@ -94,27 +104,46 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach((to, from, next) => {
+  console.log('路由守卫: 从', from.path, '到', to.path)
   const adminToken = localStorage.getItem('adminToken')
   const userToken = localStorage.getItem('userToken')
   
+  console.log('Token状态 - adminToken:', adminToken, 'userToken:', userToken)
+  
   // 管理员路由检查
   if (to.meta.adminOnly) {
+    console.log('管理员路由检查')
     if (to.meta.requiresAuth && !adminToken) {
+      console.log('需要管理员认证，跳转到管理员登录')
       next('/admin/login')
     } else if (to.meta.requiresGuest && adminToken) {
+      console.log('管理员已登录，跳转到管理员仪表板')
       next('/admin/dashboard')
     } else {
+      console.log('管理员路由检查通过')
       next()
     }
     return
   }
   
   // 普通用户路由检查
+  console.log('普通用户路由检查')
+  
+  // 特殊处理：允许已登录用户访问注册页面
+  if (to.path === '/register' && userToken) {
+    console.log('允许已登录用户访问注册页面')
+    next()
+    return
+  }
+  
   if (to.meta.requiresAuth && !userToken) {
+    console.log('需要用户认证，跳转到登录页面')
     next('/login')
-  } else if (to.meta.requiresGuest && userToken) {
-    next('/')
+  } else if (to.meta.requiresGuest && userToken && to.path !== '/register') {
+    console.log('用户已登录，跳转到首页')
+    next('/dashboard')
   } else {
+    console.log('普通用户路由检查通过')
     next()
   }
 })

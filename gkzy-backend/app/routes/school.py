@@ -61,12 +61,10 @@ def get_school_list():
 
 
 @school_bp.route('/detail/<int:school_id>', methods=['GET'])
-# @cache.cached(timeout=300, key_prefix='school_detail')
 def get_school_detail(school_id):
     """获取高校详情"""
     try:
         data = SchoolService.get_school_detail(school_id)
-        print(f"Fetched school detail for ID {school_id}: {data}")
         
         if not data:
             return error(message='学校不存在'), 404
@@ -117,6 +115,46 @@ def get_types():
     """获取所有学校类型列表"""
     try:
         data = SchoolService.get_types()
+        return success(data=data)
+    except Exception as e:
+        return error(message=str(e)), 500
+
+
+@school_bp.route('/<int:school_id>/provinces', methods=['GET'])
+def get_school_provinces(school_id):
+    """获取学校招生省份列表"""
+    try:
+        data = SchoolService.get_school_provinces(school_id)
+        return success(data=data)
+    except Exception as e:
+        return error(message=str(e)), 500
+
+
+@school_bp.route('/<int:school_id>/majors', methods=['GET'])
+def get_school_majors(school_id):
+    """获取学校在指定省份的专业列表"""
+    try:
+        province = request.args.get('province', None, type=str)
+        if not province:
+            return error(message='省份参数不能为空'), 400
+        
+        data = SchoolService.get_school_majors(school_id, province)
+        return success(data=data)
+    except Exception as e:
+        return error(message=str(e)), 500
+
+
+@school_bp.route('/<int:school_id>/scores', methods=['GET'])
+def get_school_scores(school_id):
+    """获取学校专业分数线数据"""
+    try:
+        province = request.args.get('province', None, type=str)
+        major = request.args.get('major', None, type=str)
+        
+        if not province or not major:
+            return error(message='省份和专业参数不能为空'), 400
+        
+        data = SchoolService.get_school_scores(school_id, province, major)
         return success(data=data)
     except Exception as e:
         return error(message=str(e)), 500

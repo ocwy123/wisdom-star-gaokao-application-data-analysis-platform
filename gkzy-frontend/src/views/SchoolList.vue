@@ -18,12 +18,26 @@
           </nav>
         </div>
         <div class="header-right">
-          <div class="search-mini">
-            <input type="text" placeholder="搜索..." class="search-mini-input" v-model="miniSearch" @keyup.enter="handleSearch">
-            <span class="search-icon">🔍</span>
+          <button v-if="!isLoggedIn" class="btn btn-text" @click="handleLogin">登录</button>
+          <button class="btn btn-primary" @click="handleRegister">注册</button>
+          
+          <!-- 已登录状态 -->
+          <div v-if="isLoggedIn" class="user-menu">
+            <button class="btn btn-text user-info-btn">
+              <span class="username">{{ userInfo?.username || '用户' }}</span>
+              <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="user-dropdown">
+              <div class="dropdown-item" @click="goToProfile">
+                <i class="fas fa-user"></i>
+                <span>个人中心</span>
+              </div>
+              <div class="dropdown-item" @click="handleLogout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>退出登录</span>
+              </div>
+            </div>
           </div>
-          <button class="btn btn-text">登录</button>
-          <button class="btn btn-primary">注册</button>
         </div>
       </div>
     </header>
@@ -183,6 +197,10 @@ import { getSchoolList, getProvinces, getCities, getSchoolTypes } from '@/api/sc
 
 const router = useRouter()
 
+// 用户登录状态
+const isLoggedIn = ref(false)
+const userInfo = ref(null)
+
 // 搜索
 const miniSearch = ref('')
 
@@ -209,6 +227,75 @@ const pagination = reactive({
   total: 0,
   total_pages: 0
 })
+
+// 检查登录状态
+const checkLoginStatus = () => {
+  const token = localStorage.getItem('userToken')
+  if (token) {
+    isLoggedIn.value = true
+    // 解析JWT token获取用户信息（这里简化处理）
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      userInfo.value = {
+        username: payload.username,
+        role: payload.role
+      }
+    } catch (error) {
+      console.error('解析token失败:', error)
+    }
+  } else {
+    isLoggedIn.value = false
+    userInfo.value = null
+  }
+}
+
+// 登录注册相关函数
+const handleLogin = () => {
+  console.log('登录按钮被点击')
+  // 跳转到登录页面
+  router.push('/login').then(() => {
+    console.log('成功跳转到登录页面')
+  }).catch(err => {
+    console.error('跳转失败:', err)
+  })
+}
+
+const handleRegister = () => {
+  console.log('注册按钮被点击')
+  // 跳转到注册页面（即使已登录也可以访问）
+  router.push('/register').then(() => {
+    console.log('成功跳转到注册页面')
+  }).catch(err => {
+    console.error('跳转失败:', err)
+  })
+}
+
+const handleLogout = () => {
+  console.log('退出登录')
+  // 清除本地存储的 token
+  localStorage.removeItem('userToken')
+  localStorage.removeItem('adminToken')
+  
+  // 更新登录状态
+  isLoggedIn.value = false
+  userInfo.value = null
+  
+  // 跳转到首页
+  router.push('/').then(() => {
+    console.log('退出登录成功，跳转到首页')
+    // 刷新页面以更新状态
+    window.location.reload()
+  })
+}
+
+const goToProfile = () => {
+  console.log('跳转到个人中心')
+  router.push('/profile').then(() => {
+    console.log('成功跳转到个人中心')
+  }).catch(err => {
+    console.error('跳转失败:', err)
+  })
+}
 
 // 加载高校列表
 const loadSchoolList = async () => {
@@ -386,6 +473,7 @@ watch(() => filters.type, () => {
 
 // 初始化
 onMounted(() => {
+  checkLoginStatus()
   loadSchoolList()
   loadProvinces()
   loadSchoolTypes()
@@ -520,10 +608,10 @@ onMounted(() => {
 }
 
 .btn {
-  padding: 8px 24px;
+  padding: 10px 18px;
   border-radius: 6px;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
   border: none;
@@ -548,6 +636,67 @@ onMounted(() => {
 .btn-primary:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3);
+}
+
+/* 用户菜单样式 */
+.user-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.user-info-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.username {
+  font-weight: 500;
+  color: #1e88e5;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  min-width: 140px;
+  padding: 8px 0;
+  margin-top: 8px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.user-menu:hover .user-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  color: #666;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  background-color: #f5f5f5;
+  color: #1e88e5;
+}
+
+.dropdown-item i {
+  width: 16px;
+  text-align: center;
 }
 
 /* 主体内容 */

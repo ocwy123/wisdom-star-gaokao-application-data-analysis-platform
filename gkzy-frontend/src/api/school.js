@@ -1,5 +1,10 @@
 import request from '../utils/request'
 
+// 打印API调用信息
+const logApiCall = (url, method, params) => {
+  console.log(`API Call: ${method} ${url}`, params)
+}
+
 /**
  * 获取高校列表
  * @param {Object} params - 查询参数
@@ -26,15 +31,13 @@ export function getSchoolList(params) {
  * @param {number} id - 学校 ID
  */
 export function getSchoolDetail(id) {
+  const url = `/school/detail/${id}`
+  logApiCall(url, 'GET')
   return request({
-    url: `/school/detail/${id}`,
+    url,
     method: 'get'
   })
 }
-
-// export function getSchoolDetail(id) {
-//   return service.get(`/school/detail/${id}`)
-// }
 
 /**
  * 获取所有省份列表
@@ -68,4 +71,40 @@ export function getSchoolTypes() {
   })
 }
 
+/**
+ * 获取学校招生省份列表
+ * @param {number} schoolId - 学校 ID
+ */
+export function getSchoolProvinces(schoolId) {
+  return request({
+    url: `/school/${schoolId}/provinces`,
+    method: 'get'
+  })
+}
 
+/**
+ * 获取学校在指定省份的专业列表
+ * @param {number} schoolId - 学校 ID
+ * @param {string} province - 省份
+ */
+export function getSchoolMajors(schoolId, province) {
+  return request({
+    url: `/school/${schoolId}/majors`,
+    method: 'get',
+    params: { province }
+  })
+}
+
+/**
+ * 获取学校专业分数线数据
+ * @param {number} schoolId - 学校 ID
+ * @param {string} province - 省份
+ * @param {string} major - 专业
+ */
+export function getAdmissionScores(schoolId, province, major) {
+  return request({
+    url: `/school/${schoolId}/scores`,
+    method: 'get',
+    params: { province, major }
+  })
+}
