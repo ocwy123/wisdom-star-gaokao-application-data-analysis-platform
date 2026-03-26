@@ -35,6 +35,7 @@ def create_app():
     DB_USERNAME = 'root'
     DB_PASSWORD = 'root'
     DB_HOST = '192.168.54.241'
+    DB_HOST = '192.168.54.241'
     DB_PORT = '3306'
     DB_NAME = 'gkzy_mysql'
     
@@ -87,6 +88,15 @@ def create_app():
     # 初始化缓存
     cache.init_app(app)
 
+    # 注册蓝图
+    from app.services.admin_auth import admin_auth_bp
+    from app.routes.auth import auth_bp
+    from app.routes.overview import overview_bp
+    from app.routes.school import school_bp
+    from app.services.analysis import analysis_bp
+    from app.routes.major import major_bp
+    from app.routes.heat import heat_bp
+    from app.routes.recommendation import recommendation_bp
     # 注册所有蓝图路由
     app.register_blueprint(admin_auth_bp)
     app.register_blueprint(auth_bp)
@@ -95,14 +105,16 @@ def create_app():
     app.register_blueprint(major_bp)
     app.register_blueprint(favorite_bp)
     app.register_blueprint(analysis_bp)
+    app.register_blueprint(recommendation_bp, url_prefix='/api/recommendation')
     app.register_blueprint(data_import_bp)
 
-    with app.app_context():
-        print("\n" + "="*60)
-        print("已注册的路由:")
-        for rule in app.url_map.iter_rules():
-            print(f"{rule.endpoint}: {rule}")
-        print("="*60 + "\n")
+    # 创建表
+    # with app.app_context():
+    #     print("\n" + "="*60)
+    #     print("已注册的路由:")
+    #     for rule in app.url_map.iter_rules():
+    #         print(f"{rule.endpoint}: {rule}")
+    #     print("="*60 + "\n")
 
     @app.before_request
     def log_request():

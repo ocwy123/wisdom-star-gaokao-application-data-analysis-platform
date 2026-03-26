@@ -59,6 +59,11 @@ const routes = [
     name: 'MultiDimensionAnalysis',
     component: () => import('../views/analysis/MultiDimensionAnalysis.vue')
   },
+  {
+    path: '/recommendation',
+    name: 'VolunteerRecommendation',
+    component: () => import('../views/VolunteerRecommendation.vue')
+  },
   // 管理员路由
   {
     path: '/admin/login',
