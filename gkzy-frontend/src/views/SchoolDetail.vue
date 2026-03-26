@@ -411,26 +411,47 @@ const renderChart = () => {
     console.log('Preparing chart data')
     const years = scoreData.value.map(item => item.year)
     const scores = scoreData.value.map(item => item.min_score)
-    const ranks = scoreData.value.map(item => item.min_rank)
     
     console.log('Years:', years)
     console.log('Scores:', scores)
-    console.log('Ranks:', ranks)
     
     // 检查数据有效性
-    if (scores.some(isNaN) || ranks.some(isNaN)) {
+    if (scores.some(isNaN)) {
       console.log('Invalid data detected')
       return
     }
     
+    // 计算线性回归并预测下一年分数
+    let predictedYear = null
+    let predictedScore = null
+    
+    if (years.length >= 2) {
+      // 计算线性回归参数
+      const n = years.length
+      const sumX = years.reduce((a, b) => a + b, 0)
+      const sumY = scores.reduce((a, b) => a + b, 0)
+      const sumXY = years.reduce((sum, x, i) => sum + x * scores[i], 0)
+      const sumX2 = years.reduce((sum, x) => sum + x * x, 0)
+      
+      const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX)
+      const intercept = (sumY - slope * sumX) / n
+      
+      // 预测下一年分数
+      predictedYear = Math.max(...years) + 1
+      predictedScore = slope * predictedYear + intercept
+      
+      console.log('Linear regression - Slope:', slope)
+      console.log('Linear regression - Intercept:', intercept)
+      console.log('Predicted year:', predictedYear)
+      console.log('Predicted score:', predictedScore)
+    }
+    
     // 计算图表配置参数
-    const minScore = Math.min(...scores)
-    const maxScore = Math.max(...scores)
-    const maxRank = Math.max(...ranks)
+    const minScore = Math.min(...scores, predictedScore || Infinity)
+    const maxScore = Math.max(...scores, predictedScore || -Infinity)
     
     console.log('Min score:', minScore)
     console.log('Max score:', maxScore)
-    console.log('Max rank:', maxRank)
     
     // 图表配置
     const option = {
@@ -448,13 +469,13 @@ const renderChart = () => {
         }
       },
       legend: {
-        data: ['最低分', '最低位次'],
+        data: ['最低分', '预测分数'],
         top: 30
       },
       xAxis: [
         {
           type: 'category',
-          data: years,
+          data: predictedYear ? [...years, predictedYear] : years,
           axisPointer: {
             type: 'shadow'
           }
@@ -464,19 +485,9 @@ const renderChart = () => {
         {
           type: 'value',
           name: '最低分',
-          min: Math.floor(minScore * 0.9),
-          max: Math.ceil(maxScore * 1.1),
-          interval: 20,
-          axisLabel: {
-            formatter: '{value}'
-          }
-        },
-        {
-          type: 'value',
-          name: '最低位次',
-          min: 0,
-          max: Math.ceil(maxRank * 1.1),
-          interval: Math.ceil(maxRank / 5),
+          min: Math.floor(minScore * 0.95),
+          max: Math.ceil(maxScore * 1.05),
+          interval: 10,
           axisLabel: {
             formatter: '{value}'
           }
@@ -498,19 +509,19 @@ const renderChart = () => {
           symbolSize: 8
         },
         {
-          name: '最低位次',
+          name: '预测分数',
           type: 'line',
-          yAxisIndex: 1,
-          data: ranks,
+          data: predictedScore ? [...scores, predictedScore] : [],
           smooth: true,
           itemStyle: {
-            color: '#409eff'
+            color: '#ff7875'
           },
           lineStyle: {
-            width: 3
+            width: 3,
+            type: 'dashed'
           },
-          symbol: 'circle',
-          symbolSize: 8
+          symbol: 'diamond',
+          symbolSize: 10
         }
       ]
     }
