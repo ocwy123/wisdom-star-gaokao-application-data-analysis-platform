@@ -10,7 +10,7 @@ import random
 import requests
 from pathlib import Path
 
-# ==================== 配置 ====================
+# 配置
 SCHOOL_LIST_URL = "https://static-data.gaokao.cn/www/2.0/school/list_v2.json?a=www.gaokao.cn"
 DETAIL_API_URL = "https://static-data.gaokao.cn/www/2.0/school/{}/info.json?a=www.gaokao.cn"
 
@@ -22,7 +22,6 @@ HEADERS = {
 RETRY_TIMES = 3
 REQUEST_DELAY = 1.0
 OUTPUT_FILE = Path(__file__).parent.parent / "data" / "school_data.jl"
-# ============================================
 
 
 def safe_request(url, headers=None, retry=RETRY_TIMES, **kwargs):
@@ -118,7 +117,7 @@ def main():
             # 列表页基础字段
             name = basic_info.get("name", "")
             province = basic_info.get("p", "")
-            city_list = basic_info.get("c", "")          # 列表页城市作为后备
+            city_list = basic_info.get("c", "")
             is_985 = basic_info.get("f985") == "1"
             is_211 = basic_info.get("f211") == "1"
             is_double_first = basic_info.get("dual_class") == "1"
@@ -129,7 +128,7 @@ def main():
                 print(f"  -> 获取详情失败，仅使用列表页数据")
                 school_data = {
                     "name": name,
-                    "code": "",                         # 详情失败时留空
+                    "code": "", 
                     "province": province,
                     "city": city_list,
                     "type": basic_info.get("nature", ""),
@@ -153,9 +152,9 @@ def main():
             # 合并数据：优先使用详情字段，后备使用列表页字段
             school_data = {
                 "name": name,
-                "code": detail_fields.get("code", ""),               # ✅ 从 zs_code 获取院校代码
+                "code": detail_fields.get("code", ""),
                 "province": province,
-                "city": detail_fields.get("city") or city_list,      # 优先详情城市，后备列表页城市
+                "city": detail_fields.get("city") or city_list,
                 "type": detail_fields.get("type") or basic_info.get("nature", ""),
                 "is_985": is_985,
                 "is_211": is_211,

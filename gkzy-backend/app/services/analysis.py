@@ -490,7 +490,7 @@ def multi_dimension_compare():
     多维对比分析
     请求体：{
         "dimension": "school",  # 对比维度（单选）
-        "metrics": ["avg_score", "heat_score", "admission_rate"],  # 指标列表
+        "metrics": ["avg_score", "heat_score"],  # 指标列表
         "filters": {  # 筛选条件
             "school_ids": [1, 2, 3],
             "major_ids": [1, 2],
@@ -560,10 +560,6 @@ def compare_schools(filters, metrics, time_range):
         if 'avg_score' in metrics:
             scores = [a.min_score for a in admissions if a.min_score]
             item['data']['avg_score'] = sum(scores) / len(scores) if scores else 0
-        
-        if 'admission_rate' in metrics:
-            # 计算录取率（需要实际数据）
-            item['data']['admission_rate'] = 0.75  # 示例值
         
         if 'min_score' in metrics:
             item['data']['min_score'] = min([a.min_score for a in admissions if a.min_score]) if admissions else 0

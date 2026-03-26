@@ -247,7 +247,7 @@ export default {
     ]
     
     // 状态
-    const selectedMetrics = ref(['avg_score', 'heat_score', 'admission_rate', 'avg_salary'])
+    const selectedMetrics = ref(['avg_score', 'heat_score', 'avg_salary'])
     const selectAllMetrics = ref(false)
     const showComparePanel = ref(true)
     const analyzing = ref(false)
@@ -334,7 +334,7 @@ export default {
       selectedYears.value = [2020, 2024]
       selectedScoreSegment.value = ''
       selectedHeatType.value = 'comprehensive'
-      selectedMetrics.value = ['avg_score', 'heat_score', 'admission_rate', 'avg_salary']
+      selectedMetrics.value = ['avg_score', 'heat_score', 'avg_salary']
     }
     
     // 全选指标
