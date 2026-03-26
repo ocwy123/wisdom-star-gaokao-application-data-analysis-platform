@@ -502,7 +502,7 @@ const renderChart = () => {
           name: '最低分',
           type: 'line',
           data: scores,
-          smooth: true,
+          smooth: false,
           itemStyle: {
             color: '#aa3bff'
           },
@@ -515,7 +515,7 @@ const renderChart = () => {
         {
           name: '预测分数',
           type: 'line',
-          data: [...Array(scores.length).fill(null), ...predictedScores],
+          data: [...Array(scores.length - 1).fill(null), scores[scores.length - 1], ...predictedScores],
           smooth: true,
           itemStyle: {
             color: '#ff7875'
