@@ -35,8 +35,7 @@ def create_app():
     # MySQL 配置（远程）
     DB_USERNAME = 'root'
     DB_PASSWORD = 'root'
-    DB_HOST = '192.168.54.241'
-    DB_HOST = '192.168.54.241'
+    DB_HOST = '192.168.1.241'
     DB_PORT = '3306'
     DB_NAME = 'gkzy_mysql'
     

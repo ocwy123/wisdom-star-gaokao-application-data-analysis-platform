@@ -228,29 +228,37 @@ class OverviewService:
     def get_score_segment_options():
         """获取一分一段表的筛选选项（省份、年份、选科）"""
         try:
-            # 获取所有省份
+            print("[DEBUG] 开始查询一分一段表选项...")
+            # 获取所有省份 - 使用 label 来标记列
             provinces = db.session.query(
-                distinct(ScoreSegment.province)
-            ).all()
-            province_list = [p.province for p in provinces if p.province]
+                ScoreSegment.province.label('province')
+            ).distinct().all()
+            province_list = [p[0] for p in provinces if p[0]]
+            print(f"[DEBUG] 省份列表：{province_list}")
             
             # 获取所有年份
             years = db.session.query(
-                distinct(ScoreSegment.year)
-            ).all()
-            year_list = sorted([y.year for y in years if y.year], reverse=True)
+                ScoreSegment.year.label('year')
+            ).distinct().all()
+            year_list = sorted([y[0] for y in years if y[0]], reverse=True)
+            print(f"[DEBUG] 年份列表：{year_list}")
             
             # 获取所有选科
             subjects = db.session.query(
-                distinct(ScoreSegment.subject)
-            ).all()
-            subject_list = [s.subject for s in subjects if s.subject]
+                ScoreSegment.subject.label('subject')
+            ).distinct().all()
+            subject_list = [s[0] for s in subjects if s[0]]
+            print(f"[DEBUG] 选科列表：{subject_list}")
             
-            return {
+            result = {
                 'provinces': province_list,
                 'years': year_list,
                 'subjects': subject_list
             }
+            print(f"[DEBUG] 返回结果：{result}")
+            return result
         except Exception as e:
             print(f"查询筛选选项失败：{e}")
+            import traceback
+            traceback.print_exc()
             return {'provinces': [], 'years': [], 'subjects': []}

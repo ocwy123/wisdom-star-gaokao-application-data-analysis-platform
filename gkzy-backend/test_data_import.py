@@ -248,4 +248,4 @@ def data_import():
 if __name__ == '__main__':
     print("启动测试服务器...")
     print(f"上传目录: {UPLOAD_FOLDER}")
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    app.run(debug=True, host='0.0.0.0', port=5000)

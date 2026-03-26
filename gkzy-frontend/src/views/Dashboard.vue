@@ -500,8 +500,8 @@ onMounted(async () => {
   setupCountdown()
   await loadHotSchools()
   await loadTopMajors()
-  await loadScoreSegmentOptions()
   initChart()
+  await loadScoreSegmentOptions()
   window.addEventListener('resize', handleResize)
 })
 
@@ -813,18 +813,14 @@ function getMotivationText() {
 async function loadScoreSegmentOptions() {
   try {
     const res = await getScoreSegmentOptions()
+    console.log('获取到的选项数据:', res)
     if (res.data) {
       options.value = res.data
-      // 设置默认值
-      if (options.value.provinces.length > 0) {
-        filterForm.value.province = options.value.provinces[0]
-      }
-      if (options.value.years.length > 0) {
-        filterForm.value.year = options.value.years[0]
-      }
-      if (options.value.subjects.length > 0) {
-        filterForm.value.subject = options.value.subjects[0]
-      }
+      console.log('options.value:', options.value)
+      // 设置默认值：四川省、2025、物理类
+      filterForm.value.province = options.value.provinces.includes('四川省') ? '四川省' : (options.value.provinces[0] || '')
+      filterForm.value.year = options.value.years.includes(2025) ? 2025 : (options.value.years[0] || '')
+      filterForm.value.subject = options.value.subjects.includes('物理类') ? '物理类' : (options.value.subjects[0] || '')
       // 加载默认数据
       await loadScoreSegmentData()
     }
@@ -957,7 +953,7 @@ function initChart() {
 }
 
 function updateChart() {
-  if (!chartInstance) return
+  if (!chartInstance || chartData.value.length === 0) return
   
   const scores = chartData.value.map(item => item.score.toString())
   const counts = chartData.value.map(item => item.same_score_count)

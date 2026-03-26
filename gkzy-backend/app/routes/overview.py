@@ -50,7 +50,6 @@ def get_major_rank():
 
 
 @overview_bp.route('/score-trend', methods=['GET'])
-@cache.cached(timeout=600, key_prefix='score_trend')
 def get_score_trend():
     try:
         province = request.args.get('province')
@@ -84,7 +83,6 @@ def get_plan_distribution():
 
 
 @overview_bp.route('/score-segment', methods=['GET'])
-@cache.cached(timeout=300, key_prefix='score_segment')
 def get_score_segment():
     try:
         province = request.args.get('province')
@@ -97,10 +95,15 @@ def get_score_segment():
 
 
 @overview_bp.route('/score-segment/options', methods=['GET'])
-@cache.cached(timeout=600, key_prefix='score_segment_options')
 def get_score_segment_options():
+    print("[ROUTE] 收到 /score-segment/options 请求")
     try:
+        print("[ROUTE] 调用 OverviewService.get_score_segment_options()")
         data = OverviewService.get_score_segment_options()
+        print(f"[ROUTE] 返回数据：{data}")
         return success(data=data)
     except Exception as e:
+        print(f"[ROUTE] 错误：{e}")
+        import traceback
+        traceback.print_exc()
         return error(message=str(e)), 500
