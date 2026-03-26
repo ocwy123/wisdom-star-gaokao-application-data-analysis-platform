@@ -81,3 +81,26 @@ def get_plan_distribution():
         return success(data=data)
     except Exception as e:
         return error(message=str(e)), 500
+
+
+@overview_bp.route('/score-segment', methods=['GET'])
+@cache.cached(timeout=300, key_prefix='score_segment')
+def get_score_segment():
+    try:
+        province = request.args.get('province')
+        year = request.args.get('year', type=int)
+        subject = request.args.get('subject')
+        data = OverviewService.get_score_segment(province, year, subject)
+        return success(data=data)
+    except Exception as e:
+        return error(message=str(e)), 500
+
+
+@overview_bp.route('/score-segment/options', methods=['GET'])
+@cache.cached(timeout=600, key_prefix='score_segment_options')
+def get_score_segment_options():
+    try:
+        data = OverviewService.get_score_segment_options()
+        return success(data=data)
+    except Exception as e:
+        return error(message=str(e)), 500

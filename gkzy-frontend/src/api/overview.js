@@ -27,3 +27,11 @@ export function getPlanDistribution(params) {
 export function getHotSchools(params) {
   return service.get('/overview/hot-schools', { params })
 }
+
+export function getScoreSegment(params) {
+  return service.get('/overview/score-segment', { params })
+}
+
+export function getScoreSegmentOptions() {
+  return service.get('/overview/score-segment/options')
+}

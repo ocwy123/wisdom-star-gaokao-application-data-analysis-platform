@@ -1,6 +1,7 @@
 from app.models.school import School
 from app.models.major import Major
 from app.models.adm_record import AdmRecord
+from app.models.score_segment import ScoreSegment
 from app.extensions import db
 from sqlalchemy import func, distinct
 from datetime import datetime
@@ -191,3 +192,65 @@ class OverviewService:
             }
             for r in results
         ]
+
+    @staticmethod
+    def get_score_segment(province=None, year=None, subject=None):
+        """获取一分一段表数据"""
+        try:
+            query = db.session.query(
+                ScoreSegment.score,
+                ScoreSegment.same_score_count
+            )
+            
+            if province:
+                query = query.filter(ScoreSegment.province == province)
+            if year:
+                query = query.filter(ScoreSegment.year == year)
+            if subject:
+                query = query.filter(ScoreSegment.subject == subject)
+            
+            # 按分数排序
+            query = query.order_by(ScoreSegment.score.asc())
+            results = query.all()
+            
+            return [
+                {
+                    'score': r.score,
+                    'same_score_count': r.same_score_count
+                }
+                for r in results
+            ]
+        except Exception as e:
+            print(f"查询一分一段表失败：{e}")
+            return []
+
+    @staticmethod
+    def get_score_segment_options():
+        """获取一分一段表的筛选选项（省份、年份、选科）"""
+        try:
+            # 获取所有省份
+            provinces = db.session.query(
+                distinct(ScoreSegment.province)
+            ).all()
+            province_list = [p.province for p in provinces if p.province]
+            
+            # 获取所有年份
+            years = db.session.query(
+                distinct(ScoreSegment.year)
+            ).all()
+            year_list = sorted([y.year for y in years if y.year], reverse=True)
+            
+            # 获取所有选科
+            subjects = db.session.query(
+                distinct(ScoreSegment.subject)
+            ).all()
+            subject_list = [s.subject for s in subjects if s.subject]
+            
+            return {
+                'provinces': province_list,
+                'years': year_list,
+                'subjects': subject_list
+            }
+        except Exception as e:
+            print(f"查询筛选选项失败：{e}")
+            return {'provinces': [], 'years': [], 'subjects': []}

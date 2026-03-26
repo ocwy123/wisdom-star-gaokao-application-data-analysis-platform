@@ -236,6 +236,65 @@
       </div>
     </section>
 
+    <!-- 一分一段表 -->
+    <section class="score-segment-section">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-title-group">
+            <h2 class="section-title">一分一段表</h2>
+            <p class="section-subtitle">查看各分数段的考生分布情况</p>
+          </div>
+        </div>
+        
+        <!-- 筛选器 -->
+        <div class="filter-container">
+          <el-form :inline="true" class="filter-form">
+            <el-form-item label="省份">
+              <el-select v-model="filterForm.province" placeholder="请选择省份" @change="loadScoreSegmentData" style="width: 150px;">
+                <el-option
+                  v-for="item in options.provinces"
+                  :key="item"
+                  :label="item"
+                  :value="item"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="年份">
+              <el-select v-model="filterForm.year" placeholder="请选择年份" @change="loadScoreSegmentData" style="width: 120px;">
+                <el-option
+                  v-for="item in options.years"
+                  :key="item"
+                  :label="item"
+                  :value="item"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="选科">
+              <el-select v-model="filterForm.subject" placeholder="请选择选科" @change="loadScoreSegmentData" style="width: 120px;">
+                <el-option
+                  v-for="item in options.subjects"
+                  :key="item"
+                  :label="item"
+                  :value="item"
+                />
+              </el-select>
+            </el-form-item>
+          </el-form>
+        </div>
+
+        <!-- 图表 -->
+        <div class="chart-container">
+          <div ref="scoreSegmentChart" class="score-segment-chart"></div>
+          <div v-if="loading" class="chart-loading">
+            <el-skeleton :rows="5" animated />
+          </div>
+          <div v-if="!loading && chartData.length === 0" class="chart-empty">
+            <el-empty description="请选择筛选条件查看数据" />
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- 常见问题 -->
     <section class="faq-section">
       <div class="container">
@@ -288,9 +347,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { getHotSchools, getMajorRank } from '../api/overview'
+import { getHotSchools, getMajorRank, getScoreSegment, getScoreSegmentOptions } from '../api/overview'
+import * as echarts from 'echarts'
 
 const router = useRouter()
 const searchQuery = ref('')
@@ -417,6 +477,22 @@ const filteredSchools = computed(() => {
   return recommendedSchools.value
 })
 
+// 一分一段表相关
+const filterForm = ref({
+  province: '',
+  year: '',
+  subject: ''
+})
+const options = ref({
+  provinces: [],
+  years: [],
+  subjects: []
+})
+const chartData = ref([])
+const loading = ref(false)
+const scoreSegmentChart = ref(null)
+let chartInstance = null
+
 onMounted(async () => {
   checkLoginStatus()
   setupScrollListener()
@@ -424,11 +500,19 @@ onMounted(async () => {
   setupCountdown()
   await loadHotSchools()
   await loadTopMajors()
+  await loadScoreSegmentOptions()
+  initChart()
+  window.addEventListener('resize', handleResize)
 })
 
 onUnmounted(() => {
   removeScrollListener()
   stopCarousel()
+  window.removeEventListener('resize', handleResize)
+  if (chartInstance) {
+    chartInstance.dispose()
+    chartInstance = null
+  }
 })
 
 async function loadHotSchools() {
@@ -723,6 +807,177 @@ function getMotivationText() {
   if (days > 90) return '坚持就是胜利，加油！'
   if (days > 30) return '胜利在望，坚持到底！'
   return '相信自己，你一定行！'
+}
+
+// 一分一段表相关方法
+async function loadScoreSegmentOptions() {
+  try {
+    const res = await getScoreSegmentOptions()
+    if (res.data) {
+      options.value = res.data
+      // 设置默认值
+      if (options.value.provinces.length > 0) {
+        filterForm.value.province = options.value.provinces[0]
+      }
+      if (options.value.years.length > 0) {
+        filterForm.value.year = options.value.years[0]
+      }
+      if (options.value.subjects.length > 0) {
+        filterForm.value.subject = options.value.subjects[0]
+      }
+      // 加载默认数据
+      await loadScoreSegmentData()
+    }
+  } catch (error) {
+    console.error('加载筛选选项失败:', error)
+  }
+}
+
+async function loadScoreSegmentData() {
+  if (!filterForm.value.province || !filterForm.value.year || !filterForm.value.subject) {
+    chartData.value = []
+    updateChart()
+    return
+  }
+
+  loading.value = true
+  try {
+    const res = await getScoreSegment({
+      province: filterForm.value.province,
+      year: filterForm.value.year,
+      subject: filterForm.value.subject
+    })
+    if (res.data) {
+      chartData.value = res.data
+      updateChart()
+    }
+  } catch (error) {
+    console.error('加载一分一段表数据失败:', error)
+    chartData.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+function initChart() {
+  if (!scoreSegmentChart.value) return
+  
+  chartInstance = echarts.init(scoreSegmentChart.value)
+  
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'cross'
+      },
+      formatter: function(params) {
+        return `分数：${params[0].name}<br/>人数：${params[0].value}`
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: '10%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      name: '分数',
+      nameLocation: 'middle',
+      nameGap: 30,
+      boundaryGap: false,
+      axisLabel: {
+        interval: function(index, value) {
+          // 每隔 50 分显示一次标签
+          const score = parseInt(value)
+          return score % 50 === 0
+        },
+        rotate: 45
+      },
+      splitLine: {
+        show: true,
+        lineStyle: {
+          type: 'dashed'
+        }
+      }
+    },
+    yAxis: {
+      type: 'value',
+      name: '人数',
+      nameLocation: 'middle',
+      nameGap: 50,
+      minInterval: 1,
+      splitLine: {
+        show: true,
+        lineStyle: {
+          type: 'dashed'
+        }
+      }
+    },
+    series: [
+      {
+        name: '同分人数',
+        type: 'line',
+        data: [],
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 6,
+        itemStyle: {
+          color: '#1e88e5'
+        },
+        lineStyle: {
+          width: 3,
+          color: '#1e88e5'
+        },
+        areaStyle: {
+          color: {
+            type: 'linear',
+            x: 0,
+            y: 0,
+            x2: 0,
+            y2: 1,
+            colorStops: [
+              {
+                offset: 0,
+                color: 'rgba(30, 136, 229, 0.3)'
+              },
+              {
+                offset: 1,
+                color: 'rgba(30, 136, 229, 0.05)'
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+  
+  chartInstance.setOption(option)
+}
+
+function updateChart() {
+  if (!chartInstance) return
+  
+  const scores = chartData.value.map(item => item.score.toString())
+  const counts = chartData.value.map(item => item.same_score_count)
+  
+  chartInstance.setOption({
+    xAxis: {
+      data: scores
+    },
+    series: [
+      {
+        data: counts
+      }
+    ]
+  })
+}
+
+function handleResize() {
+  if (chartInstance) {
+    chartInstance.resize()
+  }
 }
 </script>
 
@@ -1915,6 +2170,58 @@ function getMotivationText() {
   padding: 48px 0;
   background: #fafbfc;
   margin-top: 16px;
+}
+
+/* ===== 一分一段表 ===== */
+.score-segment-section {
+  padding: 48px 0;
+  background: white;
+  margin-top: 16px;
+}
+
+.filter-container {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: #f5f7fa;
+  border-radius: 8px;
+}
+
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.chart-container {
+  position: relative;
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  min-height: 500px;
+}
+
+.score-segment-chart {
+  width: 100%;
+  height: 500px;
+}
+
+.chart-loading,
+.chart-empty {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  z-index: 10;
+}
+
+.chart-empty {
+  background: white;
 }
 
 .majors-grid {
