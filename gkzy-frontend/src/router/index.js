@@ -141,7 +141,7 @@ router.beforeEach((to, from, next) => {
     next('/login')
   } else if (to.meta.requiresGuest && userToken && to.path !== '/register') {
     console.log('用户已登录，跳转到首页')
-    next('/dashboard')
+    next('/')
   } else {
     console.log('普通用户路由检查通过')
     next()
