@@ -34,8 +34,9 @@ def admin_required(f):
             if not current_admin:
                 return jsonify({'success': False, 'message': '管理员不存在'}), 401
             
-            if current_admin.status != 1:
-                return jsonify({'success': False, 'message': '账号已被禁用'}), 401
+            # 注意：Admin模型没有status字段，移除状态检查
+            # if current_admin.status != 1:
+            #     return jsonify({'success': False, 'message': '账号已被禁用'}), 401
             
             return f(current_admin, *args, **kwargs)
             

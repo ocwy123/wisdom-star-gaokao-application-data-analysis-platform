@@ -13,7 +13,7 @@
             <router-link to="/schools" class="nav-item">查大学</router-link>
             <router-link to="/majors" class="nav-item">看专业</router-link>
             <router-link to="/志愿" class="nav-item">志愿填报</router-link>
-            <router-link to="/analysis/multi-dimension" class="nav-item">数据分析</router-link>
+            <router-link to="/analysis/multi-dimension" class="nav-item">多维分析</router-link>
             <router-link to="/analysis/deep-search" class="nav-item">深度检索</router-link>
           </nav>
         </div>

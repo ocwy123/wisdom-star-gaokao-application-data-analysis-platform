@@ -659,21 +659,38 @@ export default {
       
       try {
         const res = await request.post('/analysis/export', {
-          type: 'csv',
-          data: analysisResult.value
+          type: 'excel',
+          data: analysisResult.value,
+          dimension: selectedDimension.value,
+          metrics: selectedMetrics.value
         })
         
         if (res.data.success) {
-          const blob = new Blob([res.data.data], { type: 'text/csv' })
+          // 解码 base64 并下载 Excel 文件
+          const excelData = res.data.data
+          const blob = base64ToBlob(excelData, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
           const link = document.createElement('a')
           link.href = URL.createObjectURL(blob)
-          link.download = `analysis_${new Date().getTime()}.csv`
+          link.download = res.data.filename || `analysis_${new Date().getTime()}.xlsx`
           link.click()
+          URL.revokeObjectURL(link.href)
           ElMessage.success('导出成功')
         }
       } catch (error) {
-        ElMessage.error('导出失败')
+        console.error('导出失败:', error)
+        ElMessage.error('导出失败：' + (error.response?.data?.message || '未知错误'))
       }
+    }
+    
+    // base64 转 Blob 工具函数
+    const base64ToBlob = (base64Data, contentType) => {
+      const byteCharacters = atob(base64Data)
+      const byteNumbers = new Array(byteCharacters.length)
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i)
+      }
+      const byteArray = new Uint8Array(byteNumbers)
+      return new Blob([byteArray], { type: contentType })
     }
     
     onMounted(() => {

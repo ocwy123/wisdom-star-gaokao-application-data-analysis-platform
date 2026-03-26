@@ -16,7 +16,7 @@ analysis_bp = Blueprint('analysis', __name__, url_prefix='/api/analysis')
 def deep_search():
     """
     深度信息检索
-    请求体: {
+    请求体：{
         "keyword": "搜索关键词",
         "types": ["school", "major", "employment"],  # 检索类型
         "filters": {  # 筛选条件
@@ -89,7 +89,7 @@ def deep_search():
         })
         
     except Exception as e:
-        print(f"搜索错误: {e}")
+        print(f"搜索错误：{e}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
 def search_schools(keyword, filters):
@@ -131,6 +131,15 @@ def search_schools(keyword, filters):
         # 获取学校热度
         heat = get_school_heat(school.id)
         
+        # 计算相关性（学校名称完全匹配获得最高分）
+        relevance = calculate_relevance(keyword, school.name)
+        
+        # 如果是完全匹配的学校名称，给予额外加分
+        if school.name == keyword:
+            relevance = 1.0
+        elif school.name.startswith(keyword):
+            relevance = max(relevance, 0.9)
+        
         results.append({
             'id': school.id,
             'type': 'school',
@@ -147,7 +156,7 @@ def search_schools(keyword, filters):
             'heat_score': heat.get('heat_score', 0),
             'search_count': heat.get('search_count', 0),
             'favorite_count': heat.get('favorite_count', 0),
-            'relevance': calculate_relevance(keyword, school.name)
+            'relevance': relevance
         })
     
     return results
@@ -174,6 +183,13 @@ def search_majors(keyword, filters):
         # 获取专业就业数据
         employment = get_major_employment(major.id)
         
+        # 计算相关性（专业数据的相关性应该低于学校数据）
+        relevance = calculate_relevance(keyword, major.name)
+        if major.name == keyword:
+            relevance = 0.8  # 专业名称完全匹配，但低于学校类型的结果
+        elif major.name.startswith(keyword):
+            relevance = max(relevance, 0.7)  # 专业名称开头匹配
+        
         results.append({
             'id': major.id,
             'type': 'major',
@@ -186,7 +202,7 @@ def search_majors(keyword, filters):
             'description': major.description,
             'avg_salary': employment.get('avg_salary', 0),
             'employment_rate': employment.get('employment_rate', 0),
-            'relevance': calculate_relevance(keyword, major.name)
+            'relevance': relevance
         })
     
     return results
@@ -214,6 +230,16 @@ def search_employment(keyword, filters):
     for emp in employment_data:
         major = Major.query.get(emp.major_id)
         
+        # 计算相关性（就业数据的相关性应该低于学校数据）
+        relevance = 0.0
+        if major:
+            if major.name == keyword:
+                relevance = 0.7  # 专业名称完全匹配，但低于学校类型的结果
+            elif major.name.startswith(keyword):
+                relevance = 0.6  # 专业名称开头匹配
+            elif keyword in major.name:
+                relevance = 0.5  # 专业名称包含关键词
+        
         results.append({
             'id': emp.id,
             'type': 'employment',
@@ -224,7 +250,8 @@ def search_employment(keyword, filters):
             'industry_distribution': json.loads(emp.industry_distribution) if emp.industry_distribution else {},
             'post_distribution': json.loads(emp.post_distribution) if emp.post_distribution else {},
             'region_distribution': json.loads(emp.region_distribution) if emp.region_distribution else {},
-            'prospect': emp.prospect
+            'prospect': emp.prospect,
+            'relevance': relevance
         })
     
     return results
@@ -236,15 +263,13 @@ def search_admissions(keyword, filters):
     query = AdmRecord.query.join(
         School, AdmRecord.school_id == School.id
     )
-    # .join(
-    #     Major, AdmRecord.major_id == Major.id
-    # )
     
     if keyword:
         query = query.filter(
             or_(
                 School.name.contains(keyword),
-                Major.name.contains(keyword)
+                AdmRecord.major_name.contains(keyword),
+                AdmRecord.province.contains(keyword)
             )
         )
     
@@ -271,15 +296,27 @@ def search_admissions(keyword, filters):
     results = []
     for adm in admissions:
         school = School.query.get(adm.school_id)
-        major = Major.query.get(adm.major_id)
+        
+        # 计算相关性（招生数据的相关性应该低于学校数据）
+        relevance = 0.0
+        if school and school.name == keyword:
+            relevance = 0.7  # 学校名称完全匹配，但低于学校类型的结果
+        elif school and school.name.startswith(keyword):
+            relevance = 0.6  # 学校名称开头匹配，但低于学校类型的结果
+        elif school and keyword in school.name:
+            relevance = 0.5  # 学校名称包含关键词
+        elif keyword in adm.major_name:
+            relevance = 0.4  # 专业名称包含关键词
+        elif keyword in adm.province:
+            relevance = 0.3  # 省份包含关键词
         
         results.append({
             'id': adm.id,
             'type': 'admission',
             'school_id': adm.school_id,
             'school_name': school.name if school else '未知',
-            'major_id': adm.major_id,
-            'major_name': major.name if major else '未知',
+            'major_name': adm.major_name,
+            'major_second_name': adm.major_second_name,
             'province': adm.province,
             'year': adm.year,
             'plan_count': adm.plan_count,
@@ -287,7 +324,8 @@ def search_admissions(keyword, filters):
             'batch': adm.batch,
             'major_group': adm.major_group,
             'min_score': adm.min_score,
-            'min_rank': adm.min_rank
+            'min_rank': adm.min_rank,
+            'relevance': relevance
         })
     
     return results
@@ -309,6 +347,16 @@ def search_heat_data(keyword, filters):
     for heat in heat_data:
         school = School.query.get(heat.school_id)
         
+        # 计算相关性（热度数据的相关性应该低于学校数据）
+        relevance = 0.0
+        if school:
+            if school.name == keyword:
+                relevance = 0.6  # 学校名称完全匹配，但低于学校类型的结果
+            elif school.name.startswith(keyword):
+                relevance = 0.5  # 学校名称开头匹配
+            elif keyword in school.name:
+                relevance = 0.4  # 学校名称包含关键词
+        
         results.append({
             'id': heat.id,
             'type': 'heat',
@@ -317,7 +365,8 @@ def search_heat_data(keyword, filters):
             'search_count': heat.search_count,
             'favorite_count': heat.favorite_count,
             'view_count': heat.view_count,
-            'heat_score': float(heat.heat_score) if heat.heat_score else 0
+            'heat_score': float(heat.heat_score) if heat.heat_score else 0,
+            'relevance': relevance
         })
     
     return results
@@ -354,8 +403,20 @@ def calculate_relevance(keyword, text):
         return 0
     keyword = keyword.lower()
     text = text.lower()
+    
+    # 完全匹配：最高优先级
+    if text == keyword:
+        return 1.0
+    
+    # 开头匹配：高优先级
+    if text.startswith(keyword):
+        return 0.9
+    
+    # 包含关键词：根据位置计算相关性
     if keyword in text:
-        return 1.0 - (text.index(keyword) / len(text))
+        position = text.index(keyword)
+        return 0.8 - (position / len(text))
+    
     return 0
 
 def sort_results(results, sort_by, sort_order):
@@ -381,7 +442,7 @@ def sort_results(results, sort_by, sort_order):
 def multi_dimension_compare():
     """
     多维对比分析
-    请求体: {
+    请求体：{
         "dimension": "school",  # 对比维度（单选）
         "metrics": ["avg_score", "heat_score", "admission_rate"],  # 指标列表
         "filters": {  # 筛选条件
@@ -425,7 +486,7 @@ def multi_dimension_compare():
         })
         
     except Exception as e:
-        print(f"对比分析错误: {e}")
+        print(f"对比分析错误：{e}")
         return jsonify({'success': False, 'message': str(e)}), 500
 def compare_schools(filters, metrics, time_range):
     """学校对比分析"""
@@ -470,8 +531,36 @@ def compare_schools(filters, metrics, time_range):
         
         # 获取热度数据
         heat = SchoolHeat.query.filter_by(school_id=school_id).first()
-        if heat and 'heat_score' in metrics:
-            item['data']['heat_score'] = float(heat.heat_score) if heat.heat_score else 0
+        if heat:
+            if 'heat_score' in metrics:
+                item['data']['heat_score'] = float(heat.heat_score) if heat.heat_score else 0
+            if 'search_count' in metrics:
+                item['data']['search_count'] = heat.search_count or 0
+            if 'favorite_count' in metrics:
+                item['data']['favorite_count'] = heat.favorite_count or 0
+            if 'view_count' in metrics:
+                item['data']['view_count'] = heat.view_count or 0
+        
+        # 获取学校基本信息
+        if 'phd_count' in metrics:
+            item['data']['phd_count'] = school.phd_count or 0
+        if 'master_count' in metrics:
+            item['data']['master_count'] = school.master_count or 0
+        if 'founded_year' in metrics:
+            item['data']['founded_year'] = school.founded_year or 0
+        if 'is_985' in metrics:
+            item['data']['is_985'] = 1 if school.is_985 else 0
+        if 'is_211' in metrics:
+            item['data']['is_211'] = 1 if school.is_211 else 0
+        if 'is_double_first' in metrics:
+            item['data']['is_double_first'] = 1 if school.is_double_first else 0
+        
+        # 获取招生统计数据
+        if 'admission_count' in metrics:
+            item['data']['admission_count'] = len(admissions)
+        if 'plan_count' in metrics:
+            total_plan = sum([a.plan_count for a in admissions if a.plan_count])
+            item['data']['plan_count'] = total_plan
         
         result.append(item)
     
@@ -506,9 +595,9 @@ def compare_majors(filters, metrics, time_range):
             if 'employment_rate' in metrics:
                 item['data']['employment_rate'] = 0  # 需要实际数据
         
-        # 获取招生数据
+        # 获取招生数据（通过专业名称匹配）
         admissions = AdmRecord.query.filter(
-            # AdmRecord.major_id == major_id,
+            AdmRecord.major_name == major.name,
             AdmRecord.year.between(time_range[0], time_range[1])
         ).all()
         
@@ -549,15 +638,45 @@ def compare_by_province(filters, metrics, time_range):
             'data': {}
         }
         
+        # 获取招生数据统计
         if 'avg_score' in metrics:
             scores = [a.min_score for a in admissions if a.min_score]
             item['data']['avg_score'] = sum(scores) / len(scores) if scores else 0
+        
+        if 'min_score' in metrics:
+            scores = [a.min_score for a in admissions if a.min_score]
+            item['data']['min_score'] = min(scores) if scores else 0
+        
+        if 'max_score' in metrics:
+            scores = [a.min_score for a in admissions if a.min_score]
+            item['data']['max_score'] = max(scores) if scores else 0
         
         if 'school_count' in metrics:
             item['data']['school_count'] = len(schools)
         
         if 'admission_count' in metrics:
             item['data']['admission_count'] = len(admissions)
+        
+        if 'plan_count' in metrics:
+            total_plan = sum([a.plan_count for a in admissions if a.plan_count])
+            item['data']['plan_count'] = total_plan
+        
+        # 获取省份学校统计信息
+        if '985_count' in metrics:
+            count_985 = sum([1 for s in schools if s.is_985])
+            item['data']['985_count'] = count_985
+        
+        if '211_count' in metrics:
+            count_211 = sum([1 for s in schools if s.is_211])
+            item['data']['211_count'] = count_211
+        
+        if 'double_first_count' in metrics:
+            count_double_first = sum([1 for s in schools if s.is_double_first])
+            item['data']['double_first_count'] = count_double_first
+        
+        if 'city_count' in metrics:
+            cities = set([s.city for s in schools if s.city])
+            item['data']['city_count'] = len(cities)
         
         result.append(item)
     
@@ -585,15 +704,37 @@ def analyze_year_trend(filters, metrics, time_range):
             'data': {}
         }
         
+        # 获取招生数据统计
         if 'avg_score' in metrics:
             scores = [a.min_score for a in admissions if a.min_score]
             item['data']['avg_score'] = sum(scores) / len(scores) if scores else 0
+        
+        if 'min_score' in metrics:
+            scores = [a.min_score for a in admissions if a.min_score]
+            item['data']['min_score'] = min(scores) if scores else 0
+        
+        if 'max_score' in metrics:
+            scores = [a.min_score for a in admissions if a.min_score]
+            item['data']['max_score'] = max(scores) if scores else 0
         
         if 'admission_count' in metrics:
             item['data']['admission_count'] = len(admissions)
         
         if 'plan_count' in metrics:
-            item['data']['plan_count'] = sum([a.plan_count for a in admissions if a.plan_count])
+            total_plan = sum([a.plan_count for a in admissions if a.plan_count])
+            item['data']['plan_count'] = total_plan
+        
+        if 'school_count' in metrics:
+            school_ids = set([a.school_id for a in admissions])
+            item['data']['school_count'] = len(school_ids)
+        
+        if 'major_count' in metrics:
+            major_names = set([a.major_name for a in admissions])
+            item['data']['major_count'] = len(major_names)
+        
+        if 'province_count' in metrics:
+            provinces = set([a.province for a in admissions])
+            item['data']['province_count'] = len(provinces)
         
         result.append(item)
     
@@ -604,12 +745,12 @@ def analyze_by_score_segment(filters, metrics, time_range):
     from app.services.admin_auth import AdmRecord
     
     segments = [
-        {'name': '600分以上', 'min': 600, 'max': 750},
-        {'name': '550-600分', 'min': 550, 'max': 600},
-        {'name': '500-550分', 'min': 500, 'max': 550},
-        {'name': '450-500分', 'min': 450, 'max': 500},
-        {'name': '400-450分', 'min': 400, 'max': 450},
-        {'name': '400分以下', 'min': 0, 'max': 400}
+        {'name': '600 分以上', 'min': 600, 'max': 750},
+        {'name': '550-600 分', 'min': 550, 'max': 600},
+        {'name': '500-550 分', 'min': 500, 'max': 550},
+        {'name': '450-500 分', 'min': 450, 'max': 500},
+        {'name': '400-450 分', 'min': 400, 'max': 450},
+        {'name': '400 分以下', 'min': 0, 'max': 400}
     ]
     
     result = []
@@ -632,13 +773,34 @@ def analyze_by_score_segment(filters, metrics, time_range):
             }
         }
         
+        # 获取分数段统计数据
         if 'school_count' in metrics:
             school_ids = set([a.school_id for a in admissions])
             item['data']['school_count'] = len(school_ids)
         
         if 'major_count' in metrics:
-            major_ids = set([a.major_id for a in admissions])
-            item['data']['major_count'] = len(major_ids)
+            major_names = set([a.major_name for a in admissions])
+            item['data']['major_count'] = len(major_names)
+        
+        if 'province_count' in metrics:
+            provinces = set([a.province for a in admissions])
+            item['data']['province_count'] = len(provinces)
+        
+        if 'avg_score' in metrics:
+            scores = [a.min_score for a in admissions if a.min_score]
+            item['data']['avg_score'] = sum(scores) / len(scores) if scores else 0
+        
+        if 'min_score' in metrics:
+            scores = [a.min_score for a in admissions if a.min_score]
+            item['data']['min_score'] = min(scores) if scores else 0
+        
+        if 'max_score' in metrics:
+            scores = [a.min_score for a in admissions if a.min_score]
+            item['data']['max_score'] = max(scores) if scores else 0
+        
+        if 'plan_count' in metrics:
+            total_plan = sum([a.plan_count for a in admissions if a.plan_count])
+            item['data']['plan_count'] = total_plan
         
         result.append(item)
     
@@ -664,7 +826,7 @@ def analyze_heat_trend(filters, metrics, time_range):
     heat_data.sort(key=lambda x: x.heat_score or 0, reverse=True)
     
     result = []
-    for heat in heat_data[:20]:  # 前20名
+    for heat in heat_data[:20]:  # 前 20 名
         school = School.query.get(heat.school_id)
         
         item = {
@@ -718,18 +880,18 @@ def get_filter_options():
                 'schools': school_list,
                 'years': years,
                 'score_ranges': [
-                    {'min': 0, 'max': 400, 'label': '400分以下'},
-                    {'min': 400, 'max': 450, 'label': '400-450分'},
-                    {'min': 450, 'max': 500, 'label': '450-500分'},
-                    {'min': 500, 'max': 550, 'label': '500-550分'},
-                    {'min': 550, 'max': 600, 'label': '550-600分'},
-                    {'min': 600, 'max': 750, 'label': '600分以上'}
+                    {'min': 0, 'max': 400, 'label': '400 分以下'},
+                    {'min': 400, 'max': 450, 'label': '400-450 分'},
+                    {'min': 450, 'max': 500, 'label': '450-500 分'},
+                    {'min': 500, 'max': 550, 'label': '500-550 分'},
+                    {'min': 550, 'max': 600, 'label': '550-600 分'},
+                    {'min': 600, 'max': 750, 'label': '600 分以上'}
                 ]
             }
         })
         
     except Exception as e:
-        print(f"获取筛选选项错误: {e}")
+        print(f"获取筛选选项错误：{e}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
 # ==================== 导出分析结果 ====================
@@ -738,14 +900,95 @@ def get_filter_options():
 def export_analysis():
     """导出分析结果"""
     try:
+        import base64
+        from io import BytesIO
+        import pandas as pd
+        
         data = request.get_json()
-        export_type = data.get('type', 'csv')  # csv, excel, json
+        export_type = data.get('type', 'excel')
         result_data = data.get('data', [])
+        dimension = data.get('dimension', 'school')
+        metrics = data.get('metrics', [])
+        
+        if not result_data:
+            return jsonify({'success': False, 'message': '没有可导出的数据'})
         
         if export_type == 'json':
             return jsonify({
                 'success': True,
                 'data': result_data
+            })
+        
+        elif export_type == 'excel':
+            output = BytesIO()
+            
+            flat_data = []
+            for item in result_data:
+                row = {
+                    '对比项': item.get('dimension_value', ''),
+                    '维度类型': item.get('dimension', '')
+                }
+                
+                item_data = item.get('data', {})
+                for metric in metrics:
+                    metric_value = item_data.get(metric, '')
+                    row[get_metric_name(metric)] = metric_value
+                
+                flat_data.append(row)
+            
+            df = pd.DataFrame(flat_data)
+            
+            with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                df.to_excel(writer, index=False, sheet_name='分析结果')
+                
+                workbook = writer.book
+                worksheet = writer.sheets['分析结果']
+                
+                for col in worksheet.columns:
+                    max_length = 0
+                    column = col[0].column_letter
+                    for cell in col:
+                        try:
+                            if len(str(cell.value)) > max_length:
+                                max_length = len(str(cell.value))
+                        except:
+                            pass
+                    adjusted_width = min(max_length + 2, 50)
+                    worksheet.column_dimensions[column].width = adjusted_width
+                
+                from openpyxl.styles import Font, PatternFill, Alignment
+                
+                header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+                header_font = Font(bold=True, color="FFFFFF", size=11)
+                header_alignment = Alignment(horizontal="center", vertical="center")
+                
+                for cell in worksheet[1]:
+                    cell.fill = header_fill
+                    cell.font = header_font
+                    cell.alignment = header_alignment
+                
+                data_alignment = Alignment(horizontal="left", vertical="center")
+                for row in worksheet.iter_rows(min_row=2, max_row=worksheet.max_row):
+                    for cell in row:
+                        cell.alignment = data_alignment
+                
+                worksheet.insert_rows(1)
+                title_cell = worksheet.cell(row=1, column=1, value=f'多维对比分析报告 - {get_dimension_name(dimension)}')
+                from openpyxl.styles import Font as XLFont, Alignment as XLAlignment
+                title_cell.font = XLFont(bold=True, size=16, color="1F4E79")
+                title_cell.alignment = XLAlignment(horizontal="center", vertical="center")
+                worksheet.merge_cells(f'A1:{chr(65 + len(df.columns) - 1)}1')
+            
+            output.seek(0)
+            excel_data = output.getvalue()
+            
+            excel_base64 = base64.b64encode(excel_data).decode('utf-8')
+            
+            return jsonify({
+                'success': True,
+                'data': excel_base64,
+                'format': 'xlsx',
+                'filename': f'多维对比分析报告_{dimension}_{pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
             })
         
         elif export_type == 'csv':
@@ -754,9 +997,20 @@ def export_analysis():
             
             output = StringIO()
             if result_data:
-                writer = csv.DictWriter(output, fieldnames=result_data[0].keys())
+                flat_data = []
+                for item in result_data:
+                    row = {
+                        '对比项': item.get('dimension_value', ''),
+                        '维度类型': item.get('dimension', '')
+                    }
+                    item_data = item.get('data', {})
+                    for metric in metrics:
+                        row[get_metric_name(metric)] = item_data.get(metric, '')
+                    flat_data.append(row)
+                
+                writer = csv.DictWriter(output, fieldnames=['对比项', '维度类型'] + [get_metric_name(m) for m in metrics])
                 writer.writeheader()
-                writer.writerows(result_data)
+                writer.writerows(flat_data)
             
             return jsonify({
                 'success': True,
@@ -767,5 +1021,53 @@ def export_analysis():
         return jsonify({'success': False, 'message': '不支持的导出格式'})
         
     except Exception as e:
-        print(f"导出错误: {e}")
-        return jsonify({'success': False, 'message': str(e)}), 500
+        print(f"导出错误：{e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': f'导出失败：{str(e)}'}), 500
+
+
+def get_metric_name(metric_code):
+    """获取指标的中文名称"""
+    metric_names = {
+        'avg_score': '平均分数',
+        'heat_score': '热度分数',
+        'admission_rate': '录取率',
+        'min_score': '最低分数',
+        'max_score': '最高分数',
+        'search_count': '搜索次数',
+        'favorite_count': '收藏次数',
+        'view_count': '浏览次数',
+        'phd_count': '博士点数量',
+        'master_count': '硕士点数量',
+        'founded_year': '建校年份',
+        'is_985': '是否 985',
+        'is_211': '是否 211',
+        'is_double_first': '是否双一流',
+        'admission_count': '招生数量',
+        'plan_count': '计划人数',
+        'avg_salary': '平均薪资',
+        'employment_rate': '就业率',
+        'school_count': '学校数量',
+        '985_count': '985 院校数',
+        '211_count': '211 院校数',
+        'double_first_count': '双一流院校数',
+        'city_count': '城市数量',
+        'major_count': '专业数量',
+        'province_count': '省份数量',
+        'count': '数量'
+    }
+    return metric_names.get(metric_code, metric_code)
+
+
+def get_dimension_name(dimension_code):
+    """获取维度的中文名称"""
+    dimension_names = {
+        'school': '学校对比',
+        'major': '专业对比',
+        'province': '省份对比',
+        'year': '年份趋势',
+        'score': '分数段分析',
+        'heat': '热度趋势'
+    }
+    return dimension_names.get(dimension_code, dimension_code)
