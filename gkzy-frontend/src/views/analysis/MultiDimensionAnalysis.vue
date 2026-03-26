@@ -1,59 +1,65 @@
 <template>
-  <div class="multi-dimension-analysis">
-    <!-- 顶部导航栏 -->
-    <header class="header">
-      <div class="container">
-        <div class="header-left">
-          <div class="logo" @click="scrollToTop">
-            <span class="logo-icon">🎓</span>
-            <span class="logo-text">高考志愿</span>
-          </div>
-          <nav class="nav">
-            <router-link to="/" class="nav-item">首页</router-link>
-            <router-link to="/schools" class="nav-item">查大学</router-link>
-            <router-link to="/majors" class="nav-item">看专业</router-link>
-            <router-link to="/志愿" class="nav-item">志愿填报</router-link>
-            <router-link to="/analysis/multi-dimension" class="nav-item active">多维分析</router-link>
-            <router-link to="/analysis/deep-search" class="nav-item">深度检索</router-link>
-          </nav>
+
+  <!-- 顶部导航栏 -->
+  <header class="header">
+    <div class="container">
+      <div class="header-left">
+        <div class="logo" @click="scrollToTop">
+          <span class="logo-icon">🎓</span>
+          <span class="logo-text">高考志愿</span>
         </div>
-        <div class="header-right">
-          <button v-if="!isLoggedIn" class="btn btn-text" @click="handleLogin">登录</button>
-          <button class="btn btn-primary" @click="handleRegister">注册</button>
-          
-          <!-- 已登录状态 -->
-          <div v-if="isLoggedIn" class="user-menu">
-            <button class="btn btn-text user-info-btn">
-              <span class="username">{{ userInfo?.username || '用户' }}</span>
-              <i class="fas fa-chevron-down"></i>
-            </button>
-            <div class="user-dropdown">
-              <div class="dropdown-item" @click="goToProfile">
-                <i class="fas fa-user"></i>
-                <span>个人中心</span>
-              </div>
-              <div class="dropdown-item" @click="handleLogout">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>退出登录</span>
-              </div>
+        <nav class="nav">
+          <router-link to="/" class="nav-item">首页</router-link>
+          <router-link to="/schools" class="nav-item">查大学</router-link>
+          <router-link to="/majors" class="nav-item">看专业</router-link>
+          <router-link to="/志愿" class="nav-item">志愿填报</router-link>
+          <router-link to="/analysis/multi-dimension" class="nav-item active">多维分析</router-link>
+          <router-link to="/analysis/deep-search" class="nav-item">深度检索</router-link>
+        </nav>
+      </div>
+      <div class="header-right">
+        <button v-if="!isLoggedIn" class="btn btn-text" @click="handleLogin">登录</button>
+        <button class="btn btn-primary" @click="handleRegister">注册</button>
+
+        <!-- 已登录状态 -->
+        <div v-if="isLoggedIn" class="user-menu">
+          <button class="btn btn-text user-info-btn">
+            <span class="username">{{ userInfo?.username || '用户' }}</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="user-dropdown">
+            <div class="dropdown-item" @click="goToProfile">
+              <i class="fas fa-user"></i>
+              <span>个人中心</span>
+            </div>
+            <div class="dropdown-item" @click="handleLogout">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>退出登录</span>
             </div>
           </div>
         </div>
       </div>
-    </header>
-
+    </div>
+  </header>
+  <div class="multi-dimension-analysis">
     <!-- 页面标题 -->
     <div class="page-header">
       <h2>多维对比分析</h2>
       <div class="header-actions">
         <el-button type="primary" @click="addComparison">
-          <el-icon><Plus /></el-icon> 新建对比
+          <el-icon>
+            <Plus />
+          </el-icon> 新建对比
         </el-button>
         <el-button @click="saveComparison">
-          <el-icon><Folder /></el-icon> 保存对比
+          <el-icon>
+            <Folder />
+          </el-icon> 保存对比
         </el-button>
         <el-button @click="exportAnalysis">
-          <el-icon><Download /></el-icon> 导出报告
+          <el-icon>
+            <Download />
+          </el-icon> 导出报告
         </el-button>
       </div>
     </div>
@@ -66,15 +72,14 @@
           <el-button type="text" @click="resetDimensions">重置</el-button>
         </div>
       </template>
-      
+
       <el-row :gutter="20">
         <el-col :span="6" v-for="dim in dimensionOptions" :key="dim.value">
-          <div 
-            class="dimension-item" 
-            :class="{ active: selectedDimension === dim.value }"
-            @click="selectedDimension = dim.value"
-          >
-            <el-icon :size="32"><component :is="dim.icon" /></el-icon>
+          <div class="dimension-item" :class="{ active: selectedDimension === dim.value }"
+            @click="selectedDimension = dim.value">
+            <el-icon :size="32">
+              <component :is="dim.icon" />
+            </el-icon>
             <span>{{ dim.label }}</span>
           </div>
         </el-col>
@@ -91,42 +96,27 @@
           </el-button>
         </div>
       </template>
-      
+
       <el-collapse-transition>
         <div v-show="showComparePanel">
           <!-- 学校对比 -->
           <div v-if="selectedDimension === 'school'">
-            <el-transfer
-              v-model="selectedSchools"
-              :data="schoolOptions"
-              :titles="['可选学校', '已选学校']"
-              filterable
-              filter-placeholder="搜索学校"
-            />
+            <el-transfer v-model="selectedSchools" :data="schoolOptions" :titles="['可选学校', '已选学校']" filterable
+              filter-placeholder="搜索学校" />
           </div>
-          
+
           <!-- 专业对比 -->
           <div v-else-if="selectedDimension === 'major'">
-            <el-transfer
-              v-model="selectedMajors"
-              :data="majorOptions"
-              :titles="['可选专业', '已选专业']"
-              filterable
-              filter-placeholder="搜索专业"
-            />
+            <el-transfer v-model="selectedMajors" :data="majorOptions" :titles="['可选专业', '已选专业']" filterable
+              filter-placeholder="搜索专业" />
           </div>
-          
+
           <!-- 省份对比 -->
           <div v-else-if="selectedDimension === 'province'">
-            <el-transfer
-              v-model="selectedProvinces"
-              :data="provinceOptions"
-              :titles="['可选省份', '已选省份']"
-              filterable
-              filter-placeholder="搜索省份"
-            />
+            <el-transfer v-model="selectedProvinces" :data="provinceOptions" :titles="['可选省份', '已选省份']" filterable
+              filter-placeholder="搜索省份" />
           </div>
-          
+
           <!-- 热度分析 -->
           <div v-else-if="selectedDimension === 'heat'">
             <el-select v-model="selectedHeatType" placeholder="请选择热度类型" clearable>
@@ -150,7 +140,7 @@
           </el-checkbox>
         </div>
       </template>
-      
+
       <el-checkbox-group v-model="selectedMetrics">
         <el-row :gutter="20">
           <el-col :span="6" v-for="metric in commonMetrics" :key="metric.value">
@@ -165,7 +155,9 @@
     <!-- 分析按钮 -->
     <div class="action-bar" v-if="selectedDimension">
       <el-button type="primary" size="large" @click="runAnalysis" :loading="analyzing">
-        <el-icon><DataAnalysis /></el-icon> 开始分析
+        <el-icon>
+          <DataAnalysis />
+        </el-icon> 开始分析
       </el-button>
     </div>
 
@@ -181,42 +173,26 @@
           </el-radio-group>
         </div>
       </template>
-      
-        <!-- 表格视图 - 显示所有选中的指标 -->
-        <div v-if="resultViewMode === 'table'">
-          <el-table 
-            :data="analysisResult" 
-            border 
-            stripe 
-            style="width: 100%"
-            :header-cell-style="{ background: '#f5f7fa', color: '#333', fontWeight: 'bold' }"
-            align="left"
-            header-align="left"
-          >
-            <!-- 对比项列 -->
-            <el-table-column 
-              prop="dimension_value" 
-              label="对比项" 
-              fixed 
-              width="150"
-            />
-    <el-table-column
-      v-for="metric in selectedMetrics"
-      :key="metric"
-      :label="getMetricLabel(metric)"
-      :width="150"
-    >
-      <template #default="{ row }">
-        {{ formatMetricValue(row.data[metric], metric) }}
-      </template>
-    </el-table-column>
-  </el-table>
-</div>
+
+      <!-- 表格视图 - 显示所有选中的指标 -->
+      <div v-if="resultViewMode === 'table'">
+        <el-table :data="analysisResult" border stripe style="width: 100%"
+          :header-cell-style="{ background: '#f5f7fa', color: '#333', fontWeight: 'bold' }" align="left"
+          header-align="left">
+          <!-- 对比项列 -->
+          <el-table-column prop="dimension_value" label="对比项" fixed width="150" />
+          <el-table-column v-for="metric in selectedMetrics" :key="metric" :label="getMetricLabel(metric)" :width="150">
+            <template #default="{ row }">
+              {{ formatMetricValue(row.data[metric], metric) }}
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
       <!-- 图表视图 -->
       <div v-else-if="resultViewMode === 'chart'" class="chart-container">
         <div ref="compareChart" style="width: 100%; height: 400px;"></div>
       </div>
-      
+
       <!-- 雷达图视图 -->
       <div v-else-if="resultViewMode === 'radar'" class="chart-container">
         <div ref="radarChart" style="width: 100%; height: 400px;"></div>
@@ -230,12 +206,7 @@
           <el-input v-model="saveForm.name" placeholder="请输入对比名称" />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input
-            v-model="saveForm.description"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入备注"
-          />
+          <el-input v-model="saveForm.description" type="textarea" :rows="3" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -261,11 +232,11 @@ export default {
   },
   setup() {
     const router = useRouter()
-    
+
     // 导航栏相关
     const isLoggedIn = ref(false)
     const userInfo = ref(null)
-    
+
     // 检查登录状态
     const checkLoginStatus = () => {
       const token = localStorage.getItem('userToken')
@@ -275,27 +246,27 @@ export default {
         userInfo.value = JSON.parse(user)
       }
     }
-    
+
     // 滚动到顶部
     const scrollToTop = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
-    
+
     // 处理登录
     const handleLogin = () => {
       router.push('/login')
     }
-    
+
     // 处理注册
     const handleRegister = () => {
       router.push('/register')
     }
-    
+
     // 跳转到个人中心
     const goToProfile = () => {
       router.push('/profile')
     }
-    
+
     // 处理登出
     const handleLogout = () => {
       localStorage.removeItem('userToken')
@@ -305,7 +276,7 @@ export default {
       ElMessage.success('已退出登录')
       router.push('/')
     }
-    
+
     // 在挂载时检查登录状态
     onMounted(() => {
       checkLoginStatus()
@@ -318,7 +289,7 @@ export default {
       { value: 'province', label: '地域对比', icon: 'Location' },
       { value: 'heat', label: '热度分析', icon: 'Fire' }
     ]
-    
+
     // 通用指标选项（所有维度都可用）
     const commonMetrics = [
       { value: 'avg_score', label: '平均分' },
@@ -338,7 +309,7 @@ export default {
       { value: 'phd_count', label: '博士点数量' },
       { value: 'master_count', label: '硕士点数量' }
     ]
-    
+
     // 状态
     const selectedMetrics = ref(['avg_score', 'heat_score', 'avg_salary'])
     const selectAllMetrics = ref(false)
@@ -346,7 +317,7 @@ export default {
     const analyzing = ref(false)
     const analysisResult = ref([])
     const resultViewMode = ref('table')
-    
+
     // 对比对象
     const selectedSchools = ref([])
     const selectedMajors = ref([])
@@ -354,23 +325,23 @@ export default {
     const selectedYears = ref([2020, 2024])
     const selectedScoreSegment = ref('')
     const selectedHeatType = ref('comprehensive')
-    
+
     // 选项数据
     const schoolOptions = ref([])
     const majorOptions = ref([])
     const provinceOptions = ref([])
-    
+
     // 图表引用
     const compareChart = ref(null)
     const radarChart = ref(null)
-    
+
     // 保存对话框
     const saveDialogVisible = ref(false)
     const saveForm = reactive({
       name: '',
       description: ''
     })
-    
+
     const yearMarks = {
       2018: '2018',
       2019: '2019',
@@ -380,13 +351,13 @@ export default {
       2023: '2023',
       2024: '2024'
     }
-    
+
     // 获取维度标签
     const getDimensionLabel = (value) => {
       const dim = dimensionOptions.find(d => d.value === value)
       return dim ? dim.label : value
     }
-    
+
     // 获取选项数据
     const fetchOptions = async () => {
       try {
@@ -398,26 +369,26 @@ export default {
             key: s.id,
             label: s.name
           })) || []
-          
+
           // 专业选项
           majorOptions.value = res.data.data.majors?.map(m => ({
             key: m.id,
             label: m.name
           })) || []
-          
+
           // 省份选项
           provinceOptions.value = res.data.data.provinces?.map(p => ({
             key: p,
             label: p
           })) || []
-          
+
           console.log('学校选项:', schoolOptions.value)
         }
       } catch (error) {
         console.error('获取选项失败:', error)
       }
     }
-    
+
     // 重置维度
     const resetDimensions = () => {
       selectedDimension.value = ''
@@ -429,7 +400,7 @@ export default {
       selectedHeatType.value = 'comprehensive'
       selectedMetrics.value = ['avg_score', 'heat_score', 'avg_salary']
     }
-    
+
     // 全选指标
     const toggleAllMetrics = (val) => {
       if (val) {
@@ -438,12 +409,12 @@ export default {
         selectedMetrics.value = []
       }
     }
-    
+
     // 监听选中指标变化
     watch(selectedMetrics, (val) => {
       selectAllMetrics.value = val.length === commonMetrics.length
     })
-    
+
     // 监听视图模式变化
     watch(resultViewMode, (newMode) => {
       if (analysisResult.value.length > 0) {
@@ -456,17 +427,17 @@ export default {
         })
       }
     })
-    
+
     // 获取指标标签
     const getMetricLabel = (value) => {
       const metric = commonMetrics.find(m => m.value === value)
       return metric ? metric.label : value
     }
-    
+
     // 格式化指标值
     const formatMetricValue = (value, metric) => {
       if (value === undefined || value === null) return '-'
-      
+
       if (metric.includes('score') || metric.includes('salary')) {
         return Number(value).toLocaleString()
       }
@@ -484,26 +455,26 @@ export default {
       }
       return value
     }
-    
+
     // 初始化对比图表
     const initCompareChart = () => {
       if (!compareChart.value || analysisResult.value.length === 0) return
-      
+
       // 销毁旧图表
       if (compareChart.value.chart) {
         compareChart.value.chart.dispose()
       }
-      
+
       const chart = echarts.init(compareChart.value)
       compareChart.value.chart = chart
-      
+
       const dimensions = analysisResult.value.map(item => item.dimension_value)
       const series = selectedMetrics.value.map(metric => ({
         name: getMetricLabel(metric),
         type: 'bar',
         data: analysisResult.value.map(item => item.data[metric] || 0)
       }))
-      
+
       chart.setOption({
         title: {
           text: '多维对比分析',
@@ -534,25 +505,25 @@ export default {
         },
         series: series
       })
-      
+
       // 窗口大小变化时自适应
       window.addEventListener('resize', () => {
         chart.resize()
       })
     }
-    
+
     // 初始化雷达图
     const initRadarChart = () => {
       if (!radarChart.value || analysisResult.value.length === 0) return
-      
+
       // 销毁旧图表
       if (radarChart.value.chart) {
         radarChart.value.chart.dispose()
       }
-      
+
       const chart = echarts.init(radarChart.value)
       radarChart.value.chart = chart
-      
+
       // 计算每个指标的最大值
       const maxValues = {}
       selectedMetrics.value.forEach(metric => {
@@ -560,18 +531,18 @@ export default {
           ...analysisResult.value.map(item => item.data[metric] || 0)
         ) * 1.2 || 100
       })
-      
+
       const indicators = selectedMetrics.value.map(metric => ({
         name: getMetricLabel(metric),
         max: maxValues[metric]
       }))
-      
+
       const seriesData = analysisResult.value.map(item => ({
         value: selectedMetrics.value.map(metric => item.data[metric] || 0),
         name: item.dimension_value,
         areaStyle: { color: 'rgba(64,158,255,0.2)' }
       }))
-      
+
       chart.setOption({
         title: {
           text: '雷达对比分析',
@@ -598,12 +569,12 @@ export default {
           areaStyle: { opacity: 0.2 }
         }]
       })
-      
+
       window.addEventListener('resize', () => {
         chart.resize()
       })
     }
-    
+
     // 运行分析
     const runAnalysis = async () => {
       // 验证是否选择了对比对象
@@ -628,7 +599,7 @@ export default {
           filters: {},
           time_range: selectedYears.value
         }
-        
+
         // 根据维度添加对应的筛选条件
         if (selectedDimension.value === 'school') {
           params.filters.school_ids = selectedSchools.value
@@ -641,12 +612,12 @@ export default {
         } else if (selectedDimension.value === 'heat') {
           params.filters.heat_type = selectedHeatType.value
         }
-        
+
         const res = await request.post('/analysis/compare', params)
-        
+
         if (res.data.success) {
           analysisResult.value = res.data.data.data || []
-          
+
           // 根据当前视图模式渲染不同的图表
           nextTick(() => {
             if (resultViewMode.value === 'chart') {
@@ -655,7 +626,7 @@ export default {
               initRadarChart()
             }
           })
-          
+
           ElMessage.success('分析完成')
         }
       } catch (error) {
@@ -664,13 +635,13 @@ export default {
         analyzing.value = false
       }
     }
-    
+
     // 添加对比
     const addComparison = () => {
       resetDimensions()
       ElMessage.success('已重置，可以开始新的对比')
     }
-    
+
     // 保存对比
     const saveComparison = () => {
       if (analysisResult.value.length === 0) {
@@ -679,14 +650,14 @@ export default {
       }
       saveDialogVisible.value = true
     }
-    
+
     // 执行保存
     const doSaveComparison = () => {
       if (!saveForm.name) {
         ElMessage.warning('请输入对比名称')
         return
       }
-      
+
       // 保存到 localStorage
       const savedComparisons = JSON.parse(localStorage.getItem('savedComparisons') || '[]')
       savedComparisons.push({
@@ -699,20 +670,20 @@ export default {
         createTime: new Date().toLocaleString()
       })
       localStorage.setItem('savedComparisons', JSON.stringify(savedComparisons))
-      
+
       saveDialogVisible.value = false
       saveForm.name = ''
       saveForm.description = ''
       ElMessage.success('保存成功')
     }
-    
+
     // 导出分析
     const exportAnalysis = async () => {
       if (analysisResult.value.length === 0) {
         ElMessage.warning('请先运行分析')
         return
       }
-      
+
       try {
         const res = await request.post('/analysis/export', {
           type: 'excel',
@@ -720,7 +691,7 @@ export default {
           dimension: selectedDimension.value,
           metrics: selectedMetrics.value
         })
-        
+
         if (res.data.success) {
           // 解码 base64 并下载 Excel 文件
           const excelData = res.data.data
@@ -737,7 +708,7 @@ export default {
         ElMessage.error('导出失败：' + (error.response?.data?.message || '未知错误'))
       }
     }
-    
+
     // base64 转 Blob 工具函数
     const base64ToBlob = (base64Data, contentType) => {
       const byteCharacters = atob(base64Data)
@@ -748,11 +719,11 @@ export default {
       const byteArray = new Uint8Array(byteNumbers)
       return new Blob([byteArray], { type: contentType })
     }
-    
+
     onMounted(() => {
       fetchOptions()
     })
-    
+
     return {
       // 导航栏相关
       isLoggedIn,
@@ -1241,40 +1212,40 @@ export default {
   .multi-dimension-analysis {
     padding: 16px;
   }
-  
+
   .page-header {
     flex-direction: column;
     gap: 16px;
     align-items: flex-start;
   }
-  
+
   .page-header h2 {
     font-size: 24px;
   }
-  
+
   .header-actions {
     width: 100%;
     justify-content: flex-end;
   }
-  
+
   .dimension-item {
     height: 100px;
     padding: 16px 8px;
   }
-  
+
   .dimension-item .el-icon {
     font-size: 28px;
   }
-  
+
   .dimension-item span {
     font-size: 12px;
   }
-  
+
   :deep(.el-transfer) {
     flex-direction: column;
     gap: 20px;
   }
-  
+
   :deep(.el-transfer-panel) {
     width: 100%;
   }

@@ -1,60 +1,57 @@
 <template>
-  <div class="deep-search">
-    <!-- 顶部导航栏 -->
-    <header class="header">
-      <div class="container">
-        <div class="header-left">
-          <div class="logo" @click="scrollToTop">
-            <span class="logo-icon">🎓</span>
-            <span class="logo-text">高考志愿</span>
-          </div>
-          <nav class="nav">
-            <router-link to="/" class="nav-item">首页</router-link>
-            <router-link to="/schools" class="nav-item">查大学</router-link>
-            <router-link to="/majors" class="nav-item">看专业</router-link>
-            <router-link to="/志愿" class="nav-item">志愿填报</router-link>
-            <router-link to="/analysis/multi-dimension" class="nav-item">多维分析</router-link>
-            <router-link to="/analysis/deep-search" class="nav-item active">深度检索</router-link>
-          </nav>
+  <!-- 顶部导航栏 -->
+  <header class="header">
+    <div class="container">
+      <div class="header-left">
+        <div class="logo" @click="scrollToTop">
+          <span class="logo-icon">🎓</span>
+          <span class="logo-text">高考志愿</span>
         </div>
-        <div class="header-right">
-          <button v-if="!isLoggedIn" class="btn btn-text" @click="handleLogin">登录</button>
-          <button class="btn btn-primary" @click="handleRegister">注册</button>
-          
-          <!-- 已登录状态 -->
-          <div v-if="isLoggedIn" class="user-menu">
-            <button class="btn btn-text user-info-btn">
-              <span class="username">{{ userInfo?.username || '用户' }}</span>
-              <i class="fas fa-chevron-down"></i>
-            </button>
-            <div class="user-dropdown">
-              <div class="dropdown-item" @click="goToProfile">
-                <i class="fas fa-user"></i>
-                <span>个人中心</span>
-              </div>
-              <div class="dropdown-item" @click="handleLogout">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>退出登录</span>
-              </div>
+        <nav class="nav">
+          <router-link to="/" class="nav-item">首页</router-link>
+          <router-link to="/schools" class="nav-item">查大学</router-link>
+          <router-link to="/majors" class="nav-item">看专业</router-link>
+          <router-link to="/志愿" class="nav-item">志愿填报</router-link>
+          <router-link to="/analysis/multi-dimension" class="nav-item">多维分析</router-link>
+          <router-link to="/analysis/deep-search" class="nav-item active">深度检索</router-link>
+        </nav>
+      </div>
+      <div class="header-right">
+        <button v-if="!isLoggedIn" class="btn btn-text" @click="handleLogin">登录</button>
+        <button class="btn btn-primary" @click="handleRegister">注册</button>
+
+        <!-- 已登录状态 -->
+        <div v-if="isLoggedIn" class="user-menu">
+          <button class="btn btn-text user-info-btn">
+            <span class="username">{{ userInfo?.username || '用户' }}</span>
+            <i class="fas fa-chevron-down"></i>
+          </button>
+          <div class="user-dropdown">
+            <div class="dropdown-item" @click="goToProfile">
+              <i class="fas fa-user"></i>
+              <span>个人中心</span>
+            </div>
+            <div class="dropdown-item" @click="handleLogout">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>退出登录</span>
             </div>
           </div>
         </div>
       </div>
-    </header>
+    </div>
+  </header>
 
+  <div class="deep-search">
     <!-- 搜索头部 -->
     <div class="search-header">
       <h2>深度信息检索</h2>
       <div class="search-box">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="输入关键词搜索学校、专业、就业信息..."
-          size="large"
-          @keyup.enter="handleSearch"
-        >
+        <el-input v-model="searchKeyword" placeholder="输入关键词搜索学校、专业、就业信息..." size="large" @keyup.enter="handleSearch">
           <template #append>
             <el-button type="primary" @click="handleSearch" :loading="searching">
-              <el-icon><Search /></el-icon> 搜索
+              <el-icon>
+                <Search />
+              </el-icon> 搜索
             </el-button>
           </template>
         </el-input>
@@ -69,7 +66,7 @@
           <el-button type="text" @click="resetFilters">重置</el-button>
         </div>
       </template>
-      
+
       <el-row :gutter="20">
         <el-col :span="6">
           <div class="filter-item">
@@ -83,66 +80,45 @@
             </el-checkbox-group>
           </div>
         </el-col>
-        
+
         <el-col :span="6">
           <div class="filter-item">
             <label>省份</label>
             <el-select v-model="filters.province" placeholder="全部" clearable filterable>
-              <el-option
-                v-for="province in filterOptions.provinces"
-                :key="province"
-                :label="province"
-                :value="province"
-              />
+              <el-option v-for="province in filterOptions.provinces" :key="province" :label="province"
+                :value="province" />
             </el-select>
           </div>
-          
+
           <div class="filter-item">
             <label>学校类型</label>
             <el-select v-model="filters.school_type" placeholder="全部" clearable>
-              <el-option
-                v-for="type in filterOptions.school_types"
-                :key="type"
-                :label="type"
-                :value="type"
-              />
+              <el-option v-for="type in filterOptions.school_types" :key="type" :label="type" :value="type" />
             </el-select>
           </div>
         </el-col>
-        
+
         <el-col :span="6">
           <div class="filter-item">
             <label>年份</label>
             <el-select v-model="filters.year" placeholder="全部" clearable>
-              <el-option
-                v-for="year in filterOptions.years"
-                :key="year"
-                :label="year"
-                :value="year"
-              />
+              <el-option v-for="year in filterOptions.years" :key="year" :label="year" :value="year" />
             </el-select>
           </div>
-          
+
           <div class="filter-item">
             <label>分数范围</label>
-            <el-slider
-              v-model="scoreRange"
-              range
-              :min="0"
-              :max="750"
-              :marks="scoreMarks"
-              @change="updateScoreRange"
-            />
+            <el-slider v-model="scoreRange" range :min="0" :max="750" :marks="scoreMarks" @change="updateScoreRange" />
           </div>
         </el-col>
-        
+
         <el-col :span="6">
           <div class="filter-item">
             <label>985/211</label>
             <el-checkbox v-model="filters.is_985">985院校</el-checkbox>
             <el-checkbox v-model="filters.is_211">211院校</el-checkbox>
           </div>
-          
+
           <div class="filter-item">
             <label>排序方式</label>
             <el-radio-group v-model="sortBy">
@@ -164,22 +140,28 @@
           <div>
             <el-button-group>
               <el-button :type="viewMode === 'list' ? 'primary' : 'default'" @click="viewMode = 'list'">
-                <el-icon><List /></el-icon> 列表
+                <el-icon>
+                  <List />
+                </el-icon> 列表
               </el-button>
               <el-button :type="viewMode === 'card' ? 'primary' : 'default'" @click="viewMode = 'card'">
-                <el-icon><Grid /></el-icon> 卡片
+                <el-icon>
+                  <Grid />
+                </el-icon> 卡片
               </el-button>
               <!-- <el-button :type="viewMode === 'chart' ? 'primary' : 'default'" @click="viewMode = 'chart'">
                 <el-icon><DataLine /></el-icon> 图表
               </el-button> -->
             </el-button-group>
             <el-button @click="exportResults" style="margin-left: 10px;">
-              <el-icon><Download /></el-icon> 导出
+              <el-icon>
+                <Download />
+              </el-icon> 导出
             </el-button>
           </div>
         </div>
       </template>
-      
+
       <!-- 列表视图 -->
       <div v-if="viewMode === 'list'">
         <el-table :data="results" border stripe v-loading="searching">
@@ -190,7 +172,7 @@
               </el-tag>
             </template>
           </el-table-column>
-          
+
           <el-table-column prop="name" label="名称" min-width="200">
             <template #default="{ row }">
               <div class="result-name">
@@ -200,33 +182,27 @@
               </div>
             </template>
           </el-table-column>
-          
+
           <el-table-column prop="province" label="省份" width="120" />
-          
+
           <el-table-column prop="heat_score" label="热度" width="100">
             <template #default="{ row }">
-              <el-rate
-                v-model="row.heat_score"
-                :max="5"
-                :allow-half="true"
-                disabled
-                text-color="#ff9900"
-              />
+              <el-rate v-model="row.heat_score" :max="5" :allow-half="true" disabled text-color="#ff9900" />
             </template>
           </el-table-column>
-          
+
           <el-table-column prop="avg_salary" label="平均薪资" width="120">
             <template #default="{ row }">
               {{ row.avg_salary ? '¥' + row.avg_salary.toLocaleString() : '-' }}
             </template>
           </el-table-column>
-          
+
           <el-table-column prop="min_score" label="最低分数" width="100">
             <template #default="{ row }">
               {{ row.min_score || '-' }}
             </template>
           </el-table-column>
-          
+
           <el-table-column label="操作" width="120" fixed="right">
             <template #default="{ row }">
               <el-button size="small" @click="viewDetail(row)">查看详情</el-button>
@@ -234,7 +210,7 @@
           </el-table-column>
         </el-table>
       </div>
-      
+
       <!-- 卡片视图 -->
       <div v-else-if="viewMode === 'card'" class="card-view">
         <el-row :gutter="20">
@@ -260,7 +236,7 @@
           </el-col>
         </el-row>
       </div>
-      
+
       <!-- 图表视图 -->
       <div v-else-if="viewMode === 'chart'" class="chart-view">
         <el-row :gutter="20">
@@ -282,29 +258,19 @@
           </el-col>
         </el-row>
       </div>
-      
+
       <!-- 分页 -->
       <div class="pagination">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :total="total"
-          :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSearch"
-          @current-change="handleSearch"
-        />
+        <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total"
+          :page-sizes="[10, 20, 50, 100]" layout="total, sizes, prev, pager, next, jumper" @size-change="handleSearch"
+          @current-change="handleSearch" />
       </div>
     </el-card>
-    
+
     <!-- 详情对话框 -->
     <el-dialog v-model="detailVisible" :title="detailTitle" width="800px">
       <el-descriptions :column="2" border>
-        <el-descriptions-item
-          v-for="(value, key) in detailData"
-          :key="key"
-          :label="key"
-        >
+        <el-descriptions-item v-for="(value, key) in detailData" :key="key" :label="key">
           {{ value }}
         </el-descriptions-item>
       </el-descriptions>
@@ -327,11 +293,11 @@ export default {
   },
   setup() {
     const router = useRouter()
-    
+
     // 导航栏相关
     const isLoggedIn = ref(false)
     const userInfo = ref(null)
-    
+
     // 检查登录状态
     const checkLoginStatus = () => {
       const token = localStorage.getItem('userToken')
@@ -341,27 +307,27 @@ export default {
         userInfo.value = JSON.parse(user)
       }
     }
-    
+
     // 滚动到顶部
     const scrollToTop = () => {
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
-    
+
     // 处理登录
     const handleLogin = () => {
       router.push('/login')
     }
-    
+
     // 处理注册
     const handleRegister = () => {
       router.push('/register')
     }
-    
+
     // 跳转到个人中心
     const goToProfile = () => {
       router.push('/profile')
     }
-    
+
     // 处理登出
     const handleLogout = () => {
       localStorage.removeItem('userToken')
@@ -371,7 +337,7 @@ export default {
       ElMessage.success('已退出登录')
       router.push('/')
     }
-    
+
     // 在挂载时检查登录状态
     onMounted(() => {
       checkLoginStatus()
@@ -384,10 +350,10 @@ export default {
     const currentPage = ref(1)
     const pageSize = ref(20)
     const viewMode = ref('list')
-    
+
     // 搜索类型
     const searchTypes = ref(['school', 'major', 'employment', 'admission', 'heat'])
-    
+
     // 筛选条件
     const filters = reactive({
       province: '',
@@ -396,17 +362,17 @@ export default {
       is_985: false,
       is_211: false
     })
-    
+
     const scoreRange = ref([0, 750])
     const sortBy = ref('relevance')
-    
+
     // 筛选选项
     const filterOptions = ref({
       provinces: [],
       school_types: [],
       years: []
     })
-    
+
     const scoreMarks = {
       0: '0',
       400: '400',
@@ -414,12 +380,12 @@ export default {
       600: '600',
       750: '750'
     }
-    
+
     // 详情相关
     const detailVisible = ref(false)
     const detailTitle = ref('')
     const detailData = ref({})
-    
+
     // 获取筛选选项
     const fetchFilterOptions = async () => {
       try {
@@ -431,14 +397,14 @@ export default {
         console.error('获取筛选选项失败:', error)
       }
     }
-    
+
     // 搜索
     const handleSearch = async () => {
       if (!searchKeyword.value) {
         ElMessage.warning('请输入搜索关键词')
         return
       }
-      
+
       searching.value = true
       try {
         const res = await request.post('/analysis/search', {
@@ -453,11 +419,11 @@ export default {
           sort_by: sortBy.value,
           sort_order: 'desc'
         })
-        
+
         if (res.data.success) {
           results.value = res.data.data.items
           total.value = res.data.data.total
-          
+
           // 更新图表
           if (viewMode.value === 'chart') {
             nextTick(() => {
@@ -471,7 +437,7 @@ export default {
         searching.value = false
       }
     }
-    
+
     // 重置筛选
     const resetFilters = () => {
       filters.province = ''
@@ -483,12 +449,12 @@ export default {
       sortBy.value = 'relevance'
       searchTypes.value = ['school', 'major', 'employment', 'admission', 'heat']
     }
-    
+
     // 更新分数范围
     const updateScoreRange = (value) => {
       scoreRange.value = value
     }
-    
+
     // 获取类型标签
     const getTypeTag = (type) => {
       const map = {
@@ -500,7 +466,7 @@ export default {
       }
       return map[type] || 'info'
     }
-    
+
     // 获取类型名称
     const getTypeName = (type) => {
       const map = {
@@ -512,21 +478,21 @@ export default {
       }
       return map[type] || type
     }
-    
+
     // 高亮关键词
     const highlightKeyword = (text) => {
       if (!text || !searchKeyword.value) return text
       const regex = new RegExp(searchKeyword.value, 'gi')
       return text.replace(regex, '<span class="highlight">$&</span>')
     }
-    
+
     // 查看详情
     const viewDetail = (row) => {
       detailTitle.value = row.name || row.school_name || row.major_name
       detailData.value = row
       detailVisible.value = true
     }
-    
+
     // 加入对比
     const addToCompare = (item) => {
       // 存储到 localStorage 或 store
@@ -535,7 +501,7 @@ export default {
       localStorage.setItem('compareList', JSON.stringify(compareList))
       ElMessage.success('已加入对比列表')
     }
-    
+
     // 导出结果
     const exportResults = async () => {
       try {
@@ -543,7 +509,7 @@ export default {
           type: 'csv',
           data: results.value
         })
-        
+
         if (res.data.success) {
           const blob = new Blob([res.data.data], { type: 'text/csv' })
           const link = document.createElement('a')
@@ -556,11 +522,11 @@ export default {
         ElMessage.error('导出失败')
       }
     }
-    
+
     // 初始化图表
     const heatChart = ref(null)
     const scoreChart = ref(null)
-    
+
     const initCharts = () => {
       if (heatChart.value) {
         const chart = echarts.init(heatChart.value)
@@ -569,7 +535,7 @@ export default {
           tooltip: { trigger: 'axis' },
           xAxis: {
             type: 'category',
-            data: results.value.slice(0, 10).map(item => 
+            data: results.value.slice(0, 10).map(item =>
               item.name || item.school_name || item.major_name
             )
           },
@@ -581,7 +547,7 @@ export default {
           }]
         })
       }
-      
+
       if (scoreChart.value) {
         const chart = echarts.init(scoreChart.value)
         chart.setOption({
@@ -589,7 +555,7 @@ export default {
           tooltip: { trigger: 'axis' },
           xAxis: {
             type: 'category',
-            data: results.value.slice(0, 10).map(item => 
+            data: results.value.slice(0, 10).map(item =>
               item.name || item.school_name || item.major_name
             )
           },
@@ -602,11 +568,11 @@ export default {
         })
       }
     }
-    
+
     onMounted(() => {
       fetchFilterOptions()
     })
-    
+
     return {
       // 导航栏相关
       isLoggedIn,
@@ -1077,30 +1043,30 @@ export default {
   .deep-search {
     padding: 16px;
   }
-  
+
   .search-header {
     padding: 20px 0 15px 0;
   }
-  
+
   .search-header h2 {
     font-size: 24px;
   }
-  
+
   .search-box {
     max-width: 100%;
   }
-  
+
   .card-header {
     flex-direction: column;
     gap: 12px;
     align-items: flex-start;
   }
-  
+
   .filter-item :deep(.el-checkbox-group) {
     flex-direction: row;
     flex-wrap: wrap;
   }
-  
+
   .result-name {
     flex-direction: column;
     align-items: flex-start;

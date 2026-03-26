@@ -127,7 +127,7 @@ const loadMajors = async () => {
 }
 
 const viewDetail = (id) => {
-  router.push(`/major/${id}`)
+  router.push(`/major/${id}?from=majors`)
 }
 
 const handleSearch = () => {

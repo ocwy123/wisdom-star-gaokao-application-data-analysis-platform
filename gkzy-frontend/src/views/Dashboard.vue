@@ -345,7 +345,7 @@ const carouselSlides = [
     buttonText: '立即体验',
     link: '/analysis',
     icon: '🎓',
-    gradient: 'linear-gradient(135deg, #1e88e5 0%, #1565c0 100%)'
+    gradient: '#1e88e5'
   },
   {
     badge: '数据库',
@@ -354,7 +354,7 @@ const carouselSlides = [
     buttonText: '查看高校',
     link: '/schools',
     icon: '🏫',
-    gradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+    gradient: '#f093fb'
   },
   {
     badge: '就业前景',
@@ -363,7 +363,7 @@ const carouselSlides = [
     buttonText: '探索专业',
     link: '/majors',
     icon: '📚',
-    gradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
+    gradient: '#4facfe'
   }
 ]
 
@@ -682,7 +682,7 @@ function viewSchoolDetail(id) {
 }
 
 function viewMajorDetail(id) {
-  router.push(`/major/${id}`)
+  router.push(`/major/${id}?from=home`)
 }
 
 function setupCountdown() {
@@ -792,7 +792,7 @@ function getMotivationText() {
 .logo-text {
   font-size: 20px;
   font-weight: 700;
-  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  background: #1e88e5;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -885,7 +885,7 @@ function getMotivationText() {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  background: #1e88e5;
   color: white;
   box-shadow: 0 2px 8px rgba(30, 136, 229, 0.2);
 }
@@ -958,7 +958,7 @@ function getMotivationText() {
 
 /* ===== Hero 搜索区域 ===== */
 .hero-section {
-  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  background: #1e88e5;
   padding: 60px 0;
   position: relative;
   overflow: hidden;
@@ -1020,7 +1020,7 @@ function getMotivationText() {
 
 .search-btn {
   padding: 14px 32px;
-  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  background: #1e88e5;
   border: none;
   color: white;
   font-weight: 600;
@@ -1066,7 +1066,7 @@ function getMotivationText() {
 /* ===== 平台横幅 ===== */
 .platform-banner {
   padding: 20px 0;
-  background: linear-gradient(90deg, #1e88e5 0%, #1565c0 100%);
+  background: #1e88e5;
   margin-top: 16px;
   box-shadow: 0 4px 12px rgba(30, 136, 229, 0.2);
 }
@@ -1095,7 +1095,7 @@ function getMotivationText() {
 }
 
 .stat-card {
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: #f5f7fa;
   padding: 32px 24px;
   border-radius: 12px;
   text-align: center;
@@ -1104,15 +1104,15 @@ function getMotivationText() {
 }
 
 .stat-card:nth-child(2) {
-  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  background: #fa709a;
 }
 
 .stat-card:nth-child(3) {
-  background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+  background: #30cfd0;
 }
 
 .stat-card:nth-child(4) {
-  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  background: #a8edea;
 }
 
 .stat-card:hover {
@@ -1143,7 +1143,7 @@ function getMotivationText() {
 /* ===== 轮播图 ===== */
 .carousel-section {
   padding: 40px 0;
-  background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
+  background: #f8f9fa;
 }
 
 .carousel-layout {
@@ -1255,7 +1255,7 @@ function getMotivationText() {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #ff6b6b 0%, #ff8e8e 100%);
+  background: #ff6b6b;
   border-radius: 3px;
   transition: width 0.3s ease;
 }
@@ -1301,7 +1301,7 @@ function getMotivationText() {
 .countdown-motivation {
   margin-top: auto;  /* 推到底部 */
   padding: 12px 12px 12px 8px;  /* 左内边距减少，文字向左偏移 */
-  background: linear-gradient(135deg, #fff5f5 0%, #fff0f0 100%);
+  background: #fff5f5;
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -1454,7 +1454,7 @@ function getMotivationText() {
 
  .progress-fill {
    height: 100%;
-   background: linear-gradient(90deg, #ff6b6b 0%, #ff8e8e 100%);
+   background: #ff6b6b;
    border-radius: 3px;
    transition: width 0.3s ease;
  }
@@ -1495,7 +1495,7 @@ function getMotivationText() {
  .countdown-motivation {
    margin-top: 16px;
    padding: 14px 14px 14px 10px;  /* 左内边距减少，文字向左偏移 */
-   background: linear-gradient(135deg, #fff5f5 0%, #fff0f0 100%);
+   background: #fff5f5;
    border-radius: 8px;
    display: flex;
    align-items: center;
@@ -1784,7 +1784,7 @@ function getMotivationText() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  background: #f8f9fa;
   border-radius: 10px;
   padding: 6px;
 }
@@ -1861,7 +1861,7 @@ function getMotivationText() {
 
 .school-tags .formatted-tags {
   padding: 4px 12px;
-  background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+  background: #f5f5f5;
   border-radius: 6px;
   font-size: 12px;
   color: #555;
@@ -1871,12 +1871,12 @@ function getMotivationText() {
 }
 
 .school-tags .tag.985 {
-  background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%);
+  background: #fce4ec;
   color: #c2185b;
 }
 
 .school-tags .tag.211 {
-  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  background: #e3f2fd;
   color: #1565c0;
 }
 
@@ -1949,7 +1949,7 @@ function getMotivationText() {
   justify-content: space-between;
   align-items: flex-start;
   border-bottom: 1px solid #f8f8f8;
-  background: linear-gradient(135deg, #f8fafc 0%, #f0f4f8 100%);
+  background: #f8fafc;
 }
 
 .title-wrapper {
@@ -2021,7 +2021,7 @@ function getMotivationText() {
   display: block;
   font-size: 14px;
   font-weight: 700;
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: #f093fb;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -2065,7 +2065,7 @@ function getMotivationText() {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  background: #1e88e5;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2195,7 +2195,7 @@ function getMotivationText() {
 /* ===== CTA 区域 ===== */
 .cta-section {
   padding: 60px 0;
-  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  background: #1e88e5;
   margin-top: 40px;
   position: relative;
   overflow: hidden;
@@ -2314,7 +2314,7 @@ function getMotivationText() {
   right: 24px;
   width: 44px;
   height: 44px;
-  background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+  background: #1e88e5;
   border: none;
   border-radius: 50%;
   color: white;

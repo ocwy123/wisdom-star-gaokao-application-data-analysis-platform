@@ -11,8 +11,17 @@ const route = useRoute()
 const router = useRouter()
 const majorId = route.params.id
 
+// 记录来源页面
+const fromPage = route.query.from || 'majors'
+
 const goBack = () => {
-  router.push('/majors')
+  if (fromPage === 'majors') {
+    router.push('/majors')
+  } else if (fromPage === 'home') {
+    router.push('/')
+  } else {
+    router.back()
+  }
 }
 
 const analysisData = ref(null)
@@ -227,8 +236,8 @@ onMounted(async () => {
         <div class="major-header">
           <div class="header-left">
             <div class="back-button-wrapper">
-              <el-button @click="goBack" type="primary" link class="back-button">
-                <i class="fas fa-arrow-left"></i> 返回专业列表
+              <el-button @click="goBack" type="primary" class="back-button">
+                <i class="fas fa-arrow-left"></i> 返回
               </el-button>
             </div>
             <h1>{{ analysisData.major_info.name }}</h1>
@@ -458,13 +467,22 @@ onMounted(async () => {
 
 .back-button {
   font-size: 0.9rem;
-  color: #667eea;
-  padding: 0;
+  padding: 8px 16px;
   font-weight: 500;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+}
+
+.back-button i {
+  font-size: 0.85rem;
 }
 
 .back-button:hover {
-  color: #5a6fd8;
+  transform: translateX(-3px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
 }
 
 .header-left {
