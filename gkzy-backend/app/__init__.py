@@ -34,8 +34,8 @@ def create_app():
     
     # MySQL 配置（远程）
     DB_USERNAME = 'root'
-    DB_PASSWORD = 'root'
-    DB_HOST = '192.168.1.241'
+    DB_PASSWORD = '123456'
+    DB_HOST = '127.0.0.1'
     DB_PORT = '3306'
     DB_NAME = 'gkzy_mysql'
     
@@ -76,7 +76,7 @@ def create_app():
         print(f"❌ 数据库连接测试失败: {e}")
         print("\n请检查:")
         print("1. 远程服务器 MySQL 是否允许远程连接")
-        print("2. 用户名密码是否正确 (root/root)")
+        print("2. 用户名密码是否正确")
         print("3. 防火墙是否开放 3306 端口")
         print("4. 数据库 'gkzy_mysql' 是否存在")
         print("=" * 60)

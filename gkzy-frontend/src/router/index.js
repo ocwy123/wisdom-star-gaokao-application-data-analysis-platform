@@ -37,6 +37,12 @@ const routes = [
     name: 'SchoolList',
     component: SchoolList
   },
+  {
+    path: '/school/:id',
+    name: 'SchoolDetail',
+    component: SchoolDetail,
+    props: true
+  },
   // 专业相关路由
   {
     path: '/majors',
@@ -50,55 +56,14 @@ const routes = [
     props: true
   },
   {
-    path: '/analysis/deep-search',
-    name: 'DeepSearch',
-    component: () => import('../views/analysis/DeepSearch.vue')
-  },
-  {
-    path: '/analysis/multi-dimension',
-    name: 'MultiDimensionAnalysis',
-    component: () => import('../views/analysis/MultiDimensionAnalysis.vue')
+    path: '/compare',
+    name: 'MultiDimensionCompare',
+    component: () => import('../views/MultiDimensionCompare.vue')
   },
   {
     path: '/recommendation',
     name: 'VolunteerRecommendation',
     component: () => import('../views/VolunteerRecommendation.vue')
-  },
-  // 管理员路由
-  {
-    path: '/admin/login',
-    name: 'AdminLogin',
-    component: () => import('../views/admin/Login.vue'),
-    meta: { requiresGuest: true, adminOnly: true }
-  },
-  {
-    path: '/admin/register',
-    name: 'AdminRegister',
-    component: () => import('../views/admin/Register.vue'),
-    meta: { requiresGuest: true, adminOnly: true }
-  },
-  {
-    path: '/admin/dashboard',
-    name: 'AdminDashboard',
-    component: () => import('../views/admin/AdminDashboard.vue'),
-    meta: { requiresAuth: true, adminOnly: true }
-  },
-  {
-    path: '/majors',
-    name: 'MajorList',
-    component: MajorList
-  },
-  {
-    path: '/major/:id',
-    name: 'MajorDetail',
-    component: MajorDetail,
-    props: true
-  },
-  {
-    path: '/school/:id',
-    name: 'SchoolDetail',
-    component: SchoolDetail,
-    props: true
   },
   {
     path: '/faq',

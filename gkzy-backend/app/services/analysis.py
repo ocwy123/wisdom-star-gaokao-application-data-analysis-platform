@@ -474,19 +474,6 @@ def sort_results(results, sort_by, sort_order):
 
 @analysis_bp.route('/compare', methods=['POST'])
 def multi_dimension_compare():
-    """
-    多维对比分析
-    请求体：{
-        "dimension": "school",  # 对比维度（单选）
-        "metrics": ["avg_score", "heat_score"],  # 指标列表
-        "filters": {  # 筛选条件
-            "school_ids": [1, 2, 3],
-            "major_ids": [1, 2],
-            "provinces": ["北京市", "上海市"]
-        },
-        "time_range": [2020, 2024]
-    }
-    """
     try:
         data = request.get_json()
         dimension = data.get('dimension', 'school')
@@ -519,47 +506,53 @@ def multi_dimension_compare():
         print(f"对比分析错误：{e}")
         return jsonify({'success': False, 'message': str(e)}), 500
 def compare_schools(filters, metrics, time_range):
-    """学校对比分析"""
-    from app.services.admin_auth import School, AdmRecord, SchoolHeat
-    
     school_ids = filters.get('school_ids', [])
     if not school_ids:
         return []
     
+    schools = School.query.filter(School.id.in_(school_ids)).all()
+    school_map = {s.id: s for s in schools}
+    
+    admissions = AdmRecord.query.filter(
+        AdmRecord.school_id.in_(school_ids),
+        AdmRecord.year.between(time_range[0], time_range[1])
+    ).all()
+    
+    adm_by_school = {}
+    for a in admissions:
+        if a.school_id not in adm_by_school:
+            adm_by_school[a.school_id] = []
+        adm_by_school[a.school_id].append(a)
+    
+    heat_scores = SchoolHeat.query.filter(SchoolHeat.school_id.in_(school_ids)).all()
+    heat_map = {h.school_id: h for h in heat_scores}
+    
     result = []
     for school_id in school_ids:
-        school = School.query.get(school_id)
+        school = school_map.get(school_id)
         if not school:
             continue
         
         item = {
-            'dimension': 'school',
             'dimension_value': school.name,
             'school_id': school_id,
             'data': {}
         }
         
-        # 获取招生数据
-        admissions = AdmRecord.query.filter(
-            AdmRecord.school_id == school_id,
-            AdmRecord.year.between(time_range[0], time_range[1])
-        ).all()
+        school_adms = adm_by_school.get(school_id, [])
+        scores = [a.min_score for a in school_adms if a.min_score]
         
         if 'avg_score' in metrics:
-            scores = [a.min_score for a in admissions if a.min_score]
-            item['data']['avg_score'] = sum(scores) / len(scores) if scores else 0
-        
+            item['data']['avg_score'] = round(sum(scores) / len(scores), 1) if scores else 0
         if 'min_score' in metrics:
-            item['data']['min_score'] = min([a.min_score for a in admissions if a.min_score]) if admissions else 0
-        
+            item['data']['min_score'] = min(scores) if scores else 0
         if 'max_score' in metrics:
-            item['data']['max_score'] = max([a.min_score for a in admissions if a.min_score]) if admissions else 0
+            item['data']['max_score'] = max(scores) if scores else 0
         
-        # 获取热度数据
-        heat = SchoolHeat.query.filter_by(school_id=school_id).first()
+        heat = heat_map.get(school_id)
         if heat:
             if 'heat_score' in metrics:
-                item['data']['heat_score'] = float(heat.heat_score) if heat.heat_score else 0
+                item['data']['heat_score'] = round(float(heat.heat_score) if heat.heat_score else 0, 1)
             if 'search_count' in metrics:
                 item['data']['search_count'] = heat.search_count or 0
             if 'favorite_count' in metrics:
@@ -567,13 +560,10 @@ def compare_schools(filters, metrics, time_range):
             if 'view_count' in metrics:
                 item['data']['view_count'] = heat.view_count or 0
         
-        # 获取学校基本信息
         if 'phd_count' in metrics:
             item['data']['phd_count'] = school.phd_count or 0
         if 'master_count' in metrics:
             item['data']['master_count'] = school.master_count or 0
-        if 'founded_year' in metrics:
-            item['data']['founded_year'] = school.founded_year or 0
         if 'is_985' in metrics:
             item['data']['is_985'] = 1 if school.is_985 else 0
         if 'is_211' in metrics:
@@ -586,152 +576,145 @@ def compare_schools(filters, metrics, time_range):
     return result
 
 def compare_majors(filters, metrics, time_range):
-    """专业对比分析"""
-    from app.services.admin_auth import Major, MajorEmployment, AdmRecord
-    
     major_ids = filters.get('major_ids', [])
     if not major_ids:
         return []
     
+    majors = Major.query.filter(Major.id.in_(major_ids)).all()
+    major_map = {m.id: m for m in majors}
+    
+    employments = MajorEmployment.query.filter(MajorEmployment.major_id.in_(major_ids)).all()
+    emp_map = {e.major_id: e for e in employments}
+    
+    major_names = [m.name for m in majors]
+    admissions = AdmRecord.query.filter(
+        AdmRecord.major_name.in_(major_names),
+        AdmRecord.year.between(time_range[0], time_range[1])
+    ).all()
+    
+    adm_by_major = {}
+    for a in admissions:
+        if a.major_name not in adm_by_major:
+            adm_by_major[a.major_name] = []
+        adm_by_major[a.major_name].append(a)
+    
     result = []
     for major_id in major_ids:
-        major = Major.query.get(major_id)
+        major = major_map.get(major_id)
         if not major:
             continue
         
         item = {
-            'dimension': 'major',
             'dimension_value': major.name,
             'major_id': major_id,
             'data': {}
         }
         
-        # 获取就业数据
-        employment = MajorEmployment.query.filter_by(major_id=major_id).first()
+        employment = emp_map.get(major_id)
         if employment:
             if 'avg_salary' in metrics:
                 item['data']['avg_salary'] = employment.avg_salary
-            if 'employment_rate' in metrics:
-                item['data']['employment_rate'] = 0  # 需要实际数据
         
-        # 获取招生数据（通过专业名称匹配）
-        admissions = AdmRecord.query.filter(
-            AdmRecord.major_name == major.name,
-            AdmRecord.year.between(time_range[0], time_range[1])
-        ).all()
-        
+        major_adms = adm_by_major.get(major.name, [])
+        scores = [a.min_score for a in major_adms if a.min_score]
         if 'avg_score' in metrics:
-            scores = [a.min_score for a in admissions if a.min_score]
-            item['data']['avg_score'] = sum(scores) / len(scores) if scores else 0
+            item['data']['avg_score'] = round(sum(scores) / len(scores), 1) if scores else 0
         
         result.append(item)
     
     return result
 
 def compare_by_province(filters, metrics, time_range):
-    """按省份对比分析"""
-    from app.services.admin_auth import School, AdmRecord
-    
     provinces = filters.get('provinces', [])
     if not provinces:
-        # 获取所有省份
         provinces = db.session.query(School.province).distinct().all()
         provinces = [p[0] for p in provinces if p[0]]
     
+    all_schools = School.query.filter(School.province.in_(provinces)).all()
+    schools_by_province = {}
+    for s in all_schools:
+        if s.province not in schools_by_province:
+            schools_by_province[s.province] = []
+        schools_by_province[s.province].append(s)
+    
+    all_school_ids = [s.id for s in all_schools]
+    all_admissions = AdmRecord.query.filter(
+        AdmRecord.school_id.in_(all_school_ids),
+        AdmRecord.year.between(time_range[0], time_range[1])
+    ).all()
+    
+    adm_by_school = {}
+    for a in all_admissions:
+        if a.school_id not in adm_by_school:
+            adm_by_school[a.school_id] = []
+        adm_by_school[a.school_id].append(a)
+    
     result = []
-    for province in provinces[:10]:  # 限制数量
-        schools = School.query.filter_by(province=province).all()
+    for province in provinces[:10]:
+        schools = schools_by_province.get(province, [])
         school_ids = [s.id for s in schools]
         
         if not school_ids:
             continue
         
-        admissions = AdmRecord.query.filter(
-            AdmRecord.school_id.in_(school_ids),
-            AdmRecord.year.between(time_range[0], time_range[1])
-        ).all()
+        province_admissions = []
+        for sid in school_ids:
+            province_admissions.extend(adm_by_school.get(sid, []))
         
         item = {
-            'dimension': 'province',
             'dimension_value': province,
             'data': {}
         }
         
-        # 获取招生数据统计
+        scores = [a.min_score for a in province_admissions if a.min_score]
         if 'avg_score' in metrics:
-            scores = [a.min_score for a in admissions if a.min_score]
-            item['data']['avg_score'] = sum(scores) / len(scores) if scores else 0
-        
+            item['data']['avg_score'] = round(sum(scores) / len(scores), 1) if scores else 0
         if 'min_score' in metrics:
-            scores = [a.min_score for a in admissions if a.min_score]
             item['data']['min_score'] = min(scores) if scores else 0
-        
         if 'max_score' in metrics:
-            scores = [a.min_score for a in admissions if a.min_score]
             item['data']['max_score'] = max(scores) if scores else 0
-        
         if 'school_count' in metrics:
             item['data']['school_count'] = len(schools)
-        
         if 'admission_count' in metrics:
-            item['data']['admission_count'] = len(admissions)
-
-        # 获取省份学校统计信息
+            item['data']['admission_count'] = len(province_admissions)
         if '985_count' in metrics:
-            count_985 = sum([1 for s in schools if s.is_985])
-            item['data']['985_count'] = count_985
-        
+            item['data']['985_count'] = sum(1 for s in schools if s.is_985)
         if '211_count' in metrics:
-            count_211 = sum([1 for s in schools if s.is_211])
-            item['data']['211_count'] = count_211
-        
+            item['data']['211_count'] = sum(1 for s in schools if s.is_211)
         if 'double_first_count' in metrics:
-            count_double_first = sum([1 for s in schools if s.is_double_first])
-            item['data']['double_first_count'] = count_double_first
-        
+            item['data']['double_first_count'] = sum(1 for s in schools if s.is_double_first)
         if 'city_count' in metrics:
-            cities = set([s.city for s in schools if s.city])
-            item['data']['city_count'] = len(cities)
+            item['data']['city_count'] = len(set(s.city for s in schools if s.city))
         
         result.append(item)
     
     return result
 
 def analyze_heat_trend(filters, metrics, time_range):
-    """热度趋势分析"""
-    from app.services.admin_auth import SchoolHeat, School
-    
-    query = SchoolHeat.query.join(
-        School, SchoolHeat.school_id == School.id
-    )
+    query = SchoolHeat.query.join(School, SchoolHeat.school_id == School.id)
     
     if filters.get('province'):
         query = query.filter(School.province == filters['province'])
-    
     if filters.get('school_type'):
         query = query.filter(School.type == filters['school_type'])
     
-    heat_data = query.all()
+    heat_data = query.order_by(SchoolHeat.heat_score.desc()).limit(20).all()
     
-    # 按热度分数排序
-    heat_data.sort(key=lambda x: x.heat_score or 0, reverse=True)
+    school_ids = [h.school_id for h in heat_data]
+    schools = School.query.filter(School.id.in_(school_ids)).all()
+    school_map = {s.id: s.name for s in schools}
     
     result = []
-    for heat in heat_data[:20]:  # 前 20 名
-        school = School.query.get(heat.school_id)
-        
-        item = {
-            'dimension': 'heat',
-            'dimension_value': school.name if school else '未知',
+    for heat in heat_data:
+        result.append({
+            'dimension_value': school_map.get(heat.school_id, '未知'),
             'data': {
-                'heat_score': float(heat.heat_score) if heat.heat_score else 0,
+                'heat_score': round(float(heat.heat_score) if heat.heat_score else 0, 1),
                 'search_count': heat.search_count,
                 'favorite_count': heat.favorite_count,
                 'view_count': heat.view_count
             }
-        }
-        
-        result.append(item)
+        })
     
     return result
 

@@ -1,32 +1,6 @@
 <template>
   <div class="volunteer-recommendation-page">
-    <!-- 顶部导航栏 -->
-    <header class="header">
-      <div class="container">
-        <div class="header-left">
-          <div class="logo" @click="scrollToTop">
-            <span class="logo-icon">🎓</span>
-            <span class="logo-text">高考志愿</span>
-          </div>
-          <nav class="nav">
-            <router-link to="/" class="nav-item">首页</router-link>
-            <router-link to="/schools" class="nav-item">查大学</router-link>
-            <router-link to="/majors" class="nav-item">看专业</router-link>
-            <router-link to="/recommendation" class="nav-item active">志愿推荐</router-link>
-            <router-link to="/analysis/multi-dimension" class="nav-item">多维分析</router-link>
-            <router-link to="/analysis/deep-search" class="nav-item">深度检索</router-link>
-          </nav>
-        </div>
-        <div class="header-right">
-          <div class="search-mini">
-            <input type="text" placeholder="搜索..." class="search-mini-input" v-model="miniSearch" @keyup.enter="handleSearch">
-            <span class="search-icon">🔍</span>
-          </div>
-          <button class="btn btn-text">登录</button>
-          <button class="btn btn-primary">注册</button>
-        </div>
-      </div>
-    </header>
+    <Header />
 
     <!-- 主体内容 -->
     <main class="main-content">
@@ -364,6 +338,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Location } from '@element-plus/icons-vue'
 import { getVolunteerRecommendation } from '../api/recommendation'
+import Header from '../components/Header.vue'
 
 // 表单数据
 const form = reactive({

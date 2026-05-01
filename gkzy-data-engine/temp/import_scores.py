@@ -35,7 +35,7 @@ SUBJECT_MAP = {
 }
 
 DB_CONFIG = {
-    "host": "192.168.54.241",
+    "host": "127.0.0.1",
     "port": 3306,
     "user": "root",
     "password": "root",

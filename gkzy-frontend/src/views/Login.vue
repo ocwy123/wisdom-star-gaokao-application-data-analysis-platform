@@ -2,7 +2,7 @@
   <div class="login-container">
     <div class="login-box">
       <div class="logo-section">
-        <h1 class="logo">GKZY</h1>
+        <h2 class="logo">智星</h2>
         <p class="slogan">高考志愿填报系统</p>
       </div>
       

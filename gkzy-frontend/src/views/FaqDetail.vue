@@ -1,52 +1,6 @@
 <template>
   <div class="faq-detail-page">
-    <!-- 顶部导航栏 -->
-    <header class="header">
-      <div class="container">
-        <div class="header-left">
-          <div class="logo" @click="goToHome">
-            <span class="logo-icon">🎓</span>
-            <span class="logo-text">高考志愿</span>
-          </div>
-          <nav class="nav">
-            <router-link to="/" class="nav-item">首页</router-link>
-            <router-link to="/schools" class="nav-item">查大学</router-link>
-            <router-link to="/majors" class="nav-item">看专业</router-link>
-            <router-link to="/recommendation" class="nav-item">志愿推荐</router-link>
-            <router-link to="/analysis/multi-dimension" class="nav-item">多维分析</router-link>
-            <router-link to="/analysis/deep-search" class="nav-item">深度检索</router-link>
-          </nav>
-        </div>
-        <div class="header-right">
-          <!-- 未登录状态 -->
-          <template v-if="!isLoggedIn">
-            <button class="btn btn-text" @click="handleLogin">登录</button>
-            <button class="btn btn-primary" @click="handleRegister">注册</button>
-          </template>
-          
-          <!-- 已登录状态 -->
-          <template v-else>
-            <div class="user-menu">
-              <button class="btn btn-text user-info-btn">
-                <span class="username">{{ userInfo?.username || '用户' }}</span>
-                <i class="fas fa-chevron-down"></i>
-              </button>
-              <div class="user-dropdown">
-                <div class="dropdown-item" @click="goToProfile">
-                  <i class="fas fa-user"></i>
-                  <span>个人中心</span>
-                </div>
-                <div class="dropdown-item" @click="handleLogout">
-                  <i class="fas fa-sign-out-alt"></i>
-                  <span>退出登录</span>
-                </div>
-              </div>
-            </div>
-          </template>
-        </div>
-      </div>
-    </header>
-
+  
     <!-- 返回按钮 -->
     <div class="back-button-container">
       <el-button class="back-button" @click="goBack">
@@ -101,6 +55,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ArrowLeft, ArrowRight, HomeFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import Header from '../components/Header.vue'
 
 const router = useRouter()
 const route = useRoute()

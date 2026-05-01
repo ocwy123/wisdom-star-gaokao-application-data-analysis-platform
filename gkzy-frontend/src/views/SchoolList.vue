@@ -1,46 +1,6 @@
 <template>
   <div class="school-list-page">
-    <!-- 顶部导航栏 -->
-    <header class="header">
-      <div class="container">
-        <div class="header-left">
-          <div class="logo" @click="scrollToTop">
-            <span class="logo-icon">🎓</span>
-            <span class="logo-text">高考志愿</span>
-          </div>
-          <nav class="nav">
-            <router-link to="/" class="nav-item">首页</router-link>
-            <router-link to="/schools" class="nav-item active">查大学</router-link>
-            <router-link to="/majors" class="nav-item">看专业</router-link>
-            <router-link to="/recommendation" class="nav-item">志愿推荐</router-link>
-            <router-link to="/analysis/multi-dimension" class="nav-item">多维分析</router-link>
-            <router-link to="/analysis/deep-search" class="nav-item">深度检索</router-link>
-          </nav>
-        </div>
-        <div class="header-right">
-          <button v-if="!isLoggedIn" class="btn btn-text" @click="handleLogin">登录</button>
-          <button class="btn btn-primary" @click="handleRegister">注册</button>
-          
-          <!-- 已登录状态 -->
-          <div v-if="isLoggedIn" class="user-menu">
-            <button class="btn btn-text user-info-btn">
-              <span class="username">{{ userInfo?.username || '用户' }}</span>
-              <i class="fas fa-chevron-down"></i>
-            </button>
-            <div class="user-dropdown">
-              <div class="dropdown-item" @click="goToProfile">
-                <i class="fas fa-user"></i>
-                <span>个人中心</span>
-              </div>
-              <div class="dropdown-item" @click="handleLogout">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>退出登录</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
+    <Header />
 
     <!-- 主体内容 -->
     <main class="main-content">
@@ -194,6 +154,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Search, Location } from '@element-plus/icons-vue'
 import { getSchoolList, getProvinces, getCities, getSchoolTypes } from '@/api/school'
+import Header from '@/components/Header.vue'
 
 const router = useRouter()
 

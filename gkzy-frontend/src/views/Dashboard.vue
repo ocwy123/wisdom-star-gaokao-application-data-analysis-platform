@@ -1,46 +1,7 @@
 <template>
   <div class="dashboard">
-    <!-- 顶部导航栏 -->
-    <header class="header">
-      <div class="container">
-        <div class="header-left">
-          <div class="logo" @click="scrollToTop">
-            <span class="logo-icon">🎓</span>
-            <span class="logo-text">高考志愿</span>
-          </div>
-          <nav class="nav">
-            <router-link to="/" class="nav-item active">首页</router-link>
-            <router-link to="/schools" class="nav-item">查大学</router-link>
-            <router-link to="/majors" class="nav-item">看专业</router-link>
-            <router-link to="/recommendation" class="nav-item">志愿推荐</router-link>
-            <router-link to="/analysis/multi-dimension" class="nav-item">多维分析</router-link>
-            <router-link to="/analysis/deep-search" class="nav-item">深度检索</router-link>
-          </nav>
-        </div>
-        <div class="header-right">
-          <button v-if="!isLoggedIn" class="btn btn-text" @click="handleLogin">登录</button>
-          <button class="btn btn-primary" @click="handleRegister">注册</button>
-
-          <!-- 已登录状态 -->
-          <div v-if="isLoggedIn" class="user-menu">
-            <button class="btn btn-text user-info-btn">
-              <span class="username">{{ userInfo?.username || '用户' }}</span>
-              <i class="fas fa-chevron-down"></i>
-            </button>
-            <div class="user-dropdown">
-              <div class="dropdown-item" @click="goToProfile">
-                <i class="fas fa-user"></i>
-                <span>个人中心</span>
-              </div>
-              <div class="dropdown-item" @click="handleLogout">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>退出登录</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
+    
+    <Header /> 
 
     <!-- 轮播图区域 -->
     <section class="carousel-section">
@@ -341,6 +302,7 @@ import * as echarts from 'echarts'
 import * as docx from 'docx'
 import { saveAs } from 'file-saver'
 import jsPDF from 'jspdf'
+import Header from '../components/Header.vue'
 
 const router = useRouter()
 const searchQuery = ref('')
@@ -807,8 +769,8 @@ async function loadScoreSegmentOptions() {
     if (res.data) {
       options.value = res.data
       console.log('options.value:', options.value)
-      // 设置默认值：四川省、2025、物理类
-      filterForm.value.province = options.value.provinces.includes('四川省') ? '四川省' : (options.value.provinces[0] || '')
+      // 设置默认值：陕西省、2025、物理类
+      filterForm.value.province = options.value.provinces.includes('陕西省') ? '陕西省' : (options.value.provinces[0] || '')
       filterForm.value.year = options.value.years.includes(2025) ? 2025 : (options.value.years[0] || '')
       filterForm.value.subject = options.value.subjects.includes('物理类') ? '物理类' : (options.value.subjects[0] || '')
       // 加载默认数据
