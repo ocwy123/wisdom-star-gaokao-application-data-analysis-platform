@@ -3,8 +3,13 @@ from flask import Flask
 from flask_cors import CORS
 from app.extensions import db, cors, cache
 import pymysql
+import os
+from dotenv import load_dotenv
 from app.middleware.cors import init_cors
 from app.services.admin_auth import admin_auth_bp
+
+# 加载 .env 文件
+load_dotenv()
 
 # 导入所有模型，确保 SQLAlchemy 能正确建立关系
 from app.models.school import School
@@ -29,15 +34,21 @@ from app.routes.recommendation import recommendation_bp
 
 def create_app():
     app = Flask(__name__)
-    CORS(app, origins=['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174'], supports_credentials=True)
+    
+    # 从 .env 文件读取 CORS origins
+    cors_origins_str = os.getenv('CORS_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173')
+    cors_origins = [origin.strip() for origin in cors_origins_str.split(',')]
+    
+    CORS(app, origins=cors_origins, supports_credentials=True)
     init_cors(app)
     
-    # MySQL 配置（远程）
-    DB_USERNAME = 'root'
-    DB_PASSWORD = '123456'
-    DB_HOST = '127.0.0.1'
-    DB_PORT = '3306'
-    DB_NAME = 'gkzy_mysql'
+    # 从 .env 文件读取 MySQL 配置
+    DB_USERNAME = os.getenv('DB_USERNAME')
+    DB_PASSWORD = os.getenv('DB_PASSWORD')
+    DB_HOST = os.getenv('DB_HOST')
+    DB_PORT = os.getenv('DB_PORT')
+    DB_NAME = os.getenv('DB_NAME')
+    DB_CONNECT_TIMEOUT = int(os.getenv('DB_CONNECT_TIMEOUT'))
     
     # 使用 PyMySQL
     app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+pymysql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
@@ -48,15 +59,15 @@ def create_app():
         'pool_recycle': 3600,
         'pool_pre_ping': True,
         'connect_args': {
-            'connect_timeout': 10,
+            'connect_timeout': DB_CONNECT_TIMEOUT,
             'charset': 'utf8mb4'
         }
     }
     
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     
-    # JWT 密钥
-    app.config['JWT_SECRET_KEY'] = 'NUWRghoxw_rT5sP60LTcO7PaLAoK3Zm8yHOMA-bkgs8'
+    # JWT 密钥从 .env 文件读取
+    app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'NUWRghoxw_rT5sP60LTcO7PaLAoK3Zm8yHOMA-bkgs8')
     
     # 先测试连接
     try:
@@ -67,7 +78,7 @@ def create_app():
             password=DB_PASSWORD,
             port=int(DB_PORT),
             database=DB_NAME,
-            connect_timeout=10
+            connect_timeout=DB_CONNECT_TIMEOUT
         )
         print("=" * 60)
         print("✅ 远程数据库连接测试成功！")
@@ -99,14 +110,6 @@ def create_app():
     app.register_blueprint(analysis_bp)
     app.register_blueprint(recommendation_bp, url_prefix='/api/recommendation')
     app.register_blueprint(data_import_bp)
-
-    # 创建表
-    # with app.app_context():
-    #     print("\n" + "="*60)
-    #     print("已注册的路由:")
-    #     for rule in app.url_map.iter_rules():
-    #         print(f"{rule.endpoint}: {rule}")
-    #     print("="*60 + "\n")
 
     @app.before_request
     def log_request():
